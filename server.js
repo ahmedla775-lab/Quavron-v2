@@ -36,7 +36,31 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 Pages
 ======================================== */
 
-app.use(express.static(path.join(__dirname, "pages")));
+/* ========================================
+Static Pages
+======================================== */
+
+app.use(
+express.static(
+path.join(__dirname, "pages")
+)
+);
+
+/* ========================================
+Homepage
+======================================== */
+
+app.get("/", (req, res) => {
+
+res.sendFile(
+path.join(
+__dirname,
+"pages",
+"index.html"
+)
+);
+
+});
 
 /* ========================================
 Routes
