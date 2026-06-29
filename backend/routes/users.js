@@ -1,1 +1,31 @@
+const express = require("express");
 
+const router = express.Router();
+
+/* ========================================
+Get Users
+======================================== */
+
+router.get("/", (req, res) => {
+
+res.json({
+success: true,
+users: []
+});
+
+});
+
+/* ========================================
+Get User By ID
+======================================== */
+
+router.get("/:id", (req, res) => {
+
+res.json({
+success: true,
+userId: req.params.id
+});
+
+});
+
+module.exports = router;
