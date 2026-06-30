@@ -165,3 +165,46 @@ color: #22c55e;
 overflow-x: auto;
 
 }
+.explorer h3 {
+
+font-size: 14px;
+
+opacity: 0.6;
+
+margin-bottom: 20px;
+
+}
+
+.explorer ul {
+
+list-style: none;
+
+padding: 0;
+
+}
+
+.explorer li {
+
+padding: 10px;
+
+border-radius: 8px;
+
+cursor: pointer;
+
+transition: 0.3s;
+
+}
+
+.explorer li:hover {
+
+background: rgba(255,255,255,0.08);
+
+}
+
+.nested {
+
+padding-left: 25px !important;
+
+opacity: 0.8;
+
+}
