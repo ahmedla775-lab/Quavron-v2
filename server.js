@@ -7,7 +7,7 @@ const morgan = require("morgan");
 require("dotenv").config();
 
 /* ========================================
-IMPORT ROUTES
+ROUTES
 ======================================== */
 
 const authRoutes =
@@ -20,7 +20,7 @@ APP
 const app = express();
 
 /* ========================================
-GLOBAL MIDDLEWARE
+MIDDLEWARE
 ======================================== */
 
 app.use(cors());
@@ -36,7 +36,7 @@ extended: true
 app.use(morgan("dev"));
 
 /* ========================================
-ROOT ROUTE
+ROOT
 ======================================== */
 
 app.get("/", (req, res) => {
@@ -45,34 +45,14 @@ res.json({
 
 success: true,
 
-name: "Quavron API",
-
-version: "1.0.0",
-
-status: "Running 🚀"
+message: "Quavron Running 🚀"
 
 });
 
 });
 
 /* ========================================
-TEST ROUTE
-======================================== */
-
-app.get("/api/test", (req, res) => {
-
-res.json({
-
-success: true,
-
-message: "API Working Successfully ✅"
-
-});
-
-});
-
-/* ========================================
-API ROUTES
+AUTH ROUTES
 ======================================== */
 
 app.use(
@@ -84,41 +64,7 @@ authRoutes
 );
 
 /* ========================================
-404 HANDLER
-======================================== */
-
-app.use((req, res) => {
-
-res.status(404).json({
-
-success: false,
-
-message: "Route Not Found"
-
-});
-
-});
-
-/* ========================================
-GLOBAL ERROR HANDLER
-======================================== */
-
-app.use((err, req, res, next) => {
-
-console.error(err);
-
-res.status(500).json({
-
-success: false,
-
-message: "Internal Server Error"
-
-});
-
-});
-
-/* ========================================
-EXPORT APP
+EXPORT
 ======================================== */
 
 module.exports = app;
