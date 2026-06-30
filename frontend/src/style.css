@@ -198,7 +198,51 @@ transition: 0.3s;
 .explorer li:hover {
 
 background: rgba(255,255,255,0.08);
+/* TERMINAL */
 
+.terminal {
+
+margin-top: 25px;
+
+background: #000;
+
+border-radius: 15px;
+
+overflow: hidden;
+
+border: 1px solid rgba(255,255,255,0.08);
+
+}
+
+.terminal-header {
+
+background: #111827;
+
+padding: 12px 20px;
+
+font-weight: bold;
+
+border-bottom: 1px solid rgba(255,255,255,0.08);
+
+}
+
+.terminal-body {
+
+padding: 20px;
+
+font-family: monospace;
+
+color: #22c55e;
+
+min-height: 180px;
+
+}
+
+.terminal-body p {
+
+margin: 8px 0;
+
+}
 }
 
 .nested {
