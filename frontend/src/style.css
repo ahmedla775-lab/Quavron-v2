@@ -24,45 +24,103 @@ height: 100vh;
 
 .sidebar {
 
-width: 250px;
+width: 260px;
 
 background: #111827;
 
 padding: 20px;
 
-border-right: 1px solid rgba(255,255,255,0.1);
+border-right: 1px solid rgba(255,255,255,0.08);
+
+overflow-y: auto;
 
 }
 
 .sidebar h2 {
 
-margin-bottom: 40px;
+margin-bottom: 5px;
 
 }
 
-.sidebar ul {
+.subtitle {
+
+opacity: 0.6;
+
+font-size: 14px;
+
+margin-bottom: 30px;
+
+}
+
+/* NAVIGATION */
+
+.nav h3 {
+
+font-size: 13px;
+
+opacity: 0.5;
+
+margin-bottom: 15px;
+
+}
+
+.nav ul {
 
 list-style: none;
 
 padding: 0;
 
+margin: 0;
+
 }
 
-.sidebar li {
+.nav li {
 
-padding: 15px 10px;
+margin-bottom: 10px;
+
+}
+
+/* LINKS */
+
+.nav a {
+
+text-decoration: none;
+
+color: #cbd5e1;
+
+display: block;
+
+padding: 12px 15px;
 
 border-radius: 10px;
 
-cursor: pointer;
-
-transition: 0.3s;
+transition: all 0.3s ease;
 
 }
 
-.sidebar li:hover {
+/* HOVER */
+
+.nav a:hover {
 
 background: rgba(255,255,255,0.08);
+
+color: white;
+
+transform: translateX(5px);
+
+}
+
+/* ACTIVE PAGE */
+
+.nav a.active {
+
+background: #2563eb;
+
+color: white;
+
+font-weight: bold;
+
+box-shadow: 0 0 10px rgba(37,99,235,0.4);
 
 }
 
@@ -74,7 +132,7 @@ flex: 1;
 
 padding: 25px;
 
-overflow: auto;
+overflow-y: auto;
 
 }
 
@@ -88,7 +146,25 @@ justify-content: space-between;
 
 align-items: center;
 
+margin-bottom: 25px;
+
 }
+
+.topbar h1 {
+
+margin: 0;
+
+}
+
+.topbar p {
+
+opacity: 0.6;
+
+margin-top: 5px;
+
+}
+
+/* BUTTON */
 
 .primary {
 
@@ -104,6 +180,16 @@ color: white;
 
 cursor: pointer;
 
+transition: 0.3s;
+
+}
+
+.primary:hover {
+
+background: #2563eb;
+
+transform: translateY(-2px);
+
 }
 
 /* CARDS */
@@ -116,7 +202,7 @@ grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
 
 gap: 20px;
 
-margin-top: 30px;
+margin-bottom: 30px;
 
 }
 
@@ -128,81 +214,83 @@ padding: 20px;
 
 border-radius: 15px;
 
+transition: 0.3s;
+
+border: 1px solid rgba(255,255,255,0.05);
+
+}
+
+.card:hover {
+
+transform: translateY(-4px);
+
+border-color: rgba(59,130,246,0.4);
+
+}
+
+.card h3 {
+
+margin-top: 0;
+
+}
+
+.card p {
+
+opacity: 0.7;
+
+}
+
+/* WORKSPACE GRID */
+
+.workspace-grid {
+
+display: grid;
+
+grid-template-columns: repeat(auto-fit,minmax(350px,1fr));
+
+gap: 25px;
+
+}
+
+/* WORKSPACE CARD */
+
+.workspace-card {
+
+background: #111827;
+
+border-radius: 16px;
+
+padding: 20px;
+
+border: 1px solid rgba(255,255,255,0.05);
+
+transition: 0.3s;
+
+}
+
+.workspace-card:hover {
+
+border-color: rgba(59,130,246,0.3);
+
 }
 
 /* EDITOR */
 
 .editor {
 
-margin-top: 30px;
+margin-top: 20px;
 
-background: #111827;
-
-border-radius: 15px;
+border-radius: 12px;
 
 overflow: hidden;
 
 }
 
-.editor-header {
-
-padding: 15px;
-
-background: #1f2937;
-
-border-bottom: 1px solid rgba(255,255,255,0.1);
-
-}
-
-.editor pre {
-
-margin: 0;
-
-padding: 20px;
-
-color: #22c55e;
-
-overflow-x: auto;
-
-}
-.explorer h3 {
-
-font-size: 14px;
-
-opacity: 0.6;
-
-margin-bottom: 20px;
-
-}
-
-.explorer ul {
-
-list-style: none;
-
-padding: 0;
-
-}
-
-.explorer li {
-
-padding: 10px;
-
-border-radius: 8px;
-
-cursor: pointer;
-
-transition: 0.3s;
-
-}
-
-.explorer li:hover {
-
-background: rgba(255,255,255,0.08);}
 /* TERMINAL */
 
 .terminal {
 
-margin-top: 25px;
+margin-top: 20px;
 
 background: #000;
 
@@ -243,20 +331,12 @@ min-height: 180px;
 margin: 8px 0;
 
 }
-}
 
-.nested {
-
-padding-left: 25px !important;
-
-opacity: 0.8;
-
-}
 /* AI PANEL */
 
 .ai-panel {
 
-margin-top: 25px;
+margin-top: 20px;
 
 background: #111827;
 
@@ -335,59 +415,25 @@ background: #0f172a;
 color: white;
 
 }
-/* LINKS */
 
-a {
+/* RESPONSIVE */
 
-text-decoration: none;
+@media(max-width: 900px) {
 
-color: white;
+.dashboard {
 
-display: block;
+flex-direction: column;
+
+}
+
+.sidebar {
 
 width: 100%;
 
-}
+border-right: none;
 
-a:hover {
-
-color: #60a5fa;
+border-bottom: 1px solid rgba(255,255,255,0.08);
 
 }
-/* ACTIVE NAVIGATION */
-
-.nav a {
-
-text-decoration: none;
-
-color: #cbd5e1;
-
-display: block;
-
-padding: 12px 15px;
-
-border-radius: 10px;
-
-transition: 0.3s;
-
-}
-
-.nav a:hover {
-
-background: rgba(255,255,255,0.08);
-
-color: white;
-
-transform: translateX(5px);
-
-}
-
-.nav a.active {
-
-background: #2563eb;
-
-color: white;
-
-font-weight: bold;
 
 }
