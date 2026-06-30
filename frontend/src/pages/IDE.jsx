@@ -284,7 +284,45 @@ ReactDOM.createRoot(
         </div>
 
       </div>
+/* PREVIEW */
 
+<div className="preview-panel">
+
+  <div className="preview-header">
+
+    🌐 Live Preview
+
+  </div>
+
+  <iframe
+    title="preview"
+    className="preview-frame"
+    srcDoc={`
+      <html>
+        <head>
+          <style>
+            ${files["style.css"] || ""}
+          </style>
+        </head>
+
+        <body>
+
+          <div id="root">
+            <h1 style="color:white;font-family:Arial">
+              Live Preview 🚀
+            </h1>
+
+            <p style="color:#94a3b8">
+              Quavron Rendering Engine
+            </p>
+          </div>
+
+        </body>
+      </html>
+    `}
+  />
+
+</div>
       {/* AI */}
 
       <div className="ai-sidebar">
