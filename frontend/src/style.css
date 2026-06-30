@@ -437,3 +437,100 @@ border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
 }
+/* TOPBAR */
+
+.topbar {
+
+display: flex;
+
+justify-content: space-between;
+
+align-items: center;
+
+margin-bottom: 25px;
+
+background: #111827;
+
+padding: 15px 20px;
+
+border-radius: 15px;
+
+}
+
+.topbar-right {
+
+display: flex;
+
+align-items: center;
+
+gap: 15px;
+
+}
+
+.search {
+
+background: #0f172a;
+
+border: none;
+
+padding: 12px 15px;
+
+border-radius: 10px;
+
+color: white;
+
+width: 280px;
+
+}
+
+.icon-btn {
+
+background: rgba(255,255,255,0.08);
+
+border: none;
+
+color: white;
+
+width: 45px;
+
+height: 45px;
+
+border-radius: 12px;
+
+cursor: pointer;
+
+transition: 0.3s;
+
+}
+
+.icon-btn:hover {
+
+background: #2563eb;
+
+}
+
+.profile {
+
+display: flex;
+
+align-items: center;
+
+gap: 10px;
+
+background: rgba(255,255,255,0.05);
+
+padding: 8px 12px;
+
+border-radius: 12px;
+
+}
+
+.profile img {
+
+width: 38px;
+
+height: 38px;
+
+border-radius: 50%;
+
+}
