@@ -15,7 +15,9 @@
 
 },
 
-"dependencies": {"@monaco-editor/react": "^4.6.0"
+"dependencies": {
+
+"@monaco-editor/react": "^4.6.0",
 
 "react": "^18.3.1",
 
