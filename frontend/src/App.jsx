@@ -136,6 +136,42 @@ hello();`}
 
     </section>
 
+    {/* TERMINAL */}
+
+    <section className="terminal">
+
+      <div className="terminal-header">
+
+        TERMINAL
+
+      </div>
+
+      <div className="terminal-body">
+
+        <p>
+
+          user@quavron:~$
+
+          npm run dev
+
+        </p>
+
+        <p>
+
+          Starting development server...
+
+        </p>
+
+        <p>
+
+          VITE v5.4 ready in 120ms 🚀
+
+        </p>
+
+      </div>
+
+    </section>
+
   </main>
 
 </div>
