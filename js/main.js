@@ -1,54 +1,156 @@
 console.log("🚀 Quavron Loaded Successfully");
 
 /* ========================================
-Navbar Active State
+NAVIGATION ACTIVE STATES
 ======================================== */
 
-const navLinks = document.querySelectorAll(".nav-links a");
+const navButtons = document.querySelectorAll(
+".top-btn, .dashboard-sidebar li"
+);
 
-navLinks.forEach(link => {
+navButtons.forEach(button => {
 
-link.addEventListener("click", () => {
+button.addEventListener("click", () => {
 
-navLinks.forEach(item => {
-  item.classList.remove("active");
+navButtons.forEach(item => {
+  item.classList.remove("active-menu");
 });
 
-link.classList.add("active");
+button.classList.add("active-menu");
 
 });
 
 });
 
 /* ========================================
-Simple Welcome Notification
+DASHBOARD BUTTONS
 ======================================== */
 
-window.addEventListener("load", () => {
+const dashboardButtons = document.querySelectorAll(
+".dashboard-btn"
+);
 
-console.log("Welcome To Quavron");
+dashboardButtons.forEach(button => {
+
+button.addEventListener("click", () => {
+
+console.log(
+  button.innerText + " clicked"
+);
+
+});
 
 });
 
 /* ========================================
-Future Language System Placeholder
+QUICK ACTIONS
 ======================================== */
 
-const supportedLanguages = [
-"ar",
-"en",
-"fr",
-"es",
-"ru",
-"zh",
-"it",
-"de"
-];
+const actionButtons = document.querySelectorAll(
+".actions-grid button"
+);
 
-console.log("Supported Languages:", supportedLanguages);
+actionButtons.forEach(button => {
+
+button.addEventListener("click", () => {
+
+alert(
+  button.innerText + " feature coming soon 🚀"
+);
+
+});
+
+});
 
 /* ========================================
-Future Theme System Placeholder
+AUTH FORMS
+======================================== */
+
+const authForms = document.querySelectorAll(
+".auth-form"
+);
+
+authForms.forEach(form => {
+
+form.addEventListener("submit", (e) => {
+
+e.preventDefault();
+
+alert("Authentication system coming soon 🚀");
+
+});
+
+});
+
+/* ========================================
+LANGUAGE SWITCHER
+======================================== */
+
+const languageSwitcher = document.querySelector(
+".language-switcher"
+);
+
+if (languageSwitcher) {
+
+languageSwitcher.addEventListener(
+"change",
+() => {
+
+  const selectedLanguage =
+    languageSwitcher.value;
+
+  console.log(
+    "Language Changed:",
+    selectedLanguage
+  );
+
+}
+
+);
+
+}
+
+/* ========================================
+SEARCH BAR
+======================================== */
+
+const searchBars = document.querySelectorAll(
+".search-bar"
+);
+
+searchBars.forEach(search => {
+
+search.addEventListener("input", () => {
+
+console.log(
+  "Searching:",
+  search.value
+);
+
+});
+
+});
+
+/* ========================================
+PROJECT CARDS
+======================================== */
+
+const projectButtons = document.querySelectorAll(
+".project-card button"
+);
+
+projectButtons.forEach(button => {
+
+button.addEventListener("click", () => {
+
+window.location.href = "/editor";
+
+});
+
+});
+
+/* ========================================
+FUTURE THEME SYSTEM
 ======================================== */
 
 let currentTheme = "dark";
@@ -57,13 +159,17 @@ function toggleTheme() {
 
 if (currentTheme === "dark") {
 
-document.body.classList.add("light-theme");
+document.body.classList.add(
+  "light-theme"
+);
 
 currentTheme = "light";
 
 } else {
 
-document.body.classList.remove("light-theme");
+document.body.classList.remove(
+  "light-theme"
+);
 
 currentTheme = "dark";
 
@@ -74,13 +180,26 @@ currentTheme = "dark";
 console.log("Theme System Ready");
 
 /* ========================================
-Future Authentication Placeholder
+FUTURE NOTIFICATIONS
 ======================================== */
 
-function checkAuth() {
+function showNotification(message) {
 
-console.log("Authentication System Ready");
+console.log(
+"Notification:",
+message
+);
 
 }
 
-checkAuth();
+/* ========================================
+INITIALIZATION
+======================================== */
+
+window.addEventListener("load", () => {
+
+console.log(
+"Quavron Initialized Successfully"
+);
+
+});
