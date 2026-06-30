@@ -36,6 +36,8 @@ return (
 
     </div>
 
+    {/* NAVIGATION */}
+
     <nav className="nav">
 
       <h3>PLATFORM</h3>
@@ -105,6 +107,47 @@ return (
   {/* MAIN */}
 
   <main className="main">
+
+    {/* TOPBAR */}
+
+    <header className="topbar">
+
+      <div className="topbar-left">
+
+        <input
+          type="text"
+          placeholder="Search projects..."
+          className="search"
+        />
+
+      </div>
+
+      <div className="topbar-right">
+
+        <button className="icon-btn">
+          🔔
+        </button>
+
+        <button className="icon-btn">
+          🤖
+        </button>
+
+        <div className="profile">
+
+          <img
+            src="https://i.pravatar.cc/40"
+            alt="profile"
+          />
+
+          <span>Ahmed</span>
+
+        </div>
+
+      </div>
+
+    </header>
+
+    {/* ROUTES */}
 
     <Routes>
 
