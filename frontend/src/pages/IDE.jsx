@@ -4,6 +4,7 @@ import Editor from "@monaco-editor/react";
 function IDE() {
 
   const initialFiles = {
+
     "App.jsx": `export default function App() {
   return (
     <h1>
@@ -31,26 +32,44 @@ ReactDOM.createRoot(
   "name":"quavron",
   "version":"1.0.0"
 }`
+
   };
 
-  const [files, setFiles] = useState(initialFiles);
+  const [files, setFiles] =
+    useState(initialFiles);
 
   const [activeFile, setActiveFile] =
     useState("App.jsx");
 
-  const [prompt, setPrompt] = useState("");
+  const [openedTabs, setOpenedTabs] =
+    useState(["App.jsx"]);
 
-  const [messages, setMessages] = useState([
-    {
-      role: "ai",
-      text: "Welcome to Quavron AI 🚀"
-    }
-  ]);
+  const [prompt, setPrompt] =
+    useState("");
+
+  const [messages, setMessages] =
+    useState([
+      {
+        role: "ai",
+        text: "Welcome to Quavron AI 🚀"
+      }
+    ]);
 
   /* OPEN FILE */
 
   const openFile = (file) => {
+
     setActiveFile(file);
+
+    if (!openedTabs.includes(file)) {
+
+      setOpenedTabs([
+        ...openedTabs,
+        file
+      ]);
+
+    }
+
   };
 
   /* UPDATE CODE */
@@ -68,7 +87,8 @@ ReactDOM.createRoot(
 
   const createFile = () => {
 
-    const name = prompt || "NewFile.js";
+    const name =
+      prompt || "NewFile.js";
 
     if (files[name]) return;
 
@@ -78,6 +98,11 @@ ReactDOM.createRoot(
     });
 
     setActiveFile(name);
+
+    setOpenedTabs([
+      ...openedTabs,
+      name
+    ]);
 
     setPrompt("");
 
@@ -93,6 +118,13 @@ ReactDOM.createRoot(
 
     setFiles(updated);
 
+    const filteredTabs =
+      openedTabs.filter(
+        (tab) => tab !== file
+      );
+
+    setOpenedTabs(filteredTabs);
+
     const firstFile =
       Object.keys(updated)[0];
 
@@ -100,7 +132,7 @@ ReactDOM.createRoot(
 
   };
 
-  /* AI GENERATION */
+  /* AI */
 
   const generateAI = () => {
 
@@ -176,7 +208,8 @@ ReactDOM.createRoot(
       },
       {
         role: "ai",
-        text: "Component generated successfully 🚀"
+        text:
+          "Component generated successfully 🚀"
       }
     ]);
 
@@ -249,6 +282,32 @@ ReactDOM.createRoot(
 
         </div>
 
+        {/* TABS */}
+
+        <div className="tabs">
+
+          {openedTabs.map((tab) => (
+
+            <div
+              key={tab}
+              className={
+                activeFile === tab
+                  ? "tab active-tab"
+                  : "tab"
+              }
+              onClick={() =>
+                setActiveFile(tab)
+              }
+            >
+
+              {tab}
+
+            </div>
+
+          ))}
+
+        </div>
+
         <Editor
           height="500px"
           theme="vs-dark"
@@ -284,45 +343,49 @@ ReactDOM.createRoot(
         </div>
 
       </div>
-/* PREVIEW */
 
-<div className="preview-panel">
+      {/* PREVIEW */}
 
-  <div className="preview-header">
+      <div className="preview-panel">
 
-    🌐 Live Preview
+        <div className="preview-header">
 
-  </div>
+          🌐 Live Preview
 
-  <iframe
-    title="preview"
-    className="preview-frame"
-    srcDoc={`
-      <html>
-        <head>
-          <style>
-            ${files["style.css"] || ""}
-          </style>
-        </head>
+        </div>
 
-        <body>
+        <iframe
+          title="preview"
+          className="preview-frame"
+          srcDoc={`
+<html>
+<head>
+<style>
+${files["style.css"] || ""}
+</style>
+</head>
 
-          <div id="root">
-            <h1 style="color:white;font-family:Arial">
-              Live Preview 🚀
-            </h1>
+<body>
 
-            <p style="color:#94a3b8">
-              Quavron Rendering Engine
-            </p>
-          </div>
+<div id="root">
 
-        </body>
-      </html>
-    `}
-  />
+<h1 style="color:white;font-family:Arial">
+Live Preview 🚀
+</h1>
+
+<p style="color:#94a3b8">
+Quavron Rendering Engine
+</p>
 
 </div>
+
+</body>
+</html>
+`}
+        />
+
+      </div>
+
       {/* AI */}
 
       <div className="ai-sidebar">
