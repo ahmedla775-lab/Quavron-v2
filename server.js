@@ -7,6 +7,13 @@ const morgan = require("morgan");
 require("dotenv").config();
 
 /* ========================================
+IMPORT ROUTES
+======================================== */
+
+const authRoutes =
+require("./routes/auth");
+
+/* ========================================
 APP
 ======================================== */
 
@@ -65,6 +72,18 @@ message: "API Working Successfully ✅"
 });
 
 /* ========================================
+API ROUTES
+======================================== */
+
+app.use(
+
+"/api/auth",
+
+authRoutes
+
+);
+
+/* ========================================
 404 HANDLER
 ======================================== */
 
@@ -93,9 +112,7 @@ res.status(500).json({
 success: false,
 
 message: "Internal Server Error"
-const authRoutes =
-  require("./routes/auth");
-  app.use("/api/auth", authRoutes);
+
 });
 
 });
