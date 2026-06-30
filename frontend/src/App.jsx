@@ -222,7 +222,7 @@ return (
 
   </div>
 
-</BrowserRouter>
+</HashRouter>
 
 );
 
