@@ -1056,3 +1056,53 @@ html {
 
   background: #2563eb;
 }
+/* AUTH BUTTONS */
+
+.auth-link {
+
+  text-decoration: none;
+
+  color: white;
+
+  padding: 10px 16px;
+
+  border-radius: 10px;
+
+  background: rgba(255,255,255,0.08);
+
+  transition: 0.3s;
+}
+
+.auth-link:hover {
+
+  background: rgba(255,255,255,0.15);
+}
+
+.register-btn {
+
+  background: #2563eb;
+}
+
+/* MOBILE AUTH FIX */
+
+@media (max-width: 900px) {
+
+  .topbar-right {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+    justify-content: center;
+  }
+
+  .auth-link {
+
+    font-size: 14px;
+
+    padding: 8px 12px;
+  }
+
+}
