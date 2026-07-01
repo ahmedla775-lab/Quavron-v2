@@ -516,3 +516,69 @@ body {
   border: none;
   background: white;
 }
+/* MOBILE RESPONSIVE */
+
+@media (max-width: 900px) {
+
+  .dashboard {
+    flex-direction: column;
+  }
+
+  .sidebar {
+
+    width: 100%;
+    height: auto;
+
+    border-right: none;
+
+    border-bottom:
+      1px solid rgba(255,255,255,0.08);
+
+  }
+
+  .main {
+    padding: 15px;
+  }
+
+  .ide-layout {
+
+    grid-template-columns: 1fr;
+
+  }
+
+  .topbar {
+
+    flex-direction: column;
+    gap: 15px;
+
+    align-items: flex-start;
+
+  }
+
+  .search {
+    width: 100%;
+  }
+
+  .cards,
+  .course-grid,
+  .analytics-grid {
+
+    grid-template-columns: 1fr;
+
+  }
+
+  .preview-frame {
+
+    min-height: 300px;
+
+  }
+
+  .editor-panel,
+  .preview-panel,
+  .ai-sidebar {
+
+    width: 100%;
+
+  }
+
+}
