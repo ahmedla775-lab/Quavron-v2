@@ -224,7 +224,19 @@ ReactDOM.createRoot(
       {/* FILES */}
 
       <div className="files-panel">
+<div className="explorer-section">
 
+  <p>📁 src</p>
+
+  <p className="nested">
+    📁 components
+  </p>
+
+  <p className="nested">
+    📁 pages
+  </p>
+
+</div>
         <div className="files-header">
 
           <h3>FILES</h3>
