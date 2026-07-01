@@ -231,16 +231,7 @@ function App() {
               🤖
             </button>
 
-            <div className="profile">
-
-              <img
-                src="https://i.pravatar.cc/40"
-                alt="profile"
-              />
-
-              <span>Ahmed</span>
-
-            </div>
+            
 
           </div>
 
