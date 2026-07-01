@@ -1030,3 +1030,29 @@ html {
 
   cursor: pointer;
 }
+/* AUTH LINKS */
+
+.auth-link {
+
+  text-decoration: none;
+
+  color: white;
+
+  padding: 10px 16px;
+
+  border-radius: 10px;
+
+  background: #1e293b;
+
+  transition: 0.3s;
+}
+
+.auth-link:hover {
+
+  background: #2563eb;
+}
+
+.register-btn {
+
+  background: #2563eb;
+}
