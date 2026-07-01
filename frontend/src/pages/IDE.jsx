@@ -381,9 +381,15 @@ ${files["style.css"] || ""}
 
 <div id="root">
 
-<h1 style="color:white;font-family:Arial">
-Live Preview 🚀
-</h1>
+${files["App.jsx"]
+  ?.replace(
+    "export default function App() {",
+    ""
+  )
+  ?.replace("return (", "")
+  ?.replace(");", "")
+  ?.replace("}", "")
+}
 
 <p style="color:#94a3b8">
 Quavron Rendering Engine
