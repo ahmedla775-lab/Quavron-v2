@@ -499,7 +499,9 @@ body {
   }
 
 }
-
+.menu-toggle {
+  display: none;
+}
   .sidebar {
     width: 100%;
     border-right: none;
