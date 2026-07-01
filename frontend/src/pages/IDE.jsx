@@ -323,7 +323,19 @@ ReactDOM.createRoot(
           <div className="terminal-header">
             TERMINAL
           </div>
+{/* STATUS BAR */}
 
+<div className="statusbar">
+
+  <div>
+    🌿 main
+  </div>
+
+  <div>
+    UTF-8 • JavaScript • Vite
+  </div>
+
+</div>
           <div className="terminal-body">
 
             <p>
