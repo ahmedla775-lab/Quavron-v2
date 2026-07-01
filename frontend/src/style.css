@@ -502,42 +502,7 @@ body {
 .menu-toggle {
   display: none;
 }
-  .sidebar {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-  }
-
-  .main {
-    padding: 15px;
-  }
-
-  .topbar {
-    flex-direction: column;
-    gap: 15px;
-    align-items: stretch;
-  }
-
-  .search {
-    width: 100%;
-  }
-
-  .ide-layout {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .files-panel,
-  .editor-panel,
-  .ai-sidebar {
-    width: 100%;
-  }
-
-  .ai-sidebar {
-    height: auto;
-  }
-
-}
+  
 /* PREVIEW */
 
 .preview-panel {
