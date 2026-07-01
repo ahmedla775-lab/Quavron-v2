@@ -5,7 +5,7 @@ const supabaseUrl =
 "https://bxjsfbexfjvqjiaqtmbm.supabase.co";
 
 const supabaseKey =
-"YOUR_SUPABASE_ANON_KEY";
+"sb_publishable_Q2YDV3nTxgvM3GMNfAmZ0Q_NUNq6_gD";
 
 export const supabase =
 createClient(
