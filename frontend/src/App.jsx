@@ -1,7 +1,9 @@
+import { useState } from "react";
+
 import {
-Routes,
-Route,
-NavLink
+  Routes,
+  Route,
+  NavLink
 } from "react-router-dom";
 
 /* PAGES */
@@ -18,191 +20,258 @@ import Settings from "./pages/Settings";
 
 function App() {
 
-return (
+  /* MOBILE MENU */
 
-<div className="dashboard">
+  const [mobileMenu, setMobileMenu] =
+    useState(false);
 
-  {/* SIDEBAR */}
+  return (
 
-  <aside className="sidebar">
+    <div className="dashboard">
 
-    <div>
+      {/* MOBILE BUTTON */}
 
-      <h2>🚀 Quavron</h2>
+      <button
+        className="menu-toggle"
+        onClick={() =>
+          setMobileMenu(!mobileMenu)
+        }
+      >
+        ☰
+      </button>
 
-      <p className="subtitle">
-        Next Generation Platform
-      </p>
+      {/* SIDEBAR */}
 
-    </div>
+      <aside
+        className={
+          mobileMenu
+            ? "sidebar mobile-open"
+            : "sidebar"
+        }
+      >
 
-    {/* NAVIGATION */}
+        <div>
 
-    <nav className="nav">
+          <h2>🚀 Quavron</h2>
 
-      <h3>PLATFORM</h3>
-
-      <ul>
-
-        <li>
-          <NavLink to="/">
-            🏠 Dashboard
-          </NavLink>
-        </li>
-
-        <li>
-          <NavLink to="/ide">
-            💻 Cloud IDE
-          </NavLink>
-        </li>
-
-        <li>
-          <NavLink to="/courses">
-            📚 Courses
-          </NavLink>
-        </li>
-
-        <li>
-          <NavLink to="/community">
-            🌐 Community
-          </NavLink>
-        </li>
-
-        <li>
-          <NavLink to="/marketplace">
-            🛒 Marketplace
-          </NavLink>
-        </li>
-
-        <li>
-          <NavLink to="/hosting">
-            ☁ Hosting
-          </NavLink>
-        </li>
-
-        <li>
-          <NavLink to="/freelance">
-            💼 Freelance
-          </NavLink>
-        </li>
-
-        <li>
-          <NavLink to="/analytics">
-            📊 Analytics
-          </NavLink>
-        </li>
-
-        <li>
-          <NavLink to="/settings">
-            ⚙ Settings
-          </NavLink>
-        </li>
-
-      </ul>
-
-    </nav>
-
-  </aside>
-
-  {/* MAIN */}
-
-  <main className="main">
-
-    {/* TOPBAR */}
-
-    <header className="topbar">
-
-      <div className="topbar-left">
-
-        <input
-          type="text"
-          placeholder="Search projects..."
-          className="search"
-        />
-
-      </div>
-
-      <div className="topbar-right">
-
-        <button className="icon-btn">
-          🔔
-        </button>
-
-        <button className="icon-btn">
-          🤖
-        </button>
-
-        <div className="profile">
-
-          <img
-            src="https://i.pravatar.cc/40"
-            alt="profile"
-          />
-
-          <span>Ahmed</span>
+          <p className="subtitle">
+            Next Generation Platform
+          </p>
 
         </div>
 
-      </div>
+        {/* NAVIGATION */}
 
-    </header>
+        <nav className="nav">
 
-    {/* ROUTES */}
+          <h3>PLATFORM</h3>
 
-    <Routes>
+          <ul>
 
-      <Route
-        path="/"
-        element={<Dashboard />}
-      />
+            <li>
+              <NavLink
+                to="/"
+                onClick={() =>
+                  setMobileMenu(false)
+                }
+              >
+                🏠 Dashboard
+              </NavLink>
+            </li>
 
-      <Route
-        path="/ide"
-        element={<IDE />}
-      />
+            <li>
+              <NavLink
+                to="/ide"
+                onClick={() =>
+                  setMobileMenu(false)
+                }
+              >
+                💻 Cloud IDE
+              </NavLink>
+            </li>
 
-      <Route
-        path="/courses"
-        element={<Courses />}
-      />
+            <li>
+              <NavLink
+                to="/courses"
+                onClick={() =>
+                  setMobileMenu(false)
+                }
+              >
+                📚 Courses
+              </NavLink>
+            </li>
 
-      <Route
-        path="/community"
-        element={<Community />}
-      />
+            <li>
+              <NavLink
+                to="/community"
+                onClick={() =>
+                  setMobileMenu(false)
+                }
+              >
+                🌐 Community
+              </NavLink>
+            </li>
 
-      <Route
-        path="/marketplace"
-        element={<Marketplace />}
-      />
+            <li>
+              <NavLink
+                to="/marketplace"
+                onClick={() =>
+                  setMobileMenu(false)
+                }
+              >
+                🛒 Marketplace
+              </NavLink>
+            </li>
 
-      <Route
-        path="/hosting"
-        element={<Hosting />}
-      />
+            <li>
+              <NavLink
+                to="/hosting"
+                onClick={() =>
+                  setMobileMenu(false)
+                }
+              >
+                ☁ Hosting
+              </NavLink>
+            </li>
 
-      <Route
-        path="/freelance"
-        element={<Freelance />}
-      />
+            <li>
+              <NavLink
+                to="/freelance"
+                onClick={() =>
+                  setMobileMenu(false)
+                }
+              >
+                💼 Freelance
+              </NavLink>
+            </li>
 
-      <Route
-        path="/analytics"
-        element={<Analytics />}
-      />
+            <li>
+              <NavLink
+                to="/analytics"
+                onClick={() =>
+                  setMobileMenu(false)
+                }
+              >
+                📊 Analytics
+              </NavLink>
+            </li>
 
-      <Route
-        path="/settings"
-        element={<Settings />}
-      />
+            <li>
+              <NavLink
+                to="/settings"
+                onClick={() =>
+                  setMobileMenu(false)
+                }
+              >
+                ⚙ Settings
+              </NavLink>
+            </li>
 
-    </Routes>
+          </ul>
 
-  </main>
+        </nav>
 
-</div>
+      </aside>
 
-);
+      {/* MAIN */}
+
+      <main className="main">
+
+        {/* TOPBAR */}
+
+        <header className="topbar">
+
+          <div className="topbar-left">
+
+            <input
+              type="text"
+              placeholder="Search projects..."
+              className="search"
+            />
+
+          </div>
+
+          <div className="topbar-right">
+
+            <button className="icon-btn">
+              🔔
+            </button>
+
+            <button className="icon-btn">
+              🤖
+            </button>
+
+            <div className="profile">
+
+              <img
+                src="https://i.pravatar.cc/40"
+                alt="profile"
+              />
+
+              <span>Ahmed</span>
+
+            </div>
+
+          </div>
+
+        </header>
+
+        {/* ROUTES */}
+
+        <Routes>
+
+          <Route
+            path="/"
+            element={<Dashboard />}
+          />
+
+          <Route
+            path="/ide"
+            element={<IDE />}
+          />
+
+          <Route
+            path="/courses"
+            element={<Courses />}
+          />
+
+          <Route
+            path="/community"
+            element={<Community />}
+          />
+
+          <Route
+            path="/marketplace"
+            element={<Marketplace />}
+          />
+
+          <Route
+            path="/hosting"
+            element={<Hosting />}
+          />
+
+          <Route
+            path="/freelance"
+            element={<Freelance />}
+          />
+
+          <Route
+            path="/analytics"
+            element={<Analytics />}
+          />
+
+          <Route
+            path="/settings"
+            element={<Settings />}
+          />
+
+        </Routes>
+
+      </main>
+
+    </div>
+
+  );
 
 }
 
