@@ -1,195 +1,343 @@
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
+
 function Dashboard() {
+
+  const [projects, setProjects] = useState([]);
+  const [socials, setSocials] = useState([]);
+  const [name, setName] = useState("");
+
+  const loadProjects = async () => {
+
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    const { data } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("user_id", user.id);
+
+    setProjects(data || []);
+
+  };
+
+  const loadSocials = async () => {
+
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    const { data } = await supabase
+      .from("social_accounts")
+      .select("*")
+      .eq("user_id", user.id);
+
+    setSocials(data || []);
+
+  };
+
+  const createProject = async () => {
+
+    if (!name) return;
+
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    await supabase
+      .from("projects")
+      .insert([
+        {
+          name,
+          user_id: user.id
+        }
+      ]);
+
+    setName("");
+
+    loadProjects();
+
+  };
+
+  const connectSocial = async (platform) => {
+
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    await supabase
+      .from("social_accounts")
+      .insert([
+        {
+          user_id: user.id,
+          platform
+        }
+      ]);
+
+    loadSocials();
+
+  };
+
+  useEffect(() => {
+
+    loadProjects();
+    loadSocials();
+
+  }, []);
 
   return (
 
-    <div className="dashboard-page">
+    <div style={{ padding: "20px" }}>
 
-      {/* HERO */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          marginBottom: "30px"
+        }}
+      >
 
-      <section className="hero-section">
+        <div>
 
-        <div className="hero-left">
-
-          <p className="hero-badge">
-            🚀 QUAVRON ECOSYSTEM
-          </p>
-
-          <h1>
-            Build The Future.
+          <h1
+            style={{
+              color: "white",
+              fontSize: "34px"
+            }}
+          >
+            Workspace 🚀
           </h1>
 
-          <h2>
-            Code. Create. Deploy. Connect.
-          </h2>
-
-          <p className="hero-text">
-
-            The next generation developer ecosystem
-            powered by AI, cloud infrastructure,
-            realtime collaboration and social coding.
-
+          <p style={{ color: "#94a3b8" }}>
+            Welcome back to Quavron
           </p>
 
-          <div className="hero-buttons">
-
-            <button className="primary-btn">
-              Start Building
-            </button>
-
-            <button className="secondary-btn">
-              Explore Community
-            </button>
-
-          </div>
-
         </div>
 
-        {/* RIGHT PANEL */}
+        <div
+          style={{
+            display: "flex",
+            gap: "10px"
+          }}
+        >
 
-        <div className="hero-right">
+          <button
+            style={{
+              padding: "12px",
+              borderRadius: "10px",
+              border: "none",
+              background: "#111827",
+              color: "white"
+            }}
+          >
+            🔔
+          </button>
 
-          <div className="ai-card">
-
-            <div className="ai-card-top">
-
-              <span className="live-dot"></span>
-
-              AI Connected
-
-            </div>
-
-            <div className="ai-terminal">
-
-              <p>✔ GitHub Synced</p>
-              <p>✔ Deployment Active</p>
-              <p>✔ Realtime Collaboration</p>
-              <p>✔ AI Assistant Online</p>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-      {/* STATS */}
-
-      <section className="stats-section">
-
-        <div className="stat-card">
-          <h2>2.4M+</h2>
-          <p>Developers</p>
-        </div>
-
-        <div className="stat-card">
-          <h2>410K+</h2>
-          <p>Projects</p>
-        </div>
-
-        <div className="stat-card">
-          <h2>12M+</h2>
-          <p>Deployments</p>
-        </div>
-
-        <div className="stat-card">
-          <h2>98</h2>
-          <p>Countries</p>
-        </div>
-
-      </section>
-
-      {/* PROJECTS */}
-
-      <section className="projects-section">
-
-        <div className="section-title">
-
-          <h2>🔥 Trending Projects</h2>
-
-          <button>
-            View All
+          <button
+            style={{
+              padding: "12px 18px",
+              borderRadius: "10px",
+              border: "none",
+              background: "#2563eb",
+              color: "white"
+            }}
+          >
+            AI ✨
           </button>
 
         </div>
 
-        <div className="projects-grid">
+      </div>
 
-          <div className="project-card">
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fit,minmax(180px,1fr))",
+          gap: "20px",
+          marginBottom: "40px"
+        }}
+      >
 
-            <div className="project-top">
+        <div
+          style={{
+            background: "#111827",
+            padding: "20px",
+            borderRadius: "14px"
+          }}
+        >
+          <p style={{ color: "#94a3b8" }}>
+            Projects
+          </p>
 
-              <h3>AI SaaS Platform</h3>
-
-              <span>React</span>
-
-            </div>
-
-            <p>
-              Next generation AI powered SaaS dashboard.
-            </p>
-
-            <div className="project-footer">
-
-              <button>Fork</button>
-
-              <button>Deploy</button>
-
-            </div>
-
-          </div>
-
-          <div className="project-card">
-
-            <div className="project-top">
-
-              <h3>Realtime Chat App</h3>
-
-              <span>Node.js</span>
-
-            </div>
-
-            <p>
-              Modern realtime communication platform.
-            </p>
-
-            <div className="project-footer">
-
-              <button>Fork</button>
-
-              <button>Deploy</button>
-
-            </div>
-
-          </div>
-
-          <div className="project-card">
-
-            <div className="project-top">
-
-              <h3>Cloud IDE</h3>
-
-              <span>Vite</span>
-
-            </div>
-
-            <p>
-              Browser based VSCode alternative.
-            </p>
-
-            <div className="project-footer">
-
-              <button>Fork</button>
-
-              <button>Deploy</button>
-
-            </div>
-
-          </div>
-
+          <h2 style={{ color: "white" }}>
+            {projects.length}
+          </h2>
         </div>
 
-      </section>
+        <div
+          style={{
+            background: "#111827",
+            padding: "20px",
+            borderRadius: "14px"
+          }}
+        >
+          <p style={{ color: "#94a3b8" }}>
+            Accounts
+          </p>
+
+          <h2 style={{ color: "white" }}>
+            {socials.length}
+          </h2>
+        </div>
+
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          gap: "10px",
+          marginBottom: "40px"
+        }}
+      >
+
+        <input
+          value={name}
+          onChange={(e) =>
+            setName(e.target.value)
+          }
+          placeholder="Project name"
+          style={{
+            flex: 1,
+            padding: "14px",
+            borderRadius: "10px",
+            border: "none"
+          }}
+        />
+
+        <button
+          onClick={createProject}
+          style={{
+            padding: "14px 20px",
+            borderRadius: "10px",
+            border: "none",
+            background: "#2563eb",
+            color: "white"
+          }}
+        >
+          Create
+        </button>
+
+      </div>
+
+      <h2
+        style={{
+          color: "white",
+          marginBottom: "20px"
+        }}
+      >
+        Projects 🚀
+      </h2>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fit,minmax(220px,1fr))",
+          gap: "20px",
+          marginBottom: "50px"
+        }}
+      >
+
+        {projects.map((project) => (
+
+          <div
+            key={project.id}
+            style={{
+              background: "#111827",
+              padding: "20px",
+              borderRadius: "14px"
+            }}
+          >
+
+            <h3 style={{ color: "white" }}>
+              {project.name}
+            </h3>
+
+          </div>
+
+        ))}
+
+      </div>
+
+      <h2
+        style={{
+          color: "white",
+          marginBottom: "20px"
+        }}
+      >
+        Social Hub 🔥
+      </h2>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fit,minmax(220px,1fr))",
+          gap: "20px"
+        }}
+      >
+
+        {[
+          "Facebook",
+          "Instagram",
+          "TikTok",
+          "YouTube"
+        ].map((platform) => (
+
+          <div
+            key={platform}
+            style={{
+              background: "#111827",
+              padding: "20px",
+              borderRadius: "14px"
+            }}
+          >
+
+            <h3 style={{ color: "white" }}>
+              {platform}
+            </h3>
+
+            <button
+              onClick={() =>
+                connectSocial(platform)
+              }
+              style={{
+                marginTop: "10px",
+                padding: "10px 16px",
+                borderRadius: "10px",
+                border: "none",
+                background: "#2563eb",
+                color: "white"
+              }}
+            >
+              Connect
+            </button>
+
+          </div>
+
+        ))}
+
+      </div>
 
     </div>
 
@@ -197,4 +345,5 @@ function Dashboard() {
 
 }
 
-export default Dashboard;
+export default Dashboard;0
+

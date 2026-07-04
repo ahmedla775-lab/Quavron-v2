@@ -1,5 +1,4 @@
-import { useState }
-from "react";
+import { useState } from "react";
 
 import { supabase }
 from "../lib/supabase";
@@ -26,12 +25,10 @@ function Register() {
 
       alert(error.message);
 
-    }
-
-    else {
+    } else {
 
       alert(
-        "Account Created 🚀"
+        "Account created successfully 🚀"
       );
 
     }
@@ -40,33 +37,63 @@ function Register() {
 
   return (
 
-    <div className="auth-page">
+    <div
+      style={{
+        background:"#0f172a",
+        color:"white",
+        minHeight:"100vh",
+        padding:"40px",
+        fontFamily:"Arial"
+      }}
+    >
 
-      <div className="auth-card">
+      <h1>
+        Register 🚀
+      </h1>
 
-        <h1>
-          Register
-        </h1>
+      <div
+        style={{
+          display:"flex",
+          flexDirection:"column",
+          gap:"15px",
+          marginTop:"30px",
+          maxWidth:"300px"
+        }}
+      >
 
         <input
           type="email"
           placeholder="Email"
           value={email}
-          onChange={(e) =>
+          onChange={(e)=>
             setEmail(e.target.value)
           }
+          style={{
+            padding:"12px"
+          }}
         />
 
         <input
           type="password"
           placeholder="Password"
           value={password}
-          onChange={(e) =>
+          onChange={(e)=>
             setPassword(e.target.value)
           }
+          style={{
+            padding:"12px"
+          }}
         />
 
-        <button onClick={register}>
+        <button
+          onClick={register}
+          style={{
+            padding:"12px",
+            background:"#2563eb",
+            color:"white",
+            border:"none"
+          }}
+        >
           Create Account
         </button>
 
@@ -78,4 +105,5 @@ function Register() {
 
 }
 
-export default Register;
+export default Register;0
+

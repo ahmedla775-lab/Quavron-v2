@@ -25,11 +25,11 @@ function Login() {
 
       alert(error.message);
 
-    }
+    } else {
 
-    else {
-
-      alert("Login Success 🚀");
+      alert(
+        "Login successful 🚀"
+      );
 
     }
 
@@ -37,33 +37,63 @@ function Login() {
 
   return (
 
-    <div className="auth-page">
+    <div
+      style={{
+        background:"#111827",
+        color:"white",
+        minHeight:"100vh",
+        padding:"40px",
+        fontFamily:"Arial"
+      }}
+    >
 
-      <div className="auth-card">
+      <h1>
+        Login 🚀
+      </h1>
 
-        <h1>
-          Login
-        </h1>
+      <div
+        style={{
+          display:"flex",
+          flexDirection:"column",
+          gap:"15px",
+          marginTop:"30px",
+          maxWidth:"300px"
+        }}
+      >
 
         <input
           type="email"
           placeholder="Email"
           value={email}
-          onChange={(e) =>
+          onChange={(e)=>
             setEmail(e.target.value)
           }
+          style={{
+            padding:"12px"
+          }}
         />
 
         <input
           type="password"
           placeholder="Password"
           value={password}
-          onChange={(e) =>
+          onChange={(e)=>
             setPassword(e.target.value)
           }
+          style={{
+            padding:"12px"
+          }}
         />
 
-        <button onClick={login}>
+        <button
+          onClick={login}
+          style={{
+            padding:"12px",
+            background:"#16a34a",
+            color:"white",
+            border:"none"
+          }}
+        >
           Login
         </button>
 
@@ -75,4 +105,5 @@ function Login() {
 
 }
 
-export default Login;
+export default Login;0
+

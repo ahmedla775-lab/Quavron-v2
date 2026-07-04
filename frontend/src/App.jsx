@@ -1,302 +1,119 @@
-import { useState } from "react";
-
 import {
+  BrowserRouter,
   Routes,
   Route,
   NavLink
 } from "react-router-dom";
 
-/* PAGES */
+import {
+  Home,
+  Code,
+  User,
+  Settings,
+  LogOut
+} from "lucide-react";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-
-import Dashboard from "./pages/Dashboard";
 import IDE from "./pages/IDE";
-import Courses from "./pages/Courses";
-import Community from "./pages/Community";
-import Marketplace from "./pages/Marketplace";
-import Hosting from "./pages/Hosting";
-import Freelance from "./pages/Freelance";
-import Analytics from "./pages/Analytics";
-import Settings from "./pages/Settings";
+import Dashboard from "./pages/Dashboard";
 
-function App() {
-
-  /* MOBILE MENU */
-
-  const [mobileMenu, setMobileMenu] =
-    useState(false);
+function Layout({ children }) {
 
   return (
 
-    <div className="dashboard">
-
-      {/* MOBILE BUTTON */}
-
-      <button
-        className="menu-toggle"
-        onClick={() =>
-          setMobileMenu(!mobileMenu)
-        }
-      >
-        ☰
-      </button>
-
-      {/* OVERLAY */}
-
-      {
-        mobileMenu && (
-          <div
-            className="sidebar-overlay"
-            onClick={() =>
-              setMobileMenu(false)
-            }
-          />
-        )
-      }
+    <div
+      style={{
+        display:"flex",
+        minHeight:"100vh",
+        background:"#0f172a",
+        color:"white"
+      }}
+    >
 
       {/* SIDEBAR */}
 
       <aside
-        className={
-          mobileMenu
-            ? "sidebar mobile-open"
-            : "sidebar"
-        }
+        style={{
+          width:"260px",
+          background:"#111827",
+          borderRight:"1px solid #1f2937",
+          padding:"20px",
+          display:"flex",
+          flexDirection:"column",
+          gap:"15px"
+        }}
       >
 
-        <div>
+        <h2>
+          Quavron 🚀
+        </h2>
 
-          <h2>🚀 Quavron</h2>
+        <NavLink
+          to="/dashboard"
+          style={linkStyle}
+        >
+          <Home size={18} />
+          Dashboard
+        </NavLink>
 
-          <p className="subtitle">
-            Next Generation Platform
-          </p>
+        <NavLink
+          to="/ide"
+          style={linkStyle}
+        >
+          <Code size={18} />
+          IDE
+        </NavLink>
 
-        </div>
+        <NavLink
+          to="/profile"
+          style={linkStyle}
+        >
+          <User size={18} />
+          Profile
+        </NavLink>
 
-        {/* NAVIGATION */}
+        <NavLink
+          to="/settings"
+          style={linkStyle}
+        >
+          <Settings size={18} />
+          Settings
+        </NavLink>
 
-        <nav className="nav">
+        <button
+          style={{
+            marginTop:"auto",
+            padding:"12px",
+            background:"#dc2626",
+            border:"none",
+            color:"white",
+            cursor:"pointer",
+            borderRadius:"8px",
+            display:"flex",
+            alignItems:"center",
+            gap:"10px"
+          }}
+        >
 
-          <h3>PLATFORM</h3>
+          <LogOut size={18} />
 
-          <ul>
+          Logout
 
-            <li>
-              <NavLink
-                to="/"
-                onClick={() =>
-                  setMobileMenu(false)
-                }
-              >
-                🏠 Dashboard
-              </NavLink>
-            </li>
-
-            <li>
-              <NavLink
-                to="/ide"
-                onClick={() =>
-                  setMobileMenu(false)
-                }
-              >
-                💻 Cloud IDE
-              </NavLink>
-            </li>
-
-            <li>
-              <NavLink
-                to="/courses"
-                onClick={() =>
-                  setMobileMenu(false)
-                }
-              >
-                📚 Courses
-              </NavLink>
-            </li>
-
-            <li>
-              <NavLink
-                to="/community"
-                onClick={() =>
-                  setMobileMenu(false)
-                }
-              >
-                🌐 Community
-              </NavLink>
-            </li>
-
-            <li>
-              <NavLink
-                to="/marketplace"
-                onClick={() =>
-                  setMobileMenu(false)
-                }
-              >
-                🛒 Marketplace
-              </NavLink>
-            </li>
-
-            <li>
-              <NavLink
-                to="/hosting"
-                onClick={() =>
-                  setMobileMenu(false)
-                }
-              >
-                ☁ Hosting
-              </NavLink>
-            </li>
-
-            <li>
-              <NavLink
-                to="/freelance"
-                onClick={() =>
-                  setMobileMenu(false)
-                }
-              >
-                💼 Freelance
-              </NavLink>
-            </li>
-
-            <li>
-              <NavLink
-                to="/analytics"
-                onClick={() =>
-                  setMobileMenu(false)
-                }
-              >
-                📊 Analytics
-              </NavLink>
-            </li>
-
-            <li>
-              <NavLink
-                to="/settings"
-                onClick={() =>
-                  setMobileMenu(false)
-                }
-              >
-                ⚙ Settings
-              </NavLink>
-            </li>
-
-          </ul>
-
-        </nav>
+        </button>
 
       </aside>
 
-      {/* MAIN */}
+      {/* CONTENT */}
 
-      <main className="main">
+      <main
+        style={{
+          flex:1,
+          padding:"30px"
+        }}
+      >
 
-        {/* TOPBAR */}
-
-        <header className="topbar">
-
-          <div className="topbar-left">
-
-            <input
-              type="text"
-              placeholder="Search projects..."
-              className="search"
-            />
-
-          </div>
-
-          <div className="topbar-right">
-
-            <NavLink
-              to="/login"
-              className="auth-link"
-            >
-              Login
-            </NavLink>
-
-            <NavLink
-              to="/register"
-              className="auth-link register-btn"
-            >
-              Register
-            </NavLink>
-
-            <button className="icon-btn">
-              🔔
-            </button>
-
-            <button className="icon-btn">
-              🤖
-            </button>
-
-            
-
-          </div>
-
-        </header>
-
-        {/* ROUTES */}
-
-        <Routes>
-
-          <Route
-            path="/"
-            element={<Dashboard />}
-          />
-
-          <Route
-            path="/ide"
-            element={<IDE />}
-          />
-
-          <Route
-            path="/courses"
-            element={<Courses />}
-          />
-
-          <Route
-            path="/community"
-            element={<Community />}
-          />
-
-          <Route
-            path="/marketplace"
-            element={<Marketplace />}
-          />
-
-          <Route
-            path="/hosting"
-            element={<Hosting />}
-          />
-
-          <Route
-            path="/freelance"
-            element={<Freelance />}
-          />
-
-          <Route
-            path="/analytics"
-            element={<Analytics />}
-          />
-
-          <Route
-            path="/settings"
-            element={<Settings />}
-          />
-
-          <Route
-            path="/login"
-            element={<Login />}
-          />
-
-          <Route
-            path="/register"
-            element={<Register />}
-          />
-
-        </Routes>
+        {children}
 
       </main>
 
@@ -306,4 +123,71 @@ function App() {
 
 }
 
-export default App;
+const linkStyle = {
+
+  display:"flex",
+  alignItems:"center",
+  gap:"10px",
+  padding:"12px",
+  borderRadius:"8px",
+  color:"white",
+  textDecoration:"none",
+  background:"#1f2937"
+
+};
+
+function App() {
+
+  return (
+
+    <BrowserRouter>
+
+      <Routes>
+
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+
+        <Route
+          path="/register"
+          element={<Register />}
+        />
+
+        <Route
+          path="/dashboard"
+          element={
+            <Layout>
+              <Dashboard />
+            </Layout>
+          }
+        />
+
+        <Route
+          path="/ide"
+          element={
+            <Layout>
+              <IDE />
+            </Layout>
+          }
+        />
+
+        <Route
+          path="*"
+          element={
+            <Layout>
+              <Dashboard />
+            </Layout>
+          }
+        />
+
+      </Routes>
+
+    </BrowserRouter>
+
+  );
+
+}
+
+export default App;0
+
