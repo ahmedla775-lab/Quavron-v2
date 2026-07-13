@@ -2,147 +2,120 @@ import {
   BrowserRouter,
   Routes,
   Route,
-  NavLink
 } from "react-router-dom";
 
-import {
-  Home,
-  Code,
-  User,
-  Settings,
-  LogOut
-} from "lucide-react";
-
+import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import IDE from "./pages/IDE";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
-
-function Layout({ children }) {
-
-  return (
-
-    <div
-      style={{
-        display:"flex",
-        minHeight:"100vh",
-        background:"#0f172a",
-        color:"white"
-      }}
-    >
-
-      {/* SIDEBAR */}
-
-      <aside
-        style={{
-          width:"260px",
-          background:"#111827",
-          borderRight:"1px solid #1f2937",
-          padding:"20px",
-          display:"flex",
-          flexDirection:"column",
-          gap:"15px"
-        }}
-      >
-
-        <h2>
-          Quavron 🚀
-        </h2>
-
-        <NavLink
-          to="/dashboard"
-          style={linkStyle}
-        >
-          <Home size={18} />
-          Dashboard
-        </NavLink>
-
-        <NavLink
-          to="/ide"
-          style={linkStyle}
-        >
-          <Code size={18} />
-          IDE
-        </NavLink>
-
-        <NavLink
-          to="/profile"
-          style={linkStyle}
-        >
-          <User size={18} />
-          Profile
-        </NavLink>
-
-        <NavLink
-          to="/settings"
-          style={linkStyle}
-        >
-          <Settings size={18} />
-          Settings
-        </NavLink>
-
-        <button
-          style={{
-            marginTop:"auto",
-            padding:"12px",
-            background:"#dc2626",
-            border:"none",
-            color:"white",
-            cursor:"pointer",
-            borderRadius:"8px",
-            display:"flex",
-            alignItems:"center",
-            gap:"10px"
-          }}
-        >
-
-          <LogOut size={18} />
-
-          Logout
-
-        </button>
-
-      </aside>
-
-      {/* CONTENT */}
-
-      <main
-        style={{
-          flex:1,
-          padding:"30px"
-        }}
-      >
-
-        {children}
-
-      </main>
-
-    </div>
-
-  );
-
-}
-
-const linkStyle = {
-
-  display:"flex",
-  alignItems:"center",
-  gap:"10px",
-  padding:"12px",
-  borderRadius:"8px",
-  color:"white",
-  textDecoration:"none",
-  background:"#1f2937"
-
-};
-
+import IDE from "./pages/IDE";
+import Projects from "./pages/Projects";
+import AI from "./pages/AI";
+import Courses from "./pages/Courses";
+import Marketplace from "./pages/Marketplace";
+import Hosting from "./pages/Hosting";
+import Community from "./pages/Community";
+import Analytics from "./pages/Analytics";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+import Layout from "./components/layout/Layout";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 function App() {
-
   return (
-
     <BrowserRouter>
 
       <Routes>
+
+<Route
+  path="/ide"
+  element={
+    <ProtectedRoute>
+      <IDE />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/ai"
+  element={
+    <ProtectedRoute>
+      <AI />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/courses"
+  element={
+    <ProtectedRoute>
+      <Courses />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/marketplace"
+  element={
+    <ProtectedRoute>
+      <Marketplace />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/hosting"
+  element={
+    <ProtectedRoute>
+      <Hosting />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/community"
+  element={
+    <ProtectedRoute>
+      <Community />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/analytics"
+  element={
+    <ProtectedRoute>
+      <Analytics />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/profile"
+  element={
+    <ProtectedRoute>
+      <Profile />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/settings"
+  element={
+    <ProtectedRoute>
+      <Settings />
+    </ProtectedRoute>
+  }
+/>
+        <Route
+          path="/"
+          element={
+            <Layout>
+              <Home />
+            </Layout>
+          }
+        />
 
         <Route
           path="/login"
@@ -155,20 +128,29 @@ function App() {
         />
 
         <Route
-          path="/dashboard"
-          element={
-            <Layout>
-              <Dashboard />
-            </Layout>
-          }
+          path="/forgot-password"
+          element={<ForgotPassword />}
         />
 
         <Route
-          path="/ide"
+          path="/reset-password"
+          element={<ResetPassword />}
+        />
+
+        <Route
+          path="/dashboard"
           element={
-            <Layout>
-              <IDE />
-            </Layout>
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects"
+          element={
+            <ProtectedRoute>
+              <Projects />
+            </ProtectedRoute>
           }
         />
 
@@ -176,18 +158,17 @@ function App() {
           path="*"
           element={
             <Layout>
-              <Dashboard />
+              <Home />
             </Layout>
           }
         />
-
+                  
       </Routes>
 
     </BrowserRouter>
-
   );
-
 }
 
-export default App;0
+export default App;
+
 

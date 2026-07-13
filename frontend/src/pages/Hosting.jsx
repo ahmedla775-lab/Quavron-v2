@@ -1,31 +1,17 @@
-function Hosting() {
+import DashboardLayout from "../components/dashboard/DashboardLayout";
 
-return (
+export default function Hosting() {
+  return (
+    <DashboardLayout>
+      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8">
+        <h1 className="text-3xl font-bold text-white">
+          Hosting
+        </h1>
 
-<div>
-
-  <h1>☁ Hosting</h1>
-
-  <div className="cards">
-
-    <div className="card">
-      Active Servers: 12
-    </div>
-
-    <div className="card">
-      Deployments: 54
-    </div>
-
-    <div className="card">
-      CDN Online
-    </div>
-
-  </div>
-
-</div>
-
-);
-
+        <p className="mt-2 text-slate-400">
+          This page is under development.
+        </p>
+      </div>
+    </DashboardLayout>
+  );
 }
-
-export default Hosting;

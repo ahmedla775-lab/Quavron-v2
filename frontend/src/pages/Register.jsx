@@ -1,109 +1,143 @@
 import { useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 
-import { supabase }
-from "../lib/supabase";
+import AuthLayout from "../components/auth/AuthLayout";
+import Input from "../components/ui/Input";
+import Button from "../components/ui/Button";
 
-function Register() {
+import AuthService from "../services/AuthService";
 
-  const [email, setEmail] =
-    useState("");
+export default function Register() {
 
-  const [password, setPassword] =
-    useState("");
+  const navigate = useNavigate();
 
-  const register = async () => {
+  const [fullName, setFullName] = useState("");
 
-    const { error } =
-      await supabase.auth.signUp({
+  const [email, setEmail] = useState("");
 
-        email,
-        password
+  const [password, setPassword] = useState("");
 
-      });
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-    if (error) {
+  const [loading, setLoading] = useState(false);
 
-      alert(error.message);
+  const [error, setError] = useState("");
 
-    } else {
+  async function handleRegister(e) {
 
-      alert(
-        "Account created successfully 🚀"
-      );
+    e.preventDefault();
 
+    setError("");
+
+    if (!fullName.trim()) {
+      setError("Full name is required.");
+      return;
     }
 
-  };
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+
+    setLoading(true);
+
+    const { error } = await AuthService.register(
+  fullName,
+  email,
+  password
+);
+    setLoading(false);
+
+    if (error) {
+      setError(error.message);
+      return;
+    }
+
+    navigate("/login");
+  }
 
   return (
 
-    <div
-      style={{
-        background:"#0f172a",
-        color:"white",
-        minHeight:"100vh",
-        padding:"40px",
-        fontFamily:"Arial"
-      }}
+    <AuthLayout
+      title="Create Account"
+      subtitle="Join Quavron and start building amazing projects."
     >
 
-      <h1>
-        Register 🚀
-      </h1>
-
-      <div
-        style={{
-          display:"flex",
-          flexDirection:"column",
-          gap:"15px",
-          marginTop:"30px",
-          maxWidth:"300px"
-        }}
+      <form
+        onSubmit={handleRegister}
+        className="space-y-5"
       >
 
-        <input
+        <Input
+          label="Full Name"
+          type="text"
+          placeholder="Enter your full name"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+        />
+
+        <Input
+          label="Email"
           type="email"
-          placeholder="Email"
+          placeholder="Enter your email"
           value={email}
-          onChange={(e)=>
-            setEmail(e.target.value)
-          }
-          style={{
-            padding:"12px"
-          }}
+          onChange={(e) => setEmail(e.target.value)}
         />
 
-        <input
+        <Input
+          label="Password"
           type="password"
-          placeholder="Password"
+          placeholder="Create a password"
           value={password}
-          onChange={(e)=>
-            setPassword(e.target.value)
-          }
-          style={{
-            padding:"12px"
-          }}
+          onChange={(e) => setPassword(e.target.value)}
         />
 
-        <button
-          onClick={register}
-          style={{
-            padding:"12px",
-            background:"#2563eb",
-            color:"white",
-            border:"none"
-          }}
+        <Input
+          label="Confirm Password"
+          type="password"
+          placeholder="Confirm your password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+        />
+
+        <Button
+          type="submit"
+          className="w-full"
+          size="lg"
+          disabled={loading}
         >
-          Create Account
-        </button>
+          {loading ? "Creating Account..." : "Create Account"}
+        </Button>
 
-      </div>
+        {error && (
+          <p className="text-center text-sm text-red-500">
+            {error}
+          </p>
+        )}
 
-    </div>
+      </form>
+
+      <p className="mt-8 text-center text-slate-400">
+
+        Already have an account?{" "}
+
+        <NavLink
+          to="/login"
+          className="font-semibold text-blue-400 hover:text-blue-300"
+        >
+          Sign In
+        </NavLink>
+
+      </p>
+
+    </AuthLayout>
 
   );
 
 }
-
-export default Register;0
 

@@ -1,109 +1,127 @@
 import { useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 
-import { supabase }
-from "../lib/supabase";
+import AuthLayout from "../components/auth/AuthLayout";
+import Input from "../components/ui/Input";
+import Button from "../components/ui/Button";
 
-function Login() {
+import AuthService from "../services/AuthService";
 
-  const [email, setEmail] =
-    useState("");
+export default function Login() {
 
-  const [password, setPassword] =
-    useState("");
+  const navigate = useNavigate();
 
-  const login = async () => {
+  const [email, setEmail] = useState("");
 
-    const { error } =
-      await supabase.auth.signInWithPassword({
+  const [password, setPassword] = useState("");
 
-        email,
-        password
+  const [loading, setLoading] = useState(false);
 
-      });
+  const [error, setError] = useState("");
+
+  async function handleLogin(e) {
+
+    e.preventDefault();
+
+    setLoading(true);
+
+    setError("");
+
+    const { error } = await AuthService.login(
+      email,
+      password
+    );
+
+    setLoading(false);
 
     if (error) {
 
-      alert(error.message);
+      setError(error.message);
 
-    } else {
-
-      alert(
-        "Login successful 🚀"
-      );
+      return;
 
     }
 
-  };
+    navigate("/dashboard");
+
+  }
 
   return (
 
-    <div
-      style={{
-        background:"#111827",
-        color:"white",
-        minHeight:"100vh",
-        padding:"40px",
-        fontFamily:"Arial"
-      }}
+    <AuthLayout
+      title="Welcome Back"
+      subtitle="Sign in to continue to Quavron."
     >
 
-      <h1>
-        Login 🚀
-      </h1>
-
-      <div
-        style={{
-          display:"flex",
-          flexDirection:"column",
-          gap:"15px",
-          marginTop:"30px",
-          maxWidth:"300px"
-        }}
+      <form
+        onSubmit={handleLogin}
+        className="space-y-5"
       >
 
-        <input
+        <Input
+          label="Email"
           type="email"
-          placeholder="Email"
+          placeholder="Enter your email"
           value={email}
-          onChange={(e)=>
-            setEmail(e.target.value)
-          }
-          style={{
-            padding:"12px"
-          }}
+          onChange={(e) => setEmail(e.target.value)}
         />
 
-        <input
+        <Input
+          label="Password"
           type="password"
-          placeholder="Password"
+          placeholder="Enter your password"
           value={password}
-          onChange={(e)=>
-            setPassword(e.target.value)
-          }
-          style={{
-            padding:"12px"
-          }}
+          onChange={(e) => setPassword(e.target.value)}
         />
 
-        <button
-          onClick={login}
-          style={{
-            padding:"12px",
-            background:"#16a34a",
-            color:"white",
-            border:"none"
-          }}
+        <div className="flex justify-end">
+
+          <NavLink
+            to="/forgot-password"
+            className="text-sm text-blue-400 hover:text-blue-300"
+          >
+            Forgot Password?
+          </NavLink>
+
+        </div>
+
+        <Button
+          type="submit"
+          className="w-full"
+          size="lg"
+          disabled={loading}
         >
-          Login
-        </button>
+          {loading ? "Signing In..." : "Sign In"}
+        </Button>
 
-      </div>
+        {error && (
 
-    </div>
+          <p className="text-center text-sm text-red-500">
+
+            {error}
+
+          </p>
+
+        )}
+
+      </form>
+
+      <p className="mt-8 text-center text-slate-400">
+
+        Don't have an account?{" "}
+
+        <NavLink
+          to="/register"
+          className="font-semibold text-blue-400 hover:text-blue-300"
+        >
+          Create Account
+        </NavLink>
+
+      </p>
+
+    </AuthLayout>
 
   );
 
 }
-
-export default Login;0
 

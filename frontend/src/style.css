@@ -1,28 +1,2 @@
-body {
-
-  margin: 0;
-
-  font-family: Arial, sans-serif;
-
-  background: #0f172a;
-
-  color: white;
-
-}
-
-a {
-
-  color: #38bdf8;
-
-  text-decoration: none;
-
-  font-size: 18px;
-
-}
-
-a:hover {
-
-  color: #0ea5e9;
-
-}0
+@import "tailwindcss";
 

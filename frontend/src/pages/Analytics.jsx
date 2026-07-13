@@ -1,31 +1,17 @@
-function Analytics() {
+import DashboardLayout from "../components/dashboard/DashboardLayout";
 
-return (
+export default function Analytics() {
+  return (
+    <DashboardLayout>
+      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8">
+        <h1 className="text-3xl font-bold text-white">
+          Analytics
+        </h1>
 
-<div>
-
-  <h1>📊 Analytics</h1>
-
-  <div className="cards">
-
-    <div className="card">
-      Users: 1240
-    </div>
-
-    <div className="card">
-      Projects: 542
-    </div>
-
-    <div className="card">
-      AI Requests: 12450
-    </div>
-
-  </div>
-
-</div>
-
-);
-
+        <p className="mt-2 text-slate-400">
+          This page is under development.
+        </p>
+      </div>
+    </DashboardLayout>
+  );
 }
-
-export default Analytics;

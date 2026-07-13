@@ -1,35 +1,17 @@
-function Courses() {
+import DashboardLayout from "../components/dashboard/DashboardLayout";
 
-return (
+export default function Courses() {
+  return (
+    <DashboardLayout>
+      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8">
+        <h1 className="text-3xl font-bold text-white">
+          Courses
+        </h1>
 
-<div>
-
-  <h1>📚 Courses</h1>
-
-  <div className="cards">
-
-    <div className="card">
-      React Masterclass
-    </div>
-
-    <div className="card">
-      Node.js Backend
-    </div>
-
-    <div className="card">
-      AI Engineering
-    </div>
-
-    <div className="card">
-      Cyber Security
-    </div>
-
-  </div>
-
-</div>
-
-);
-
+        <p className="mt-2 text-slate-400">
+          This page is under development.
+        </p>
+      </div>
+    </DashboardLayout>
+  );
 }
-
-export default Courses;

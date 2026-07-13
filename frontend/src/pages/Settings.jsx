@@ -1,33 +1,17 @@
-function Settings() {
+import DashboardLayout from "../components/dashboard/DashboardLayout";
 
-return (
+export default function Settings() {
+  return (
+    <DashboardLayout>
+      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8">
+        <h1 className="text-3xl font-bold text-white">
+          Settings
+        </h1>
 
-<div>
-
-  <h1>⚙ Settings</h1>
-
-  <div className="card">
-
-    Theme: Dark Mode
-
-  </div>
-
-  <div className="card">
-
-    Notifications: Enabled
-
-  </div>
-
-  <div className="card">
-
-    AI Assistant: Active
-
-  </div>
-
-</div>
-
-);
-
+        <p className="mt-2 text-slate-400">
+          This page is under development.
+        </p>
+      </div>
+    </DashboardLayout>
+  );
 }
-
-export default Settings;
