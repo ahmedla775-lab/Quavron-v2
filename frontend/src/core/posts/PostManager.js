@@ -6,8 +6,6 @@ class PostManager {
     authorId,
     content,
     visibility = "public",
-    mediaUrl = null,
-    mediaType = null,
   }) {
 
     return {
@@ -17,10 +15,6 @@ class PostManager {
       author_id: authorId,
 
       content,
-
-      media_url: mediaUrl,
-
-      media_type: mediaType,
 
       visibility,
 

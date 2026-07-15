@@ -6,8 +6,17 @@ import {
 
 import Input from "../ui/Input";
 
+import { useAuth } from "../auth/AuthProvider";
+import { useProfile } from "../../context/ProfileContext";
+
 export default function Topbar() {
+
+  const { user } = useAuth();
+
+  const { profile } = useProfile();
+
   return (
+
     <header className="flex items-center justify-between border-b border-slate-800 bg-slate-950 px-8 py-5">
 
       <div className="w-full max-w-md">
@@ -38,11 +47,11 @@ export default function Topbar() {
           <div>
 
             <p className="font-semibold text-white">
-              Ahmed
+              {profile?.full_name || "Quavron User"}
             </p>
 
             <p className="text-sm text-slate-400">
-              Developer
+              {profile?.username || user?.email || ""}
             </p>
 
           </div>
@@ -52,6 +61,7 @@ export default function Topbar() {
       </div>
 
     </header>
-  );
-}
 
+  );
+
+}

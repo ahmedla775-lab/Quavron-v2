@@ -1,22 +1,26 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useState,
 } from "react";
 
 import ProfileService from "../services/ProfileService";
+import { useAuth } from "../components/auth/AuthProvider";
 
 const ProfileContext = createContext(null);
 
-export function ProfileProvider({
-  children,
-}) {
+export function ProfileProvider({ children }) {
+
+  const { user } = useAuth();
 
   const [profile, setProfile] = useState(null);
 
   const [loading, setLoading] = useState(false);
 
   async function loadProfile(id) {
+
+    if (!id) return;
 
     setLoading(true);
 
@@ -28,6 +32,12 @@ export function ProfileProvider({
       if (error) throw error;
 
       setProfile(data);
+
+    } catch (error) {
+
+      console.error("PROFILE ERROR:", error);
+
+      setProfile(null);
 
     } finally {
 
@@ -53,6 +63,20 @@ export function ProfileProvider({
 
   }
 
+  useEffect(() => {
+
+    if (user) {
+
+      loadProfile(user.id);
+
+    } else {
+
+      setProfile(null);
+
+    }
+
+  }, [user]);
+
   return (
 
     <ProfileContext.Provider
@@ -74,6 +98,16 @@ export function ProfileProvider({
 
 export function useProfile() {
 
-  return useContext(ProfileContext);
+  const context = useContext(ProfileContext);
+
+  if (!context) {
+
+    throw new Error(
+      "useProfile must be used inside ProfileProvider"
+    );
+
+  }
+
+  return context;
 
 }

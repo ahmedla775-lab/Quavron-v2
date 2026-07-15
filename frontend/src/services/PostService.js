@@ -6,7 +6,24 @@ class PostService {
 
     return await supabase
       .from("community_feed")
-      .select("*")
+      .select(`
+        *,
+        profiles (
+          id,
+          username,
+          full_name,
+          avatar_url
+        ),
+        post_media (
+          id,
+          type,
+          mime_type,
+          file_name,
+          file_size,
+          url,
+          created_at
+        )
+      `)
       .order("created_at", {
         ascending: false,
       });
@@ -15,16 +32,35 @@ class PostService {
 
   async createPost(values) {
 
-    const { error } = await supabase
+    const { data: inserted, error } = await supabase
       .from("posts")
-      .insert(values);
+      .insert(values)
+      .select("id")
+      .single();
 
     if (error) return { error };
 
     return await supabase
       .from("community_feed")
-      .select("*")
-      .eq("id", values.id)
+      .select(`
+        *,
+        profiles (
+          id,
+          username,
+          full_name,
+          avatar_url
+        ),
+        post_media (
+          id,
+          type,
+          mime_type,
+          file_name,
+          file_size,
+          url,
+          created_at
+        )
+      `)
+      .eq("id", inserted.id)
       .single();
 
   }
@@ -40,7 +76,24 @@ class PostService {
 
     return await supabase
       .from("community_feed")
-      .select("*")
+      .select(`
+        *,
+        profiles (
+          id,
+          username,
+          full_name,
+          avatar_url
+        ),
+        post_media (
+          id,
+          type,
+          mime_type,
+          file_name,
+          file_size,
+          url,
+          created_at
+        )
+      `)
       .eq("id", id)
       .single();
 

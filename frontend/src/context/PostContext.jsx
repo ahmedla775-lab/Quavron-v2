@@ -7,6 +7,7 @@ import {
 
 import PostManager from "../core/posts/PostManager";
 import PostService from "../services/PostService";
+import PostMediaService from "../modules/community/services/PostMediaService";
 
 const PostContext = createContext(null);
 
@@ -35,8 +36,13 @@ export function PostProvider({ children }) {
 
   async function createPost(values) {
 
+    const {
+      files = [],
+      ...postValues
+    } = values;
+
     const post =
-      PostManager.createPost(values);
+      PostManager.createPost(postValues);
 
     const { data, error } =
       await PostService.createPost(post);
@@ -51,10 +57,17 @@ export function PostProvider({ children }) {
 
     }
 
-    setPosts((prev) => [
-      data,
-      ...prev,
-    ]);
+    if (files.length > 0) {
+
+      await PostMediaService.uploadAll(
+        post.id,
+        files,
+        post.author_id
+      );
+
+    }
+
+    await loadPosts();
 
     return data;
 
