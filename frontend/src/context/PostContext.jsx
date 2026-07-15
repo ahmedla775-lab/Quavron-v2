@@ -14,7 +14,6 @@ const PostContext = createContext(null);
 export function PostProvider({ children }) {
 
   const [posts, setPosts] = useState([]);
-
   const [loading, setLoading] = useState(false);
 
   async function loadPosts() {
@@ -25,9 +24,7 @@ export function PostProvider({ children }) {
       await PostService.getPosts();
 
     if (!error && data) {
-
       setPosts(data);
-
     }
 
     setLoading(false);
@@ -50,20 +47,33 @@ export function PostProvider({ children }) {
     if (error) {
 
       console.error("POST ERROR:", error);
-
       alert(error.message);
-
       throw error;
 
     }
 
     if (files.length > 0) {
 
-      await PostMediaService.uploadAll(
-        post.id,
-        files,
-        post.author_id
-      );
+      alert("1");
+
+      try {
+
+        alert("2");
+
+        await PostMediaService.uploadAll(
+          post.id,
+          files,
+          post.author_id
+        );
+
+        alert("3");
+
+      } catch (error) {
+
+        console.error(error);
+        alert(error.message);
+
+      }
 
     }
 
@@ -84,9 +94,7 @@ export function PostProvider({ children }) {
     if (error) {
 
       console.error(error);
-
       alert(error.message);
-
       throw error;
 
     }
@@ -111,9 +119,7 @@ export function PostProvider({ children }) {
     if (error) {
 
       console.error(error);
-
       alert(error.message);
-
       throw error;
 
     }
@@ -142,13 +148,9 @@ export function PostProvider({ children }) {
   );
 
   return (
-
     <PostContext.Provider value={value}>
-
       {children}
-
     </PostContext.Provider>
-
   );
 
 }
