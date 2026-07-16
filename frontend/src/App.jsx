@@ -163,11 +163,7 @@ function App() {
 
         <Route
           path="/post/:id"
-          element={
-            <ProtectedRoute>
-              <PostDetails />
-            </ProtectedRoute>
-          }
+          element={<PostDetails />}
         />
 
         <Route
