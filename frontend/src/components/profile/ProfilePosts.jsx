@@ -4,32 +4,51 @@ import PostCard from "../community/PostCard";
 
 import PostService from "../../services/PostService";
 
-export default function ProfilePosts({ profile }) {
+export default function ProfilePosts({
+
+  profile,
+
+}) {
 
   const [posts, setPosts] = useState([]);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
-  useEffect(() => {
+  async function loadPosts() {
 
-    async function load() {
+    if (!profile) return;
 
-      const { data } =
+    setLoading(true);
+
+    try {
+
+      const { data, error } =
         await PostService.getUserPosts(
           profile.id
         );
 
+      if (error) throw error;
+
       setPosts(data || []);
+
+    } catch (error) {
+
+      console.error(error);
+
+      setPosts([]);
+
+    } finally {
 
       setLoading(false);
 
     }
 
-    if (profile?.id) {
+  }
 
-      load();
+  useEffect(() => {
 
-    }
+    loadPosts();
 
   }, [profile]);
 
@@ -37,9 +56,13 @@ export default function ProfilePosts({ profile }) {
 
     return (
 
-      <div className="mt-8 text-center text-slate-400">
+      <div className="mt-8 flex justify-center">
 
-        Loading posts...
+        <div className="text-slate-400">
+
+          Loading posts...
+
+        </div>
 
       </div>
 
@@ -51,9 +74,19 @@ export default function ProfilePosts({ profile }) {
 
     return (
 
-      <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center text-slate-400">
+      <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-900 p-10 text-center">
 
-        No posts yet.
+        <h2 className="text-2xl font-bold text-white">
+
+          No posts yet
+
+        </h2>
+
+        <p className="mt-3 text-slate-400">
+
+          Your published posts will appear here.
+
+        </p>
 
       </div>
 
@@ -68,8 +101,11 @@ export default function ProfilePosts({ profile }) {
       {posts.map((post) => (
 
         <PostCard
+
           key={post.id}
+
           post={post}
+
         />
 
       ))}

@@ -10,11 +10,11 @@ class ProfileService {
       .single();
   }
 
-  async createProfile(values) {
+  async getProfileByUsername(username) {
     return await supabase
       .from("profiles")
-      .insert(values)
-      .select()
+      .select("*")
+      .eq("username", username)
       .single();
   }
 
@@ -27,35 +27,125 @@ class ProfileService {
       .single();
   }
 
-  async getFollowers(id) {
-    return await supabase
-      .from("follows")
-      .select("*")
-      .eq("following_id", id);
+  async isUsernameAvailable(username, currentId) {
+
+    const { data } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("username", username)
+      .maybeSingle();
+
+    if (!data) return true;
+
+    return data.id === currentId;
+
   }
 
-  async getFollowing(id) {
+  async uploadAvatar(userId, file) {
+
+    const extension = file.name.split(".").pop();
+
+    const path =
+      `avatars/${userId}.${extension}`;
+
+    const { error } =
+      await supabase.storage
+        .from("post-media")
+        .upload(path, file, {
+          upsert: true,
+        });
+
+    if (error) throw error;
+
+    const { data } =
+      supabase.storage
+        .from("post-media")
+        .getPublicUrl(path);
+
+    return data.publicUrl;
+
+  }
+
+  async uploadCover(userId, file) {
+
+    const extension = file.name.split(".").pop();
+
+    const path =
+      `covers/${userId}.${extension}`;
+
+    const { error } =
+      await supabase.storage
+        .from("post-media")
+        .upload(path, file, {
+          upsert: true,
+        });
+
+    if (error) throw error;
+
+    const { data } =
+      supabase.storage
+        .from("post-media")
+        .getPublicUrl(path);
+
+    return data.publicUrl;
+
+  }
+
+  async getFollowers(userId) {
+
     return await supabase
       .from("follows")
-      .select("*")
-      .eq("follower_id", id);
+      .select(`
+        *,
+        profiles:follower_id(
+          id,
+          username,
+          full_name,
+          avatar_url,
+          verified
+        )
+      `)
+      .eq("following_id", userId);
+
+  }
+
+  async getFollowing(userId) {
+
+    return await supabase
+      .from("follows")
+      .select(`
+        *,
+        profiles:following_id(
+          id,
+          username,
+          full_name,
+          avatar_url,
+          verified
+        )
+      `)
+      .eq("follower_id", userId);
+
   }
 
   async follow(followerId, followingId) {
+
     return await supabase
       .from("follows")
       .insert({
         follower_id: followerId,
         following_id: followingId,
       });
+
   }
 
   async unfollow(followerId, followingId) {
+
     return await supabase
       .from("follows")
       .delete()
       .eq("follower_id", followerId)
       .eq("following_id", followingId);
+
   }
 
 }

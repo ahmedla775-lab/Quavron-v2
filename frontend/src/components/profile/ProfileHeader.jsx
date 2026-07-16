@@ -1,81 +1,191 @@
-import { useState } from "react";
+import {
+  MapPin,
+  Globe,
+  CheckCircle,
+  Pencil,
+  Share2,
+} from "lucide-react";
 
-import EditProfileDialog from "./EditProfileDialog";
+export default function ProfileHeader({
 
-export default function ProfileHeader({ profile }) {
+  profile,
 
-  const [open, setOpen] = useState(false);
+  onEdit,
+
+}) {
+
+  async function shareProfile() {
+
+    const url = window.location.href;
+
+    if (navigator.share) {
+
+      await navigator.share({
+
+        title: profile?.full_name,
+
+        text: `Check out ${profile?.full_name} on Quavron`,
+
+        url,
+
+      });
+
+      return;
+
+    }
+
+    await navigator.clipboard.writeText(url);
+
+    alert("Profile link copied.");
+
+  }
 
   return (
-    <>
 
-      <div className="relative">
+    <div className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900">
 
-        <div className="h-56 w-full overflow-hidden rounded-2xl bg-gradient-to-r from-blue-700 via-cyan-600 to-indigo-700">
+      <div className="relative h-72 w-full">
 
-          {profile?.cover_url && (
+        {profile?.cover_url ? (
 
-            <img
-              src={profile.cover_url}
-              alt="Cover"
-              className="h-full w-full object-cover"
-            />
+          <img
+            src={profile.cover_url}
+            alt="Cover"
+            className="h-full w-full object-cover"
+          />
 
-          )}
+        ) : (
 
-        </div>
+          <div className="h-full w-full bg-gradient-to-r from-sky-600 via-cyan-500 to-indigo-700" />
 
-        <div className="mx-auto max-w-6xl px-8">
+        )}
 
-          <div className="-mt-20 flex items-end justify-between">
+      </div>
 
-            <div className="flex items-end gap-6">
+      <div className="relative px-8 pb-8">
 
-              <div className="h-40 w-40 overflow-hidden rounded-full border-4 border-slate-950 bg-slate-800">
+        <div className="-mt-20 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
 
-                {profile?.avatar_url ? (
+          <div className="flex items-end gap-6">
 
-                  <img
-                    src={profile.avatar_url}
-                    alt={profile.full_name}
-                    className="h-full w-full object-cover"
+            <div className="h-40 w-40 overflow-hidden rounded-full border-4 border-slate-900 bg-slate-800">
+
+              {profile?.avatar_url ? (
+
+                <img
+                  src={profile.avatar_url}
+                  alt={profile.full_name}
+                  className="h-full w-full object-cover"
+                />
+
+              ) : (
+
+                <div className="flex h-full w-full items-center justify-center text-6xl font-bold text-white">
+
+                  {profile?.full_name?.charAt(0)?.toUpperCase() || "Q"}
+
+                </div>
+
+              )}
+
+            </div>
+
+            <div>
+
+              <div className="flex items-center gap-2">
+
+                <h1 className="text-4xl font-bold text-white">
+
+                  {profile?.full_name || "Quavron User"}
+
+                </h1>
+
+                {profile?.verified && (
+
+                  <CheckCircle
+                    size={24}
+                    className="text-sky-400"
                   />
-
-                ) : (
-
-                  <div className="flex h-full items-center justify-center text-5xl font-bold text-white">
-
-                    {profile?.full_name?.charAt(0)?.toUpperCase() || "Q"}
-
-                  </div>
 
                 )}
 
               </div>
 
-              <div className="pb-5">
+              <p className="mt-1 text-slate-400">
 
-                <h1 className="text-4xl font-bold text-white">
+                @{profile?.username}
 
-                  {profile?.full_name}
+              </p>
 
-                </h1>
+              {profile?.bio && (
 
-                <p className="text-slate-400">
+                <p className="mt-4 max-w-2xl text-slate-300">
 
-                  @{profile?.username}
+                  {profile.bio}
 
                 </p>
+
+              )}
+
+              <div className="mt-4 flex flex-wrap gap-5 text-sm text-slate-400">
+
+                {profile?.location && (
+
+                  <div className="flex items-center gap-2">
+
+                    <MapPin size={16} />
+
+                    {profile.location}
+
+                  </div>
+
+                )}
+
+                {profile?.website && (
+
+                  <a
+                    href={profile.website}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 text-sky-400 hover:underline"
+                  >
+
+                    <Globe size={16} />
+
+                    {profile.website}
+
+                  </a>
+
+                )}
 
               </div>
 
             </div>
 
+          </div>
+
+          <div className="flex gap-3">
+
             <button
-              onClick={() => setOpen(true)}
-              className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-500"
+              onClick={shareProfile}
+              className="flex items-center gap-2 rounded-xl bg-slate-800 px-5 py-3 text-white transition hover:bg-slate-700"
             >
+
+              <Share2 size={18} />
+
+              Share
+
+            </button>
+
+            <button
+              onClick={onEdit}
+              className="flex items-center gap-2 rounded-xl bg-sky-600 px-5 py-3 font-semibold text-white transition hover:bg-sky-700"
+            >
+
+              <Pencil size={18} />
+
               Edit Profile
+
             </button>
 
           </div>
@@ -84,13 +194,8 @@ export default function ProfileHeader({ profile }) {
 
       </div>
 
-      <EditProfileDialog
-        open={open}
-        profile={profile}
-        onClose={() => setOpen(false)}
-      />
+    </div>
 
-    </>
   );
 
 }

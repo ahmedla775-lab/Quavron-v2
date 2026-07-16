@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { supabase } from "../../lib/supabase";
 import { useProfile } from "../../context/ProfileContext";
+import ProfileService from "../../services/ProfileService";
 
 export default function EditProfileDialog({
 
@@ -11,26 +11,25 @@ export default function EditProfileDialog({
 
   onClose,
 
-  onSaved,
-
 }) {
 
-  const { updateProfile } = useProfile();
+  const { saveProfile } =
+    useProfile();
 
   const [fullName, setFullName] =
-    useState(profile?.full_name || "");
+    useState("");
 
   const [username, setUsername] =
-    useState(profile?.username || "");
+    useState("");
 
   const [bio, setBio] =
-    useState(profile?.bio || "");
+    useState("");
 
   const [website, setWebsite] =
-    useState(profile?.website || "");
+    useState("");
 
   const [location, setLocation] =
-    useState(profile?.location || "");
+    useState("");
 
   const [avatar, setAvatar] =
     useState(null);
@@ -38,43 +37,42 @@ export default function EditProfileDialog({
   const [cover, setCover] =
     useState(null);
 
-  const [loading, setLoading] =
+  const [saving, setSaving] =
     useState(false);
+
+  useEffect(() => {
+
+    if (!profile) return;
+
+    setFullName(
+      profile.full_name || ""
+    );
+
+    setUsername(
+      profile.username || ""
+    );
+
+    setBio(
+      profile.bio || ""
+    );
+
+    setWebsite(
+      profile.website || ""
+    );
+
+    setLocation(
+      profile.location || ""
+    );
+
+  }, [profile]);
 
   if (!open) return null;
 
-  async function upload(file, folder) {
-
-    if (!file) return null;
-
-    const ext = file.name.split(".").pop();
-
-    const path =
-      `${folder}/${profile.id}.${ext}`;
-
-    const { error } =
-      await supabase.storage
-        .from("post-media")
-        .upload(path, file, {
-          upsert: true,
-        });
-
-    if (error) throw error;
-
-    const { data } =
-      supabase.storage
-        .from("post-media")
-        .getPublicUrl(path);
-
-    return data.publicUrl;
-
-  }
-
-  async function save() {
-
-    setLoading(true);
+  async function handleSave() {
 
     try {
+
+      setSaving(true);
 
       let avatarUrl =
         profile.avatar_url;
@@ -85,9 +83,9 @@ export default function EditProfileDialog({
       if (avatar) {
 
         avatarUrl =
-          await upload(
-            avatar,
-            "avatars"
+          await ProfileService.uploadAvatar(
+            profile.id,
+            avatar
           );
 
       }
@@ -95,14 +93,14 @@ export default function EditProfileDialog({
       if (cover) {
 
         coverUrl =
-          await upload(
-            cover,
-            "covers"
+          await ProfileService.uploadCover(
+            profile.id,
+            cover
           );
 
       }
 
-      await updateProfile({
+      await saveProfile({
 
         full_name: fullName,
 
@@ -120,17 +118,17 @@ export default function EditProfileDialog({
 
       });
 
-      if (onSaved) {
-
-        onSaved();
-
-      }
-
       onClose();
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert(error.message);
 
     } finally {
 
-      setLoading(false);
+      setSaving(false);
 
     }
 
@@ -138,115 +136,158 @@ export default function EditProfileDialog({
 
   return (
 
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
 
-      <div className="w-full max-w-xl rounded-2xl bg-slate-900 p-6">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-slate-900 p-8">
 
-        <h2 className="mb-6 text-2xl font-bold text-white">
+        <h2 className="mb-8 text-3xl font-bold text-white">
 
           Edit Profile
 
         </h2>
 
-        <div className="space-y-4">
-
-          <input
-            type="text"
-            value={fullName}
-            onChange={(e) =>
-              setFullName(e.target.value)
-            }
-            placeholder="Full Name"
-            className="w-full rounded-lg bg-slate-800 p-3 text-white"
-          />
-
-          <input
-            type="text"
-            value={username}
-            onChange={(e) =>
-              setUsername(e.target.value)
-            }
-            placeholder="Username"
-            className="w-full rounded-lg bg-slate-800 p-3 text-white"
-          />
-
-          <textarea
-            value={bio}
-            onChange={(e) =>
-              setBio(e.target.value)
-            }
-            placeholder="Bio"
-            rows={4}
-            className="w-full rounded-lg bg-slate-800 p-3 text-white"
-          />
-
-          <input
-            type="text"
-            value={website}
-            onChange={(e) =>
-              setWebsite(e.target.value)
-            }
-            placeholder="Website"
-            className="w-full rounded-lg bg-slate-800 p-3 text-white"
-          />
-
-          <input
-            type="text"
-            value={location}
-            onChange={(e) =>
-              setLocation(e.target.value)
-            }
-            placeholder="Location"
-            className="w-full rounded-lg bg-slate-800 p-3 text-white"
-          />
+        <div className="space-y-6">
 
           <div>
 
-            <p className="mb-2 text-sm text-slate-400">
+            <label className="mb-2 block text-slate-300">
 
-              Avatar
+              Full Name
 
-            </p>
+            </label>
 
             <input
-              type="file"
-              accept="image/*"
-              onChange={(e) =>
-                setAvatar(
-                  e.target.files?.[0] ?? null
-                )
+              value={fullName}
+              onChange={(e)=>
+                setFullName(e.target.value)
               }
+              className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
             />
 
           </div>
 
           <div>
 
-            <p className="mb-2 text-sm text-slate-400">
+            <label className="mb-2 block text-slate-300">
 
-              Cover
+              Username
 
-            </p>
+            </label>
+
+            <input
+              value={username}
+              onChange={(e)=>
+                setUsername(e.target.value)
+              }
+              className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
+            />
+
+          </div>
+
+          <div>
+
+            <label className="mb-2 block text-slate-300">
+
+              Bio
+
+            </label>
+
+            <textarea
+              rows={4}
+              value={bio}
+              onChange={(e)=>
+                setBio(e.target.value)
+              }
+              className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
+            />
+
+          </div>
+          <div>
+
+            <label className="mb-2 block text-slate-300">
+
+              Website
+
+            </label>
+
+            <input
+              value={website}
+              onChange={(e)=>
+                setWebsite(e.target.value)
+              }
+              placeholder="https://..."
+              className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
+            />
+
+          </div>
+
+          <div>
+
+            <label className="mb-2 block text-slate-300">
+
+              Location
+
+            </label>
+
+            <input
+              value={location}
+              onChange={(e)=>
+                setLocation(e.target.value)
+              }
+              className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
+            />
+
+          </div>
+
+          <div>
+
+            <label className="mb-2 block text-slate-300">
+
+              Avatar
+
+            </label>
 
             <input
               type="file"
               accept="image/*"
-              onChange={(e) =>
-                setCover(
-                  e.target.files?.[0] ?? null
+              onChange={(e)=>
+                setAvatar(
+                  e.target.files?.[0] || null
                 )
               }
+              className="w-full rounded-xl bg-slate-800 p-3 text-white"
+            />
+
+          </div>
+
+          <div>
+
+            <label className="mb-2 block text-slate-300">
+
+              Cover Image
+
+            </label>
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e)=>
+                setCover(
+                  e.target.files?.[0] || null
+                )
+              }
+              className="w-full rounded-xl bg-slate-800 p-3 text-white"
             />
 
           </div>
 
         </div>
 
-        <div className="mt-6 flex justify-end gap-3">
+        <div className="mt-10 flex justify-end gap-4">
 
           <button
             onClick={onClose}
-            className="rounded-lg bg-slate-700 px-5 py-2 text-white"
+            className="rounded-xl bg-slate-700 px-6 py-3 text-white transition hover:bg-slate-600"
           >
 
             Cancel
@@ -254,12 +295,20 @@ export default function EditProfileDialog({
           </button>
 
           <button
-            disabled={loading}
-            onClick={save}
-            className="rounded-lg bg-blue-600 px-5 py-2 text-white"
+            disabled={saving}
+            onClick={handleSave}
+            className="rounded-xl bg-sky-600 px-6 py-3 font-semibold text-white transition hover:bg-sky-700 disabled:opacity-60"
           >
 
-            {loading ? "Saving..." : "Save"}
+            {
+
+              saving
+
+                ? "Saving..."
+
+                : "Save Changes"
+
+            }
 
           </button>
 

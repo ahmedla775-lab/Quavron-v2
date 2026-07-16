@@ -1,47 +1,74 @@
-export default function ProfileStats({ profile }) {
+import {
+  Users,
+  UserPlus,
+  FileText,
+  Image,
+} from "lucide-react";
 
-  const stats = [
+export default function ProfileStats({
+
+  profile,
+
+  mediaCount = 0,
+
+}) {
+
+  const cards = [
 
     {
-      label: "Posts",
-      value: profile?.posts_count ?? 0,
+      title: "Posts",
+      value: profile?.posts_count || 0,
+      icon: <FileText size={22} />,
     },
 
     {
-      label: "Followers",
-      value: profile?.followers_count ?? 0,
+      title: "Followers",
+      value: profile?.followers_count || 0,
+      icon: <Users size={22} />,
     },
 
     {
-      label: "Following",
-      value: profile?.following_count ?? 0,
+      title: "Following",
+      value: profile?.following_count || 0,
+      icon: <UserPlus size={22} />,
     },
 
     {
-      label: "Verified",
-      value: profile?.verified ? "Yes" : "No",
+      title: "Media",
+      value: mediaCount,
+      icon: <Image size={22} />,
     },
 
   ];
 
   return (
 
-    <div className="mt-6 grid gap-4 md:grid-cols-4">
+    <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
 
-      {stats.map((item) => (
+      {cards.map((item) => (
 
         <div
-          key={item.label}
-          className="rounded-2xl border border-slate-800 bg-slate-900 p-6 text-center"
+          key={item.title}
+          className="rounded-2xl border border-slate-800 bg-slate-900 p-6 transition hover:border-sky-500"
         >
 
-          <p className="text-sm text-slate-400">
+          <div className="flex items-center justify-between">
 
-            {item.label}
+            <span className="text-slate-400">
 
-          </p>
+              {item.title}
 
-          <h2 className="mt-2 text-3xl font-bold text-white">
+            </span>
+
+            <div className="text-sky-400">
+
+              {item.icon}
+
+            </div>
+
+          </div>
+
+          <h2 className="mt-4 text-4xl font-bold text-white">
 
             {item.value}
 

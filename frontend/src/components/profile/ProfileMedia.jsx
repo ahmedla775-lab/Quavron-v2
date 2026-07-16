@@ -1,45 +1,64 @@
 import { useEffect, useState } from "react";
 
-import PostService from "../../services/PostService";
+import { Play } from "lucide-react";
 
-export default function ProfileMedia({ profile }) {
+import { supabase } from "../../lib/supabase";
+
+export default function ProfileMedia({
+
+  profile,
+
+}) {
 
   const [media, setMedia] = useState([]);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
-  useEffect(() => {
+  async function loadMedia() {
 
-    async function load() {
+    if (!profile) return;
 
-      const { data } =
-        await PostService.getUserPosts(
-          profile.id
-        );
+    setLoading(true);
 
-      const files = [];
+    try {
 
-      (data || []).forEach((post) => {
+      const { data, error } =
+        await supabase
+          .from("post_media")
+          .select(`
+            *,
+            posts!inner(
+              id,
+              author_id
+            )
+          `)
+          .eq("posts.author_id", profile.id)
+          .order("created_at", {
+            ascending: false,
+          });
 
-        (post.post_media || []).forEach((file) => {
+      if (error) throw error;
 
-          files.push(file);
+      setMedia(data || []);
 
-        });
+    } catch (error) {
 
-      });
+      console.error(error);
 
-      setMedia(files);
+      setMedia([]);
+
+    } finally {
 
       setLoading(false);
 
     }
 
-    if (profile?.id) {
+  }
 
-      load();
+  useEffect(() => {
 
-    }
+    loadMedia();
 
   }, [profile]);
 
@@ -61,9 +80,19 @@ export default function ProfileMedia({ profile }) {
 
     return (
 
-      <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center text-slate-400">
+      <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-900 p-10 text-center">
 
-        No media found.
+        <h2 className="text-2xl font-bold text-white">
+
+          No media yet
+
+        </h2>
+
+        <p className="mt-3 text-slate-400">
+
+          Images and videos from your posts will appear here.
+
+        </p>
 
       </div>
 
@@ -75,28 +104,44 @@ export default function ProfileMedia({ profile }) {
 
     <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
 
-      {media.map((file) => (
+      {media.map((item) => (
 
         <div
-          key={file.id}
-          className="overflow-hidden rounded-xl bg-slate-900"
+          key={item.id}
+          className="group relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900"
         >
 
-          {file.type === "image" ? (
+          {item.type === "image" ? (
 
             <img
-              src={file.url}
+              src={item.url}
               alt=""
-              className="h-48 w-full object-cover"
+              className="aspect-square w-full object-cover transition duration-300 group-hover:scale-105"
             />
 
           ) : (
 
-            <video
-              src={file.url}
-              controls
-              className="h-48 w-full object-cover"
-            />
+            <div className="relative">
+
+              <video
+                src={item.url}
+                className="aspect-square w-full object-cover"
+              />
+
+              <div className="absolute inset-0 flex items-center justify-center">
+
+                <div className="rounded-full bg-black/60 p-4">
+
+                  <Play
+                    size={34}
+                    className="text-white"
+                  />
+
+                </div>
+
+              </div>
+
+            </div>
 
           )}
 

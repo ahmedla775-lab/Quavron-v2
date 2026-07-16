@@ -5,8 +5,8 @@ import {
   useState,
 } from "react";
 
-import ProfileService from "../services/ProfileService";
 import { useAuth } from "../components/auth/AuthProvider";
+import ProfileService from "../services/ProfileService";
 
 const ProfileContext = createContext(null);
 
@@ -16,11 +16,19 @@ export function ProfileProvider({ children }) {
 
   const [profile, setProfile] = useState(null);
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   async function loadProfile(id) {
 
-    if (!id) return;
+    if (!id) {
+
+      setProfile(null);
+
+      setLoading(false);
+
+      return;
+
+    }
 
     setLoading(true);
 
@@ -35,7 +43,7 @@ export function ProfileProvider({ children }) {
 
     } catch (error) {
 
-      console.error("PROFILE ERROR:", error);
+      console.error(error);
 
       setProfile(null);
 
@@ -47,7 +55,15 @@ export function ProfileProvider({ children }) {
 
   }
 
-  async function updateProfile(values) {
+  async function refreshProfile() {
+
+    if (!user) return;
+
+    await loadProfile(user.id);
+
+  }
+
+  async function saveProfile(values) {
 
     if (!profile) return;
 
@@ -61,6 +77,20 @@ export function ProfileProvider({ children }) {
 
     setProfile(data);
 
+    return data;
+
+  }
+
+  function updateLocalProfile(values) {
+
+    setProfile((current) => ({
+
+      ...current,
+
+      ...values,
+
+    }));
+
   }
 
   useEffect(() => {
@@ -73,6 +103,8 @@ export function ProfileProvider({ children }) {
 
       setProfile(null);
 
+      setLoading(false);
+
     }
 
   }, [user]);
@@ -81,10 +113,17 @@ export function ProfileProvider({ children }) {
 
     <ProfileContext.Provider
       value={{
+
         profile,
+
         loading,
-        loadProfile,
-        updateProfile,
+
+        refreshProfile,
+
+        saveProfile,
+
+        updateLocalProfile,
+
       }}
     >
 
