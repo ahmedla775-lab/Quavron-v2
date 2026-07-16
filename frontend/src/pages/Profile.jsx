@@ -1,99 +1,83 @@
+import { useState } from "react";
+
 import DashboardLayout from "../components/dashboard/DashboardLayout";
+
 import { useProfile } from "../context/ProfileContext";
+
+import ProfileHeader from "../components/profile/ProfileHeader";
+import ProfileStats from "../components/profile/ProfileStats";
+import ProfileTabs from "../components/profile/ProfileTabs";
+import ProfilePosts from "../components/profile/ProfilePosts";
+import ProfileMedia from "../components/profile/ProfileMedia";
+import ProfileSaved from "../components/profile/ProfileSaved";
+import ProfileAbout from "../components/profile/ProfileAbout";
+import EditProfileDialog from "../components/profile/EditProfileDialog";
 
 export default function Profile() {
 
   const { profile } = useProfile();
 
+  const [tab, setTab] = useState("Posts");
+
+  const [openEdit, setOpenEdit] = useState(false);
+
   return (
 
     <DashboardLayout>
 
-      <div className="bg-slate-950 text-white">
+      <div className="mx-auto max-w-6xl p-6">
 
-        <div className="h-56 w-full bg-gradient-to-r from-blue-700 via-cyan-600 to-indigo-700" />
+        <ProfileHeader
+          profile={profile}
+          onEdit={() => setOpenEdit(true)}
+        />
 
-        <div className="mx-auto max-w-6xl px-8">
+        <ProfileStats
+          profile={profile}
+        />
 
-          <div className="-mt-20 flex items-end gap-6">
+        <ProfileTabs
+          activeTab={tab}
+          onChange={setTab}
+        />
 
-            <div className="flex h-40 w-40 items-center justify-center rounded-full border-4 border-slate-950 bg-slate-800 text-5xl font-bold">
+        {tab === "Posts" && (
 
-              {profile?.full_name?.charAt(0)?.toUpperCase() || "Q"}
+          <ProfilePosts
+            profile={profile}
+          />
 
-            </div>
+        )}
 
-            <div className="pb-5">
+        {tab === "Media" && (
 
-              <h1 className="text-4xl font-bold">
+          <ProfileMedia
+            profile={profile}
+          />
 
-                {profile?.full_name || "Quavron User"}
+        )}
 
-              </h1>
+        {tab === "Saved" && (
 
-              <p className="text-slate-400">
+          <ProfileSaved
+            profile={profile}
+          />
 
-                @{profile?.username || "quavron"}
+        )}
 
-              </p>
+        {tab === "About" && (
 
-            </div>
+          <ProfileAbout
+            profile={profile}
+          />
 
-          </div>
+        )}
 
-          <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-900 p-6">
-
-            <h2 className="mb-4 text-2xl font-bold">
-
-              About
-
-            </h2>
-
-            <p className="text-slate-300">
-
-              {profile?.bio || "Welcome to Quavron Community."}
-
-            </p>
-
-          </div>
-
-          <div className="mt-6 grid gap-6 md:grid-cols-4">
-
-            <div className="rounded-xl bg-slate-900 p-5">
-
-              <h3 className="text-slate-400">Followers</h3>
-
-              <div className="mt-2 text-3xl font-bold">0</div>
-
-            </div>
-
-            <div className="rounded-xl bg-slate-900 p-5">
-
-              <h3 className="text-slate-400">Following</h3>
-
-              <div className="mt-2 text-3xl font-bold">0</div>
-
-            </div>
-
-            <div className="rounded-xl bg-slate-900 p-5">
-
-              <h3 className="text-slate-400">Posts</h3>
-
-              <div className="mt-2 text-3xl font-bold">0</div>
-
-            </div>
-
-            <div className="rounded-xl bg-slate-900 p-5">
-
-              <h3 className="text-slate-400">Projects</h3>
-
-              <div className="mt-2 text-3xl font-bold">0</div>
-
-            </div>
-
-          </div>
-
-        </div>
+        <EditProfileDialog
+          open={openEdit}
+          profile={profile}
+          onClose={() => setOpenEdit(false)}
+        />
 
       </div>
 
