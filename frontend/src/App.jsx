@@ -20,94 +20,19 @@ import Community from "./pages/Community";
 import Analytics from "./pages/Analytics";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
+import PostDetails from "./pages/PostDetails";
+
 import Layout from "./components/layout/Layout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+
 function App() {
+
   return (
+
     <BrowserRouter>
 
       <Routes>
 
-<Route
-  path="/ide"
-  element={
-    <ProtectedRoute>
-      <IDE />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/ai"
-  element={
-    <ProtectedRoute>
-      <AI />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/courses"
-  element={
-    <ProtectedRoute>
-      <Courses />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/marketplace"
-  element={
-    <ProtectedRoute>
-      <Marketplace />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/hosting"
-  element={
-    <ProtectedRoute>
-      <Hosting />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/community"
-  element={
-    <ProtectedRoute>
-      <Community />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/analytics"
-  element={
-    <ProtectedRoute>
-      <Analytics />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/profile"
-  element={
-    <ProtectedRoute>
-      <Profile />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/settings"
-  element={
-    <ProtectedRoute>
-      <Settings />
-    </ProtectedRoute>
-  }
-/>
         <Route
           path="/"
           element={
@@ -145,11 +70,102 @@ function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/projects"
           element={
             <ProtectedRoute>
               <Projects />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/ide"
+          element={
+            <ProtectedRoute>
+              <IDE />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/ai"
+          element={
+            <ProtectedRoute>
+              <AI />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/courses"
+          element={
+            <ProtectedRoute>
+              <Courses />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/marketplace"
+          element={
+            <ProtectedRoute>
+              <Marketplace />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/hosting"
+          element={
+            <ProtectedRoute>
+              <Hosting />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/community"
+          element={
+            <ProtectedRoute>
+              <Community />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/analytics"
+          element={
+            <ProtectedRoute>
+              <Analytics />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/post/:id"
+          element={
+            <ProtectedRoute>
+              <PostDetails />
             </ProtectedRoute>
           }
         />
@@ -162,13 +178,13 @@ function App() {
             </Layout>
           }
         />
-                  
+
       </Routes>
 
     </BrowserRouter>
+
   );
+
 }
 
 export default App;
-
-

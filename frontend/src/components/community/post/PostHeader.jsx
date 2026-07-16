@@ -1,8 +1,17 @@
-export default function PostHeader({ post }) {
+import PostMenu from "./PostMenu";
+
+export default function PostHeader({
+  post,
+  isOwner = false,
+  onEdit,
+  onDelete,
+  onShare,
+  onBookmark,
+}) {
 
   return (
 
-    <div className="flex items-center gap-3">
+    <div className="flex items-start gap-3">
 
       {post.avatar_url ? (
 
@@ -27,25 +36,26 @@ export default function PostHeader({ post }) {
       <div className="flex-1">
 
         <h3 className="font-semibold text-white">
-
           {post.full_name || "Quavron User"}
-
         </h3>
 
         <p className="text-sm text-slate-400">
-
           @{post.username || "user"}
-
         </p>
 
         <p className="text-xs text-slate-500">
-
-          {new Date(post.created_at)
-            .toLocaleString()}
-
+          {new Date(post.created_at).toLocaleString()}
         </p>
 
       </div>
+
+      <PostMenu
+        isOwner={isOwner}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onShare={onShare}
+        onBookmark={onBookmark}
+      />
 
     </div>
 

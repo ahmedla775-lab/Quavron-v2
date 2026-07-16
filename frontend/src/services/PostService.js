@@ -65,6 +65,33 @@ class PostService {
 
   }
 
+  async getPost(id) {
+
+    return await supabase
+      .from("community_feed")
+      .select(`
+        *,
+        profiles (
+          id,
+          username,
+          full_name,
+          avatar_url
+        ),
+        post_media (
+          id,
+          type,
+          mime_type,
+          file_name,
+          file_size,
+          url,
+          created_at
+        )
+      `)
+      .eq("id", id)
+      .single();
+
+  }
+
   async updatePost(id, values) {
 
     const { error } = await supabase
