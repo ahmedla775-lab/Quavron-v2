@@ -1,72 +1,114 @@
-import EditorTabs from "./EditorTabs";
-import Breadcrumbs from "./Breadcrumbs";
-import TerminalPanel from "./TerminalPanel";
-import StatusBar from "./StatusBar";
+import { useEffect, useState } from "react";
 
-import { useWorkspace } from "../../context/WorkspaceContext";
+import useEditor from "../../modules/workspace/hooks/useEditor";
+import useWorkspace from "../../modules/workspace/hooks/useWorkspace";
 
 export default function EditorArea() {
 
   const {
 
-    tabs,
+    activeFileId,
 
-    activeTab,
+    actions,
 
   } = useWorkspace();
 
-  const currentFile =
-    tabs.find(
-      (tab) => tab.id === activeTab
+  const {
+
+    save,
+
+  } = useEditor();
+
+  const file = activeFileId
+
+    ? actions.openFile(activeFileId)
+
+    : null;
+
+  const [content, setContent] =
+    useState("");
+
+  useEffect(() => {
+
+    if (file) {
+
+      setContent(file.content || "");
+
+    }
+
+  }, [file]);
+
+  useEffect(() => {
+
+    if (!file) {
+
+      return;
+
+    }
+
+    const timer = setTimeout(() => {
+
+      save(content);
+
+    }, 500);
+
+    return () => clearTimeout(timer);
+
+  }, [content]);
+
+  if (!file) {
+
+    return (
+
+      <div className="flex h-full items-center justify-center bg-slate-950 text-slate-500">
+
+        Open a file from Explorer
+
+      </div>
+
     );
+
+  }
 
   return (
 
     <div className="flex h-full flex-col bg-slate-950">
 
-      <EditorTabs />
+      <div className="border-b border-slate-800 px-4 py-2 text-sm text-slate-300">
 
-      <Breadcrumbs />
+        <div className="flex items-center justify-between">
 
-      <div className="flex-1 overflow-auto">
+          <span>
 
-        <div className="border-b border-slate-800 bg-slate-900 px-6 py-3">
+            {file.name}
 
-          <h2 className="font-semibold text-white">
+          </span>
 
-            {currentFile?.name || "No File Open"}
+          <span className="text-xs text-slate-500">
 
-          </h2>
+            {file.language || "plaintext"}
+
+          </span>
 
         </div>
 
-        <pre className="min-h-full p-8 font-mono text-sm leading-7 text-slate-300">
-
-{`// ${currentFile?.name || "No File"}
-
-export default function Example() {
-
-  return (
-
-    <div>
-
-      Editing:
-      ${currentFile?.name || "Nothing"}
-
-    </div>
-
-  );
-
-}
-`}
-
-        </pre>
-
       </div>
 
-      <TerminalPanel />
+      <textarea
 
-      <StatusBar />
+        value={content}
+
+        onChange={(e) =>
+
+          setContent(e.target.value)
+
+        }
+
+        spellCheck={false}
+
+        className="h-full w-full resize-none bg-slate-950 p-4 font-mono text-sm text-slate-200 outline-none"
+
+      />
 
     </div>
 

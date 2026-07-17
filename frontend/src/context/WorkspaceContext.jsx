@@ -24,6 +24,22 @@ export function WorkspaceProvider({
   const [activeTab, setActiveTab] =
     useState("app");
 
+  const [selectedItem, setSelectedItem] =
+    useState(null);
+
+  const [dialogs, setDialogs] =
+    useState({
+
+      newFile: false,
+
+      newFolder: false,
+
+      rename: false,
+
+      delete: false,
+
+    });
+
   const [fileTree, setFileTree] =
     useState([
       {
@@ -128,6 +144,30 @@ export function WorkspaceProvider({
 
   }
 
+  function openDialog(name) {
+
+    setDialogs((old) => ({
+
+      ...old,
+
+      [name]: true,
+
+    }));
+
+  }
+
+  function closeDialog(name) {
+
+    setDialogs((old) => ({
+
+      ...old,
+
+      [name]: false,
+
+    }));
+
+  }
+
   return (
 
     <WorkspaceContext.Provider
@@ -136,6 +176,11 @@ export function WorkspaceProvider({
         activeTab,
         fileTree,
         setFileTree,
+        selectedItem,
+        setSelectedItem,
+        dialogs,
+        openDialog,
+        closeDialog,
         openFile,
         closeTab,
         setActiveTab,

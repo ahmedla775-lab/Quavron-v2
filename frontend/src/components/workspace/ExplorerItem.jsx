@@ -1,23 +1,52 @@
 import { useState } from "react";
+
 import {
-  ChevronRight,
   ChevronDown,
+  ChevronRight,
+  File,
   Folder,
   FolderOpen,
-  FileCode2,
 } from "lucide-react";
 
-import { useWorkspace } from "../../context/WorkspaceContext";
+import useWorkspace from "../../modules/workspace/hooks/useWorkspace";
 
-export default function ExplorerItem({ item }) {
+export default function ExplorerItem({
 
-  const [open, setOpen] = useState(item.open ?? false);
+  item,
 
-  const { openFile } = useWorkspace();
+  level = 0,
 
-  const isFolder = !!item.children;
+}) {
+
+  const {
+
+    activeFileId,
+
+    setActiveFileId,
+
+    selectedNodeId,
+
+    setSelectedNodeId,
+
+    actions,
+
+  } = useWorkspace();
+
+  const [open, setOpen] =
+    useState(item.open ?? false);
+
+  const isFolder =
+    item.type === "folder";
+
+  const selected =
+    selectedNodeId === item.id;
+
+  const active =
+    activeFileId === item.id;
 
   function handleClick() {
+
+    setSelectedNodeId(item.id);
 
     if (isFolder) {
 
@@ -27,13 +56,9 @@ export default function ExplorerItem({ item }) {
 
     }
 
-    openFile({
+    setActiveFileId(item.id);
 
-      id: item.name,
-
-      name: item.name,
-
-    });
+    actions.openFile(item.id);
 
   }
 
@@ -42,50 +67,90 @@ export default function ExplorerItem({ item }) {
     <div>
 
       <div
+
         onClick={handleClick}
-        className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-slate-300 transition hover:bg-slate-800"
+
+        className={`flex cursor-pointer items-center gap-2 rounded px-2 py-1 transition
+
+        ${selected
+          ? "bg-slate-700"
+          : "hover:bg-slate-800"}
+
+        ${active
+          ? "text-blue-400"
+          : "text-slate-200"}
+
+        `}
+
+        style={{
+
+          paddingLeft:
+
+            8 + level * 16,
+
+        }}
+
       >
 
         {isFolder ? (
+
           open ? (
+
             <ChevronDown className="h-4 w-4" />
+
           ) : (
+
             <ChevronRight className="h-4 w-4" />
+
           )
+
         ) : (
+
           <span className="w-4" />
+
         )}
 
         {isFolder ? (
+
           open ? (
+
             <FolderOpen className="h-4 w-4 text-yellow-400" />
+
           ) : (
+
             <Folder className="h-4 w-4 text-yellow-400" />
+
           )
+
         ) : (
-          <FileCode2 className="h-4 w-4 text-sky-400" />
+
+          <File className="h-4 w-4" />
+
         )}
 
-        <span>{item.name}</span>
+        <span className="truncate">
+
+          {item.name}
+
+        </span>
 
       </div>
 
-      {isFolder && open && (
+      {isFolder &&
+        open &&
+        item.children?.map((child) => (
 
-        <div className="ml-6">
+          <ExplorerItem
 
-          {item.children.map((child) => (
+            key={child.id}
 
-            <ExplorerItem
-              key={child.name}
-              item={child}
-            />
+            item={child}
 
-          ))}
+            level={level + 1}
 
-        </div>
+          />
 
-      )}
+        ))}
 
     </div>
 
