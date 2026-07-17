@@ -12,9 +12,9 @@ import { ProfileProvider } from "./context/ProfileContext";
 import { PostProvider } from "./context/PostContext";
 import { TabProvider } from "./context/TabContext";
 import { TerminalProvider } from "./context/TerminalContext";
+import { WorkspaceProvider } from "./context/WorkspaceContext";
 
 import { CommentsProvider } from "./modules/community/context/CommentsContext";
-
 
 ReactDOM.createRoot(
   document.getElementById("root")
@@ -38,7 +38,11 @@ ReactDOM.createRoot(
 
                   <TerminalProvider>
 
-                    <App />
+                    <WorkspaceProvider>
+
+                      <App />
+
+                    </WorkspaceProvider>
 
                   </TerminalProvider>
 
