@@ -4,65 +4,46 @@ import { useProfile } from "../../context/ProfileContext";
 import ProfileService from "../../services/ProfileService";
 
 export default function EditProfileDialog({
-
   profile,
-
   open,
-
   onClose,
-
 }) {
 
-  const { saveProfile } =
-    useProfile();
+  const { saveProfile } = useProfile();
 
-  const [fullName, setFullName] =
-    useState("");
+  const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
+  const [bio, setBio] = useState("");
+  const [website, setWebsite] = useState("");
+  const [location, setLocation] = useState("");
 
-  const [username, setUsername] =
-    useState("");
+  const [github, setGithub] = useState("");
+  const [linkedin, setLinkedin] = useState("");
+  const [x, setX] = useState("");
+  const [youtube, setYoutube] = useState("");
+  const [telegram, setTelegram] = useState("");
 
-  const [bio, setBio] =
-    useState("");
+  const [avatar, setAvatar] = useState(null);
+  const [cover, setCover] = useState(null);
 
-  const [website, setWebsite] =
-    useState("");
-
-  const [location, setLocation] =
-    useState("");
-
-  const [avatar, setAvatar] =
-    useState(null);
-
-  const [cover, setCover] =
-    useState(null);
-
-  const [saving, setSaving] =
-    useState(false);
+  const [saving, setSaving] = useState(false);
+  const [usernameError, setUsernameError] = useState("");
 
   useEffect(() => {
 
     if (!profile) return;
 
-    setFullName(
-      profile.full_name || ""
-    );
+    setFullName(profile.full_name || "");
+    setUsername(profile.username || "");
+    setBio(profile.bio || "");
+    setWebsite(profile.website || "");
+    setLocation(profile.location || "");
 
-    setUsername(
-      profile.username || ""
-    );
-
-    setBio(
-      profile.bio || ""
-    );
-
-    setWebsite(
-      profile.website || ""
-    );
-
-    setLocation(
-      profile.location || ""
-    );
+    setGithub(profile.github_url || "");
+    setLinkedin(profile.linkedin_url || "");
+    setX(profile.x_url || "");
+    setYoutube(profile.youtube_url || "");
+    setTelegram(profile.telegram_url || "");
 
   }, [profile]);
 
@@ -74,11 +55,28 @@ export default function EditProfileDialog({
 
       setSaving(true);
 
-      let avatarUrl =
-        profile.avatar_url;
+      setUsernameError("");
 
-      let coverUrl =
-        profile.cover_url;
+      const available =
+        await ProfileService.isUsernameAvailable(
+          username,
+          profile.id
+        );
+
+      if (!available) {
+
+        setUsernameError(
+          "Username already exists."
+        );
+
+        setSaving(false);
+
+        return;
+
+      }
+
+      let avatarUrl = profile.avatar_url;
+      let coverUrl = profile.cover_url;
 
       if (avatar) {
 
@@ -112,8 +110,13 @@ export default function EditProfileDialog({
 
         location,
 
-        avatar_url: avatarUrl,
+        github_url: github,
+        linkedin_url: linkedin,
+        x_url: x,
+        youtube_url: youtube,
+        telegram_url: telegram,
 
+        avatar_url: avatarUrl,
         cover_url: coverUrl,
 
       });
@@ -151,16 +154,12 @@ export default function EditProfileDialog({
           <div>
 
             <label className="mb-2 block text-slate-300">
-
               Full Name
-
             </label>
 
             <input
               value={fullName}
-              onChange={(e)=>
-                setFullName(e.target.value)
-              }
+              onChange={(e)=>setFullName(e.target.value)}
               className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
             />
 
@@ -169,53 +168,51 @@ export default function EditProfileDialog({
           <div>
 
             <label className="mb-2 block text-slate-300">
-
               Username
-
             </label>
 
             <input
               value={username}
-              onChange={(e)=>
-                setUsername(e.target.value)
-              }
+              onChange={(e)=>setUsername(e.target.value)}
               className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
             />
+
+            {usernameError && (
+
+              <p className="mt-2 text-sm text-red-500">
+
+                {usernameError}
+
+              </p>
+
+            )}
 
           </div>
 
           <div>
 
             <label className="mb-2 block text-slate-300">
-
               Bio
-
             </label>
 
             <textarea
               rows={4}
               value={bio}
-              onChange={(e)=>
-                setBio(e.target.value)
-              }
+              onChange={(e)=>setBio(e.target.value)}
               className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
             />
 
           </div>
+
           <div>
 
             <label className="mb-2 block text-slate-300">
-
               Website
-
             </label>
 
             <input
               value={website}
-              onChange={(e)=>
-                setWebsite(e.target.value)
-              }
-              placeholder="https://..."
+              onChange={(e)=>setWebsite(e.target.value)}
               className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
             />
 
@@ -224,16 +221,26 @@ export default function EditProfileDialog({
           <div>
 
             <label className="mb-2 block text-slate-300">
-
               Location
-
             </label>
 
             <input
               value={location}
-              onChange={(e)=>
-                setLocation(e.target.value)
-              }
+              onChange={(e)=>setLocation(e.target.value)}
+              className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
+            />
+
+          </div>
+          <div>
+
+            <label className="mb-2 block text-slate-300">
+              GitHub
+            </label>
+
+            <input
+              value={github}
+              onChange={(e)=>setGithub(e.target.value)}
+              placeholder="https://github.com/username"
               className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
             />
 
@@ -242,9 +249,67 @@ export default function EditProfileDialog({
           <div>
 
             <label className="mb-2 block text-slate-300">
+              LinkedIn
+            </label>
 
+            <input
+              value={linkedin}
+              onChange={(e)=>setLinkedin(e.target.value)}
+              placeholder="https://linkedin.com/in/username"
+              className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
+            />
+
+          </div>
+
+          <div>
+
+            <label className="mb-2 block text-slate-300">
+              X (Twitter)
+            </label>
+
+            <input
+              value={x}
+              onChange={(e)=>setX(e.target.value)}
+              placeholder="https://x.com/username"
+              className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
+            />
+
+          </div>
+
+          <div>
+
+            <label className="mb-2 block text-slate-300">
+              YouTube
+            </label>
+
+            <input
+              value={youtube}
+              onChange={(e)=>setYoutube(e.target.value)}
+              placeholder="https://youtube.com/@channel"
+              className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
+            />
+
+          </div>
+
+          <div>
+
+            <label className="mb-2 block text-slate-300">
+              Telegram
+            </label>
+
+            <input
+              value={telegram}
+              onChange={(e)=>setTelegram(e.target.value)}
+              placeholder="https://t.me/username"
+              className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
+            />
+
+          </div>
+
+          <div>
+
+            <label className="mb-2 block text-slate-300">
               Avatar
-
             </label>
 
             <input
@@ -263,9 +328,7 @@ export default function EditProfileDialog({
           <div>
 
             <label className="mb-2 block text-slate-300">
-
               Cover Image
-
             </label>
 
             <input
@@ -289,9 +352,7 @@ export default function EditProfileDialog({
             onClick={onClose}
             className="rounded-xl bg-slate-700 px-6 py-3 text-white transition hover:bg-slate-600"
           >
-
             Cancel
-
           </button>
 
           <button
@@ -300,15 +361,7 @@ export default function EditProfileDialog({
             className="rounded-xl bg-sky-600 px-6 py-3 font-semibold text-white transition hover:bg-sky-700 disabled:opacity-60"
           >
 
-            {
-
-              saving
-
-                ? "Saving..."
-
-                : "Save Changes"
-
-            }
+            {saving ? "Saving..." : "Save Changes"}
 
           </button>
 

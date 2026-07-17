@@ -2,235 +2,112 @@ import {
   Globe,
   MapPin,
   Calendar,
-  BadgeCheck,
-  User,
+  Briefcase,
+  GraduationCap,
+  Languages,
 } from "lucide-react";
 
-export default function ProfileAbout({
+export default function ProfileAbout({ profile }) {
 
-  profile,
+  const items = [
 
-}) {
+    {
+      icon: Globe,
+      label: "Website",
+      value: profile?.website,
+    },
+
+    {
+      icon: MapPin,
+      label: "Location",
+      value: profile?.location,
+    },
+
+    {
+      icon: Briefcase,
+      label: "Headline",
+      value: profile?.headline,
+    },
+
+    {
+      icon: GraduationCap,
+      label: "Education",
+      value: profile?.education,
+    },
+
+    {
+      icon: Languages,
+      label: "Languages",
+      value: profile?.languages,
+    },
+
+    {
+      icon: Calendar,
+      label: "Joined",
+      value: profile?.created_at
+        ? new Date(profile.created_at).toLocaleDateString()
+        : null,
+    },
+
+  ];
 
   return (
 
-    <div className="mt-8 rounded-3xl border border-slate-800 bg-slate-900 p-8">
+    <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-900 p-8">
 
-      <h2 className="mb-8 text-3xl font-bold text-white">
+      <h2 className="mb-6 text-2xl font-bold text-white">
 
         About
 
       </h2>
 
-      <div className="space-y-8">
+      <div className="space-y-5">
 
-        <div className="flex items-start gap-4">
+        <div>
 
-          <User
-            className="mt-1 text-sky-400"
-            size={22}
-          />
+          <h3 className="mb-2 text-slate-400">
 
-          <div>
+            Bio
 
-            <p className="text-sm text-slate-400">
+          </h3>
 
-              Full Name
+          <p className="text-white">
 
-            </p>
+            {profile?.bio || "No bio yet."}
 
-            <p className="mt-1 text-lg font-medium text-white">
-
-              {profile?.full_name || "-"}
-
-            </p>
-
-          </div>
+          </p>
 
         </div>
 
-        <div className="flex items-start gap-4">
+        {items.map((item) => {
 
-          <BadgeCheck
-            className="mt-1 text-sky-400"
-            size={22}
-          />
+          if (!item.value) return null;
 
-          <div>
+          const Icon = item.icon;
 
-            <p className="text-sm text-slate-400">
+          return (
 
-              Username
-
-            </p>
-
-            <p className="mt-1 text-lg font-medium text-white">
-
-              @{profile?.username || "-"}
-
-            </p>
-
-          </div>
-
-        </div>
-
-        <div className="flex items-start gap-4">
-
-          <User
-            className="mt-1 text-sky-400"
-            size={22}
-          />
-
-          <div>
-
-            <p className="text-sm text-slate-400">
-
-              Bio
-
-            </p>
-
-            <p className="mt-1 whitespace-pre-wrap text-slate-300">
-
-              {profile?.bio || "No bio yet."}
-
-            </p>
-
-          </div>
-
-        </div>
-
-        <div className="flex items-start gap-4">
-
-          <MapPin
-            className="mt-1 text-sky-400"
-            size={22}
-          />
-
-          <div>
-
-            <p className="text-sm text-slate-400">
-
-              Location
-
-            </p>
-
-            <p className="mt-1 text-white">
-
-              {profile?.location || "-"}
-
-            </p>
-
-          </div>
-
-        </div>
-
-        <div className="flex items-start gap-4">
-
-          <Globe
-            className="mt-1 text-sky-400"
-            size={22}
-          />
-
-          <div>
-
-            <p className="text-sm text-slate-400">
-
-              Website
-
-            </p>
-
-            {profile?.website ? (
-
-              <a
-                href={profile.website}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-1 inline-block break-all text-sky-400 hover:underline"
-              >
-
-                {profile.website}
-
-              </a>
-
-            ) : (
-
-              <p className="mt-1 text-white">
-
-                -
-
-              </p>
-
-            )}
-
-          </div>
-
-        </div>
-
-        <div className="flex items-start gap-4">
-
-          <Calendar
-            className="mt-1 text-sky-400"
-            size={22}
-          />
-
-          <div>
-
-            <p className="text-sm text-slate-400">
-
-              Joined
-
-            </p>
-
-            <p className="mt-1 text-white">
-
-              {profile?.created_at
-                ? new Date(
-                    profile.created_at
-                  ).toLocaleDateString()
-                : "-"}
-
-            </p>
-
-          </div>
-
-        </div>
-
-        <div className="flex items-start gap-4">
-
-          <BadgeCheck
-            className={`mt-1 ${
-              profile?.verified
-                ? "text-green-400"
-                : "text-slate-500"
-            }`}
-            size={22}
-          />
-
-          <div>
-
-            <p className="text-sm text-slate-400">
-
-              Verification
-
-            </p>
-
-            <p
-              className={`mt-1 font-medium ${
-                profile?.verified
-                  ? "text-green-400"
-                  : "text-slate-400"
-              }`}
+            <div
+              key={item.label}
+              className="flex items-center gap-3"
             >
 
-              {profile?.verified
-                ? "Verified Account"
-                : "Not Verified"}
+              <Icon
+                size={18}
+                className="text-blue-400"
+              />
 
-            </p>
+              <span className="text-slate-300">
 
-          </div>
+                {item.value}
 
-        </div>
+              </span>
+
+            </div>
+
+          );
+
+        })}
 
       </div>
 

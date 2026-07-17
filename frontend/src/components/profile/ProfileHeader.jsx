@@ -1,9 +1,10 @@
 import {
   MapPin,
   Globe,
-  CheckCircle,
-  Pencil,
+  BadgeCheck,
+  Calendar,
   Share2,
+  Pencil,
 } from "lucide-react";
 
 export default function ProfileHeader({
@@ -14,97 +15,49 @@ export default function ProfileHeader({
 
 }) {
 
-  async function shareProfile() {
-
-    const url = window.location.href;
-
-    if (navigator.share) {
-
-      await navigator.share({
-
-        title: profile?.full_name,
-
-        text: `Check out ${profile?.full_name} on Quavron`,
-
-        url,
-
-      });
-
-      return;
-
-    }
-
-    await navigator.clipboard.writeText(url);
-
-    alert("Profile link copied.");
-
-  }
-
   return (
 
     <div className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900">
 
-      <div className="relative h-72 w-full">
+      <div
+        className="h-56 w-full bg-cover bg-center"
+        style={{
+          backgroundImage: profile?.cover_url
+            ? `url(${profile.cover_url})`
+            : "linear-gradient(135deg,#2563eb,#0f172a)",
+        }}
+      />
 
-        {profile?.cover_url ? (
+      <div className="px-8 pb-8">
 
-          <img
-            src={profile.cover_url}
-            alt="Cover"
-            className="h-full w-full object-cover"
-          />
+        <div className="-mt-20 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
 
-        ) : (
+          <div className="flex gap-6">
 
-          <div className="h-full w-full bg-gradient-to-r from-sky-600 via-cyan-500 to-indigo-700" />
+            <img
+              src={
+                profile?.avatar_url ||
+                "https://placehold.co/160x160"
+              }
+              alt=""
+              className="h-40 w-40 rounded-full border-4 border-slate-900 object-cover"
+            />
 
-        )}
-
-      </div>
-
-      <div className="relative px-8 pb-8">
-
-        <div className="-mt-20 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-
-          <div className="flex items-end gap-6">
-
-            <div className="h-40 w-40 overflow-hidden rounded-full border-4 border-slate-900 bg-slate-800">
-
-              {profile?.avatar_url ? (
-
-                <img
-                  src={profile.avatar_url}
-                  alt={profile.full_name}
-                  className="h-full w-full object-cover"
-                />
-
-              ) : (
-
-                <div className="flex h-full w-full items-center justify-center text-6xl font-bold text-white">
-
-                  {profile?.full_name?.charAt(0)?.toUpperCase() || "Q"}
-
-                </div>
-
-              )}
-
-            </div>
-
-            <div>
+            <div className="pt-20">
 
               <div className="flex items-center gap-2">
 
-                <h1 className="text-4xl font-bold text-white">
+                <h1 className="text-3xl font-bold text-white">
 
-                  {profile?.full_name || "Quavron User"}
+                  {profile?.full_name}
 
                 </h1>
 
                 {profile?.verified && (
 
-                  <CheckCircle
+                  <BadgeCheck
                     size={24}
-                    className="text-sky-400"
+                    className="text-blue-500"
                   />
 
                 )}
@@ -143,18 +96,28 @@ export default function ProfileHeader({
 
                 {profile?.website && (
 
-                  <a
-                    href={profile.website}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-2 text-sky-400 hover:underline"
-                  >
+                  <div className="flex items-center gap-2">
 
                     <Globe size={16} />
 
                     {profile.website}
 
-                  </a>
+                  </div>
+
+                )}
+
+                {profile?.created_at && (
+
+                  <div className="flex items-center gap-2">
+
+                    <Calendar size={16} />
+
+                    Joined{" "}
+                    {new Date(
+                      profile.created_at
+                    ).getFullYear()}
+
+                  </div>
 
                 )}
 
@@ -167,19 +130,16 @@ export default function ProfileHeader({
           <div className="flex gap-3">
 
             <button
-              onClick={shareProfile}
-              className="flex items-center gap-2 rounded-xl bg-slate-800 px-5 py-3 text-white transition hover:bg-slate-700"
+              className="rounded-xl border border-slate-700 px-5 py-3 text-white transition hover:bg-slate-800"
             >
 
               <Share2 size={18} />
-
-              Share
 
             </button>
 
             <button
               onClick={onEdit}
-              className="flex items-center gap-2 rounded-xl bg-sky-600 px-5 py-3 font-semibold text-white transition hover:bg-sky-700"
+              className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-500"
             >
 
               <Pencil size={18} />

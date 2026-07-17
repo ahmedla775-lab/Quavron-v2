@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+
 import Dashboard from "./pages/Dashboard";
 import IDE from "./pages/IDE";
 import Projects from "./pages/Projects";
@@ -20,6 +21,7 @@ import Community from "./pages/Community";
 import Analytics from "./pages/Analytics";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
+import UserSettings from "./pages/UserSettings";
 import PostDetails from "./pages/PostDetails";
 
 import Layout from "./components/layout/Layout";
@@ -157,6 +159,15 @@ function App() {
           element={
             <ProtectedRoute>
               <Settings />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/user-settings"
+          element={
+            <ProtectedRoute>
+              <UserSettings />
             </ProtectedRoute>
           }
         />
