@@ -24,20 +24,78 @@ export function WorkspaceProvider({
   const [activeTab, setActiveTab] =
     useState("app");
 
+  const [fileTree, setFileTree] =
+    useState([
+      {
+        name: "src",
+        open: true,
+        children: [
+          {
+            name: "components",
+            open: true,
+            children: [
+              {
+                name: "workspace",
+                open: false,
+                children: [
+                  {
+                    name: "ActivityBar.jsx",
+                  },
+                  {
+                    name: "EditorArea.jsx",
+                  },
+                  {
+                    name: "TerminalPanel.jsx",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: "pages",
+            open: false,
+            children: [
+              {
+                name: "IDE.jsx",
+              },
+              {
+                name: "Dashboard.jsx",
+              },
+              {
+                name: "Profile.jsx",
+              },
+            ],
+          },
+          {
+            name: "App.jsx",
+          },
+          {
+            name: "main.jsx",
+          },
+        ],
+      },
+      {
+        name: "public",
+        open: false,
+        children: [],
+      },
+      {
+        name: "package.json",
+      },
+    ]);
+
   function openFile(file) {
 
-    const exists = tabs.find(
-      (t) => t.id === file.id
-    );
+    const exists =
+      tabs.find(
+        (t) => t.id === file.id
+      );
 
     if (!exists) {
 
       setTabs((old) => [
-
         ...old,
-
         file,
-
       ]);
 
     }
@@ -76,6 +134,8 @@ export function WorkspaceProvider({
       value={{
         tabs,
         activeTab,
+        fileTree,
+        setFileTree,
         openFile,
         closeTab,
         setActiveTab,

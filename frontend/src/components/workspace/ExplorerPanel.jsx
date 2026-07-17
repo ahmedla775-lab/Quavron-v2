@@ -1,49 +1,16 @@
 import ExplorerItem from "./ExplorerItem";
-
-const files = [
-  {
-    name: "src",
-    open: true,
-    children: [
-      {
-        name: "components",
-        open: true,
-        children: [
-          {
-            name: "workspace",
-            open: false,
-            children: [
-              { name: "ActivityBar.jsx" },
-              { name: "EditorArea.jsx" },
-              { name: "TerminalPanel.jsx" },
-            ],
-          },
-        ],
-      },
-      {
-        name: "pages",
-        open: false,
-        children: [
-          { name: "IDE.jsx" },
-          { name: "Dashboard.jsx" },
-          { name: "Profile.jsx" },
-        ],
-      },
-      { name: "App.jsx" },
-      { name: "main.jsx" },
-    ],
-  },
-  {
-    name: "public",
-    open: false,
-    children: [],
-  },
-  {
-    name: "package.json",
-  },
-];
+import ExplorerToolbar from "./ExplorerToolbar";
+import {
+  useWorkspace,
+} from "../../context/WorkspaceContext";
 
 export default function ExplorerPanel() {
+
+  const {
+
+    fileTree,
+
+  } = useWorkspace();
 
   return (
 
@@ -58,10 +25,10 @@ export default function ExplorerPanel() {
         </h2>
 
       </div>
-
+<ExplorerToolbar />
       <div className="p-2">
 
-        {files.map((item) => (
+        {fileTree.map((item) => (
 
           <ExplorerItem
             key={item.name}
