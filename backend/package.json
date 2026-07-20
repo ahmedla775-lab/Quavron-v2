@@ -1,17 +1,15 @@
 {
-  "name": "backend",
+  "name": "quavron-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "socket.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "description": "Quavron Backend API",
+  "main": "server.js",
   "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.0",
+    "@vercel/node": "^5.8.26",
     "axios": "^1.18.1",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
