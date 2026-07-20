@@ -4,11 +4,24 @@ export default function PostContent({ post }) {
 
   return (
 
-    <div className="mt-4">
+    <div
+      className="
+        mt-4
+        w-full
+        min-w-0
+      "
+    >
+
 
       {post.content && (
 
-        <p className="whitespace-pre-wrap leading-7 text-slate-200">
+        <p
+          className="
+            whitespace-pre-wrap
+            leading-7
+            text-slate-200
+          "
+        >
 
           {post.content}
 
@@ -16,32 +29,65 @@ export default function PostContent({ post }) {
 
       )}
 
+
+
+
       {media.length > 0 && (
 
-        <div className="mt-4 space-y-4">
+        <div
+          className="
+            mt-4
+            flex
+            w-full
+            flex-col
+            gap-4
+          "
+        >
 
           {media.map((item) => (
 
             <div
               key={item.id}
-              className="overflow-hidden rounded-2xl border border-slate-800"
+              className="
+                w-full
+                overflow-hidden
+                border-y
+                border-slate-800
+                bg-slate-950
+
+                sm:rounded-2xl
+                sm:border
+              "
             >
+
 
               {item.mime_type?.startsWith("image/") && (
 
                 <img
                   src={item.url}
                   alt={item.file_name}
-                  className="w-full object-cover"
+                  className="
+                    block
+                    h-auto
+                    w-full
+                    object-cover
+                  "
                 />
 
               )}
+
+
+
 
               {item.mime_type?.startsWith("video/") && (
 
                 <video
                   controls
-                  className="w-full"
+                  className="
+                    block
+                    h-auto
+                    w-full
+                  "
                 >
 
                   <source
@@ -52,6 +98,11 @@ export default function PostContent({ post }) {
                 </video>
 
               )}
+
+
+
+
+
 
               {item.mime_type?.startsWith("audio/") && (
 
@@ -73,6 +124,11 @@ export default function PostContent({ post }) {
 
               )}
 
+
+
+
+
+
               {!item.mime_type?.startsWith("image/")
                 && !item.mime_type?.startsWith("video/")
                 && !item.mime_type?.startsWith("audio/") && (
@@ -83,7 +139,11 @@ export default function PostContent({ post }) {
                     href={item.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="font-medium text-blue-400 hover:underline"
+                    className="
+                      font-medium
+                      text-blue-400
+                      hover:underline
+                    "
                   >
 
                     📄 {item.file_name}
@@ -94,13 +154,17 @@ export default function PostContent({ post }) {
 
               )}
 
+
+
             </div>
 
           ))}
 
+
         </div>
 
       )}
+
 
     </div>
 

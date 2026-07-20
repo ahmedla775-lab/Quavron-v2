@@ -35,17 +35,19 @@ class BookmarkService {
   }
 
   async getBookmarks(userId) {
-
-    return await supabase
-      .from("post_bookmarks")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", {
-        ascending: false,
-      });
-
-  }
-
+  return await supabase
+    .from("post_bookmarks")
+    .select(`
+      post:posts(
+        *,
+        profiles(*)
+      )
+    `)
+    .eq("user_id", userId)
+    .order("created_at", {
+      ascending: false,
+    });
+}
 }
 
 export default new BookmarkService();

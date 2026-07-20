@@ -18,12 +18,7 @@ export default function ProfileSaved({ profile }) {
           profile.id
         );
 
-      setPosts(
-        (data || []).map(
-          (item) => item.posts
-        )
-      );
-
+      setPosts(data || []);
       setLoading(false);
 
     }

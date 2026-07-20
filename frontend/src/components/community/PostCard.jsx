@@ -7,6 +7,7 @@ import PostHeader from "./post/PostHeader";
 import PostContent from "./post/PostContent";
 import PostActions from "./post/PostActions";
 
+
 export default function PostCard({ post }) {
 
   const { user } = useAuth();
@@ -16,14 +17,18 @@ export default function PostCard({ post }) {
     deletePost,
   } = usePosts();
 
-  const [editing, setEditing] =
-    useState(false);
 
-  const [content, setContent] =
-    useState(post.content);
+  const [editing, setEditing] = useState(false);
+
+  const [content, setContent] = useState(
+    post.content
+  );
+
 
   const isOwner =
     user?.id === post.author_id;
+
+
 
   async function handleSave() {
 
@@ -35,16 +40,21 @@ export default function PostCard({ post }) {
 
   }
 
+
+
   async function handleDelete() {
 
-    const ok =
-      confirm("Delete this post?");
+    const ok = confirm(
+      "Delete this post?"
+    );
 
     if (!ok) return;
 
     await deletePost(post.id);
 
   }
+
+
 
   async function handleShare() {
 
@@ -57,8 +67,8 @@ export default function PostCard({ post }) {
       });
 
       return;
-
     }
+
 
     await navigator.clipboard.writeText(
       window.location.href
@@ -68,59 +78,142 @@ export default function PostCard({ post }) {
 
   }
 
+
+
   function handleBookmark() {
 
-    alert("Bookmark will be connected next");
+    alert(
+      "Bookmark will be connected next"
+    );
 
   }
 
+
+
   return (
 
-    <article className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-sm transition hover:border-slate-700">
+    <article
+      className="
+        w-full
+        min-w-0
+        overflow-hidden
+        border-y
+        border-slate-800
+        bg-slate-900
+        p-4
+        shadow-sm
+        transition
+
+        sm:rounded-2xl
+        sm:border
+        sm:p-5
+
+        hover:border-slate-700
+      "
+    >
+
 
       <PostHeader
+
         post={post}
+
         isOwner={isOwner}
-        onEdit={() => setEditing(true)}
+
+        onEdit={() =>
+          setEditing(true)
+        }
+
         onDelete={handleDelete}
+
         onShare={handleShare}
+
         onBookmark={handleBookmark}
+
       />
+
+
 
       {editing ? (
 
         <div className="mt-4">
 
+
           <textarea
+
             value={content}
+
             onChange={(e) =>
               setContent(e.target.value)
             }
-            className="min-h-[120px] w-full rounded-xl border border-slate-700 bg-slate-950 p-4 text-white"
+
+            className="
+              min-h-[120px]
+              w-full
+              rounded-xl
+              border
+              border-slate-700
+              bg-slate-950
+              p-4
+              text-white
+            "
+
           />
+
+
 
           <div className="mt-3 flex gap-2">
 
-            <button
-              onClick={handleSave}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-white"
-            >
-              Save
-            </button>
 
             <button
-              onClick={() => {
-                setContent(post.content);
-                setEditing(false);
-              }}
-              className="rounded-lg bg-slate-700 px-4 py-2 text-white"
+
+              onClick={handleSave}
+
+              className="
+                rounded-lg
+                bg-blue-600
+                px-4
+                py-2
+                text-white
+              "
+
             >
-              Cancel
+
+              Save
+
             </button>
+
+
+
+            <button
+
+              onClick={() => {
+
+                setContent(post.content);
+
+                setEditing(false);
+
+              }}
+
+              className="
+                rounded-lg
+                bg-slate-700
+                px-4
+                py-2
+                text-white
+              "
+
+            >
+
+              Cancel
+
+            </button>
+
 
           </div>
 
+
         </div>
+
 
       ) : (
 
@@ -128,7 +221,10 @@ export default function PostCard({ post }) {
 
       )}
 
+
+
       <PostActions post={post} />
+
 
     </article>
 

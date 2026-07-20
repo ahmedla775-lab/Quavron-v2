@@ -60,33 +60,44 @@ class PostService {
   }
 
   async getSavedPosts(userId) {
+  const { data: bookmarks, error } = await supabase
+    .from("post_bookmarks")
+    .select("post_id")
+    .eq("user_id", userId);
 
-    return await supabase
-      .from("bookmarks")
-      .select(`
-        posts!inner (
-          *,
-          profiles (
-            id,
-            username,
-            full_name,
-            avatar_url
-          ),
-          post_media (
-            id,
-            type,
-            mime_type,
-            file_name,
-            file_size,
-            url,
-            created_at
-          )
-        )
-      `)
-      .eq("user_id", userId);
+  if (error) return { data: [], error };
 
+  if (!bookmarks?.length) {
+    return { data: [] };
   }
 
+  const ids = bookmarks.map((b) => b.post_id);
+
+  return await supabase
+    .from("community_feed")
+    .select(`
+      *,
+      profiles (
+        id,
+        username,
+        full_name,
+        avatar_url
+      ),
+      post_media (
+        id,
+        type,
+        mime_type,
+        file_name,
+        file_size,
+        url,
+        created_at
+      )
+    `)
+    .in("id", ids)
+    .order("created_at", {
+      ascending: false,
+    });
+}
   async createPost(values) {
 
     const { data: inserted, error } = await supabase

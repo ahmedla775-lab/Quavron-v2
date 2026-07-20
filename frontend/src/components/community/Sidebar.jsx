@@ -26,9 +26,20 @@ const items = [
   { icon: Bookmark, label: "Saved" },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({
+  active = "Home",
+  onChange,
+}) {
   return (
-    <div className="h-full bg-slate-900 p-4">
+    <div
+      className="
+        h-full
+        overflow-y-auto
+        bg-slate-900
+        p-4
+        pb-24
+      "
+    >
       <h2 className="mb-6 text-2xl font-bold text-white">
         Community
       </h2>
@@ -37,10 +48,29 @@ export default function Sidebar() {
         {items.map((item) => {
           const Icon = item.icon;
 
+          const selected = active === item.label;
+
           return (
             <button
               key={item.label}
-              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-slate-300 transition hover:bg-slate-800 hover:text-white"
+              onClick={() => onChange?.(item.label)}
+              className={`
+                flex
+                w-full
+                items-center
+                gap-3
+                rounded-xl
+                px-4
+                py-3
+                text-left
+                transition
+
+                ${
+                  selected
+                    ? "bg-blue-600 text-white"
+                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                }
+              `}
             >
               <Icon size={20} />
               <span>{item.label}</span>

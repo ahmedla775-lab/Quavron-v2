@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import BackButton from "../common/BackButton";
 import ActivityBar from "./ActivityBar";
 import ExplorerPanel from "./ExplorerPanel";
 
@@ -92,7 +92,11 @@ export default function WorkspaceLayout({
       </div>
 
       <main className="flex-1 overflow-hidden">
+<div className="border-b border-slate-800 bg-slate-950 p-3">
 
+  <BackButton />
+
+</div>
         {children}
 
       </main>

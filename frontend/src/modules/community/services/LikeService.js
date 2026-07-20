@@ -1,51 +1,91 @@
 import { supabase } from "../../../lib/supabase";
 
+
 class LikeService {
 
-  async isLiked(postId, userId) {
+
+  async getReaction(postId,userId){
 
     return await supabase
-      .from("post_likes")
-      .select("id")
-      .eq("post_id", postId)
-      .eq("user_id", userId)
+      .from("post_reactions")
+      .select("*")
+      .eq("post_id",postId)
+      .eq("user_id",userId)
       .maybeSingle();
 
   }
 
-  async addLike(postId, userId) {
+
+
+  async setReaction(postId,userId,reaction){
+
+    const existing =
+      await this.getReaction(postId,userId);
+
+
+    if(existing.data){
+
+      return await supabase
+        .from("post_reactions")
+        .update({
+          reaction
+        })
+        .eq(
+          "id",
+          existing.data.id
+        );
+
+    }
+
 
     return await supabase
-      .from("post_likes")
+      .from("post_reactions")
       .insert({
-        post_id: postId,
-        user_id: userId,
+
+        post_id:postId,
+        user_id:userId,
+        reaction
+
       });
 
   }
 
-  async removeLike(postId, userId) {
+
+
+  async removeReaction(postId,userId){
 
     return await supabase
-      .from("post_likes")
+      .from("post_reactions")
       .delete()
-      .eq("post_id", postId)
-      .eq("user_id", userId);
+      .eq(
+        "post_id",
+        postId
+      )
+      .eq(
+        "user_id",
+        userId
+      );
 
   }
 
-  async countLikes(postId) {
+
+
+  async countReactions(postId){
 
     return await supabase
-      .from("post_likes")
-      .select("*", {
-        count: "exact",
-        head: true,
-      })
-      .eq("post_id", postId);
+      .from("post_reactions")
+      .select(
+        "reaction"
+      )
+      .eq(
+        "post_id",
+        postId
+      );
 
   }
+
 
 }
+
 
 export default new LikeService();

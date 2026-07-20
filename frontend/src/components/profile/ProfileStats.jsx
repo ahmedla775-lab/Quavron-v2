@@ -1,109 +1,69 @@
-import {
-  FileText,
-  Users,
-  UserPlus,
-  FolderKanban,
-  Award,
-  Eye,
-  Store,
-  GraduationCap,
-} from "lucide-react";
+export default function ProfileStats({
 
-export default function ProfileStats({ profile }) {
+  profile,
+
+}) {
 
   const stats = [
 
     {
-      label: "Posts",
-      value: profile?.posts_count ?? 0,
-      icon: FileText,
+      title: "Followers",
+      value: profile?.followers_count || 0,
     },
 
     {
-      label: "Followers",
-      value: profile?.followers_count ?? 0,
-      icon: Users,
+      title: "Following",
+      value: profile?.following_count || 0,
     },
 
     {
-      label: "Following",
-      value: profile?.following_count ?? 0,
-      icon: UserPlus,
+      title: "Projects",
+      value: profile?.projects_count || 0,
     },
 
     {
-      label: "Projects",
-      value: profile?.projects_count ?? 0,
-      icon: FolderKanban,
+      title: "Posts",
+      value: profile?.posts_count || 0,
     },
 
     {
-      label: "Courses",
-      value: profile?.courses_count ?? 0,
-      icon: GraduationCap,
+      title: "Reputation",
+      value: profile?.reputation || 0,
     },
 
     {
-      label: "Marketplace",
-      value: profile?.marketplace_count ?? 0,
-      icon: Store,
-    },
-
-    {
-      label: "Reputation",
-      value: profile?.reputation ?? 0,
-      icon: Award,
-    },
-
-    {
-      label: "Views",
-      value: profile?.profile_views ?? 0,
-      icon: Eye,
+      title: "Level",
+      value: profile?.level || 1,
     },
 
   ];
 
   return (
 
-    <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+    <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
 
-      {stats.map((item) => {
+      {stats.map((item) => (
 
-        const Icon = item.icon;
+        <div
+          key={item.title}
+          className="rounded-2xl border border-slate-800 bg-slate-900 p-5 text-center transition hover:border-blue-500"
+        >
 
-        return (
+          <p className="text-3xl font-bold text-white">
 
-          <div
-            key={item.label}
-            className="rounded-2xl border border-slate-800 bg-slate-900 p-5"
-          >
+            {item.value}
 
-            <div className="flex items-center justify-between">
+          </p>
 
-              <span className="text-slate-400 text-sm">
+          <p className="mt-2 text-sm text-slate-400">
 
-                {item.label}
+            {item.title}
 
-              </span>
+          </p>
 
-              <Icon
-                size={18}
-                className="text-blue-400"
-              />
+        </div>
 
-            </div>
-
-            <h3 className="mt-3 text-2xl font-bold text-white">
-
-              {item.value}
-
-            </h3>
-
-          </div>
-
-        );
-
-      })}
+      ))}
 
     </div>
 

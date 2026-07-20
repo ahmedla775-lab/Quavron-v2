@@ -1,20 +1,18 @@
-const express = require("express");
-const cors = require("cors");
+require("dotenv").config();
 
-const app = express();
+const app = require("./src/app");
+const config = require("./src/config/server");
+const bootstrap = require("./src/bootstrap");
 
-app.use(cors());
-app.use(express.json());
+async function start() {
+  await bootstrap();
 
-app.get("/", (req, res) => {
-  res.json({
-    success: true,
-    name: "Quavron API",
-    version: "1.0.0",
-    status: "Running 🚀"
+  app.listen(config.port, () => {
+    console.log(`Quavron API listening on port ${config.port}`);
   });
-});
+}
 
-app.listen(5000, () => {
-  console.log("Server running on port 5000");
+start().catch((error) => {
+  console.error(error);
+  process.exit(1);
 });

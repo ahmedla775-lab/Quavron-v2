@@ -1,2 +1,20 @@
+# Node modules
 backend/node_modules/
 frontend/node_modules/
+
+# Environment files
+backend/.env
+frontend/.env
+
+# Logs
+*.log
+
+# Temporary files
+backend/feed.json
+backend/test.json
+backend/backend_files.txt
+frontend/frontend_files.txt
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,41 @@
+/* Responsive Containers */
+.q-container {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding-inline: 1rem;
+}
+
+/* Responsive Grid */
+.q-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+/* Responsive Cards */
+.q-card {
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Responsive Images */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Prevent horizontal scrolling */
+html,
+body,
+#root {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* Flexible layout */
+.q-flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}

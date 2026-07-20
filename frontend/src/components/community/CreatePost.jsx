@@ -10,11 +10,13 @@ import {
 import { useAuth } from "../auth/AuthProvider";
 import { usePosts } from "../../context/PostContext";
 
+
 export default function CreatePost() {
 
   const { user } = useAuth();
 
   const { createPost } = usePosts();
+
 
   const [content, setContent] = useState("");
 
@@ -22,9 +24,13 @@ export default function CreatePost() {
 
   const [loading, setLoading] = useState(false);
 
+
+
   function handleFiles(e) {
 
-    const selected = Array.from(e.target.files);
+    const selected = Array.from(
+      e.target.files
+    );
 
     setFiles((prev) => [
       ...prev,
@@ -32,6 +38,8 @@ export default function CreatePost() {
     ]);
 
   }
+
+
 
   function removeFile(index) {
 
@@ -41,13 +49,19 @@ export default function CreatePost() {
 
   }
 
+
+
+
   async function handlePost() {
 
     if (!user) return;
 
-    if (!content.trim() && files.length === 0) return;
+    if (!content.trim() && files.length === 0)
+      return;
+
 
     setLoading(true);
+
 
     try {
 
@@ -57,9 +71,11 @@ export default function CreatePost() {
         files,
       });
 
+
       setContent("");
 
       setFiles([]);
+
 
     } catch (err) {
 
@@ -73,55 +89,114 @@ export default function CreatePost() {
 
   }
 
+
+
+
+
   return (
 
-    <div className="border-b border-slate-800 bg-slate-900 p-4">
+    <div
+      className="
+        w-full
+        border-b
+        border-slate-800
+        bg-slate-900
+        p-3
+
+        sm:p-4
+      "
+    >
+
 
       <textarea
         rows="3"
         value={content}
-        onChange={(e) => setContent(e.target.value)}
+        onChange={(e) =>
+          setContent(e.target.value)
+        }
         placeholder="What's happening today?"
-        className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
+        className="
+          w-full
+          rounded-xl
+          bg-slate-800
+          p-3
+          text-white
+          outline-none
+        "
       />
+
+
 
       {files.length > 0 && (
 
         <div className="mt-4 space-y-2">
 
+
           {files.map((file, index) => (
 
             <div
               key={index}
-              className="flex items-center justify-between rounded-lg bg-slate-800 px-3 py-2"
+              className="
+                flex
+                items-center
+                justify-between
+                rounded-lg
+                bg-slate-800
+                px-3
+                py-2
+              "
             >
 
               <span className="truncate text-sm text-white">
                 {file.name}
               </span>
 
+
               <button
-                onClick={() => removeFile(index)}
-                className="text-red-500 hover:text-red-400"
+                onClick={() =>
+                  removeFile(index)
+                }
+                className="
+                  text-red-500
+                  hover:text-red-400
+                "
               >
+
                 Remove
+
               </button>
+
 
             </div>
 
           ))}
 
+
         </div>
 
       )}
 
-      <div className="mt-4 flex items-center justify-between">
+
+
+
+
+
+      <div
+        className="
+          mt-4
+          flex
+          items-center
+          justify-between
+        "
+      >
+
 
         <div className="flex gap-3">
 
+
           <label className="cursor-pointer text-slate-400 hover:text-blue-500">
 
-            <Image size={22} />
+            <Image size={22}/>
 
             <input
               type="file"
@@ -133,9 +208,12 @@ export default function CreatePost() {
 
           </label>
 
+
+
+
           <label className="cursor-pointer text-slate-400 hover:text-green-500">
 
-            <Video size={22} />
+            <Video size={22}/>
 
             <input
               type="file"
@@ -147,9 +225,12 @@ export default function CreatePost() {
 
           </label>
 
+
+
+
           <label className="cursor-pointer text-slate-400 hover:text-yellow-500">
 
-            <Paperclip size={22} />
+            <Paperclip size={22}/>
 
             <input
               type="file"
@@ -160,9 +241,12 @@ export default function CreatePost() {
 
           </label>
 
+
+
+
           <label className="cursor-pointer text-slate-400 hover:text-pink-500">
 
-            <Music size={22} />
+            <Music size={22}/>
 
             <input
               type="file"
@@ -174,17 +258,35 @@ export default function CreatePost() {
 
           </label>
 
+
         </div>
+
+
+
+
 
         <button
           onClick={handlePost}
           disabled={loading}
-          className="rounded-xl bg-blue-600 px-5 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+          className="
+            rounded-xl
+            bg-blue-600
+            px-5
+            py-2
+            font-semibold
+            text-white
+            hover:bg-blue-700
+            disabled:opacity-50
+          "
         >
+
           {loading ? "Posting..." : "Post"}
+
         </button>
 
+
       </div>
+
 
     </div>
 

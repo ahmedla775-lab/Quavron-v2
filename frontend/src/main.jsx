@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-
+import { SocialHubProvider } from "./modules/socialhub/providers/SocialHubProvider";
 import App from "./App";
 import "./style.css";
 
@@ -12,54 +12,58 @@ import { ProfileProvider } from "./context/ProfileContext";
 import { PostProvider } from "./context/PostContext";
 import { TabProvider } from "./context/TabContext";
 import { TerminalProvider } from "./context/TerminalContext";
-import { WorkspaceProvider } from "./context/WorkspaceContext";
 
+import { WorkspaceProvider } from "./modules/workspace/context/WorkspaceContext";
 import { CommentsProvider } from "./modules/community/context/CommentsContext";
+
+import { ThemeProvider } from "./theme/ThemeProvider";
 
 ReactDOM.createRoot(
   document.getElementById("root")
 ).render(
-
   <React.StrictMode>
 
-    <AuthProvider>
+    <ThemeProvider>
 
-      <ProjectProvider>
+      <AuthProvider>
 
-        <FileProvider>
+        <ProjectProvider>
 
-          <ProfileProvider>
+          <FileProvider>
 
-            <PostProvider>
+            <ProfileProvider>
 
-              <CommentsProvider>
+              <PostProvider>
 
-                <TabProvider>
+                <CommentsProvider>
 
-                  <TerminalProvider>
+                  <TabProvider>
 
-                    <WorkspaceProvider>
+                    <TerminalProvider>
 
-                      <App />
+                      <SocialHubProvider>
+  <WorkspaceProvider>
+    <App />
+  </WorkspaceProvider>
+</SocialHubProvider>
 
-                    </WorkspaceProvider>
+                    </TerminalProvider>
 
-                  </TerminalProvider>
+                  </TabProvider>
 
-                </TabProvider>
+                </CommentsProvider>
 
-              </CommentsProvider>
+              </PostProvider>
 
-            </PostProvider>
+            </ProfileProvider>
 
-          </ProfileProvider>
+          </FileProvider>
 
-        </FileProvider>
+        </ProjectProvider>
 
-      </ProjectProvider>
+      </AuthProvider>
 
-    </AuthProvider>
+    </ThemeProvider>
 
   </React.StrictMode>
-
 );

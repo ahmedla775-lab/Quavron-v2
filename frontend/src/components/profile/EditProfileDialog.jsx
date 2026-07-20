@@ -17,17 +17,12 @@ export default function EditProfileDialog({
   const [website, setWebsite] = useState("");
   const [location, setLocation] = useState("");
 
-  const [github, setGithub] = useState("");
-  const [linkedin, setLinkedin] = useState("");
-  const [x, setX] = useState("");
-  const [youtube, setYoutube] = useState("");
-  const [telegram, setTelegram] = useState("");
-
   const [avatar, setAvatar] = useState(null);
   const [cover, setCover] = useState(null);
 
   const [saving, setSaving] = useState(false);
-  const [usernameError, setUsernameError] = useState("");
+  const [usernameError, setUsernameError] =
+    useState("");
 
   useEffect(() => {
 
@@ -39,12 +34,6 @@ export default function EditProfileDialog({
     setWebsite(profile.website || "");
     setLocation(profile.location || "");
 
-    setGithub(profile.github_url || "");
-    setLinkedin(profile.linkedin_url || "");
-    setX(profile.x_url || "");
-    setYoutube(profile.youtube_url || "");
-    setTelegram(profile.telegram_url || "");
-
   }, [profile]);
 
   if (!open) return null;
@@ -54,7 +43,6 @@ export default function EditProfileDialog({
     try {
 
       setSaving(true);
-
       setUsernameError("");
 
       const available =
@@ -75,8 +63,11 @@ export default function EditProfileDialog({
 
       }
 
-      let avatarUrl = profile.avatar_url;
-      let coverUrl = profile.cover_url;
+      let avatarUrl =
+        profile.avatar_url;
+
+      let coverUrl =
+        profile.cover_url;
 
       if (avatar) {
 
@@ -110,13 +101,8 @@ export default function EditProfileDialog({
 
         location,
 
-        github_url: github,
-        linkedin_url: linkedin,
-        x_url: x,
-        youtube_url: youtube,
-        telegram_url: telegram,
-
         avatar_url: avatarUrl,
+
         cover_url: coverUrl,
 
       });
@@ -154,7 +140,9 @@ export default function EditProfileDialog({
           <div>
 
             <label className="mb-2 block text-slate-300">
+
               Full Name
+
             </label>
 
             <input
@@ -168,7 +156,9 @@ export default function EditProfileDialog({
           <div>
 
             <label className="mb-2 block text-slate-300">
+
               Username
+
             </label>
 
             <input
@@ -192,7 +182,9 @@ export default function EditProfileDialog({
           <div>
 
             <label className="mb-2 block text-slate-300">
+
               Bio
+
             </label>
 
             <textarea
@@ -207,7 +199,9 @@ export default function EditProfileDialog({
           <div>
 
             <label className="mb-2 block text-slate-300">
+
               Website
+
             </label>
 
             <input
@@ -221,7 +215,9 @@ export default function EditProfileDialog({
           <div>
 
             <label className="mb-2 block text-slate-300">
+
               Location
+
             </label>
 
             <input
@@ -234,88 +230,13 @@ export default function EditProfileDialog({
           <div>
 
             <label className="mb-2 block text-slate-300">
-              GitHub
-            </label>
-
-            <input
-              value={github}
-              onChange={(e)=>setGithub(e.target.value)}
-              placeholder="https://github.com/username"
-              className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
-            />
-
-          </div>
-
-          <div>
-
-            <label className="mb-2 block text-slate-300">
-              LinkedIn
-            </label>
-
-            <input
-              value={linkedin}
-              onChange={(e)=>setLinkedin(e.target.value)}
-              placeholder="https://linkedin.com/in/username"
-              className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
-            />
-
-          </div>
-
-          <div>
-
-            <label className="mb-2 block text-slate-300">
-              X (Twitter)
-            </label>
-
-            <input
-              value={x}
-              onChange={(e)=>setX(e.target.value)}
-              placeholder="https://x.com/username"
-              className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
-            />
-
-          </div>
-
-          <div>
-
-            <label className="mb-2 block text-slate-300">
-              YouTube
-            </label>
-
-            <input
-              value={youtube}
-              onChange={(e)=>setYoutube(e.target.value)}
-              placeholder="https://youtube.com/@channel"
-              className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
-            />
-
-          </div>
-
-          <div>
-
-            <label className="mb-2 block text-slate-300">
-              Telegram
-            </label>
-
-            <input
-              value={telegram}
-              onChange={(e)=>setTelegram(e.target.value)}
-              placeholder="https://t.me/username"
-              className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
-            />
-
-          </div>
-
-          <div>
-
-            <label className="mb-2 block text-slate-300">
               Avatar
             </label>
 
             <input
               type="file"
               accept="image/*"
-              onChange={(e)=>
+              onChange={(e) =>
                 setAvatar(
                   e.target.files?.[0] || null
                 )
@@ -334,7 +255,7 @@ export default function EditProfileDialog({
             <input
               type="file"
               accept="image/*"
-              onChange={(e)=>
+              onChange={(e) =>
                 setCover(
                   e.target.files?.[0] || null
                 )
@@ -360,9 +281,7 @@ export default function EditProfileDialog({
             onClick={handleSave}
             className="rounded-xl bg-sky-600 px-6 py-3 font-semibold text-white transition hover:bg-sky-700 disabled:opacity-60"
           >
-
             {saving ? "Saving..." : "Save Changes"}
-
           </button>
 
         </div>
