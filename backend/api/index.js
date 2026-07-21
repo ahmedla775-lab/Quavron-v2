@@ -1,13 +1,20 @@
-const bootstrap = require("../src/bootstrap");
 const app = require("../src/app");
+const bootstrap = require("../src/bootstrap");
 
-let initialized = false;
+let ready = false;
 
 module.exports = async (req, res) => {
-  if (!initialized) {
-    await bootstrap();
-    initialized = true;
-  }
+  try {
+    if (!ready) {
+      await bootstrap();
+      ready = true;
+    }
 
-  return app(req, res);
+    return app(req, res);
+  } catch (err) {
+    console.error(err);
+
+    res.statusCode = 500;
+    res.end("Internal Server Error");
+  }
 };
