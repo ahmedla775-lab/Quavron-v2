@@ -1,121 +1,64 @@
-const axios = require("axios");
+const Parser = require("rss-parser");
 const BaseConnector = require("../BaseConnector");
 const ContentModel = require("../../types/ContentModel");
+
+const channels = require("./channelFeeds.json");
 
 class YouTubeConnector extends BaseConnector {
   constructor() {
     super("youtube");
-
-    this.api = "https://www.googleapis.com/youtube/v3";
-    this.key = process.env.YOUTUBE_API_KEY;
+    this.parser = new Parser();
   }
-
 
   async fetchFeed(options = {}) {
     return this.fetchTrending(options);
   }
 
-
   async fetchTrending(options = {}) {
-
-    const regions = [
-      "DZ",
-      "TN",
-      "FR",
-      "IT",
-      "ES",
-      "US"
-    ];
-
-
-    const interests = [
-      "artificial intelligence",
-      "cyber security",
-      "world news politics",
-      "Quran",
-      "Ibn Uthaymeen",
-      "Abdul Salam Al Shuwaier"
-    ];
-
-
     const results = [];
 
+    for (const channel of channels) {
+      try {
+        const feed = await this.parser.parseURL(
+          `https://www.youtube.com/feeds/videos.xml?channel_id=${channel.channelId}`
+        );
 
-    for (const region of regions) {
+        for (const item of (feed.items || []).slice(0, 5)) {
+          results.push(
+            new ContentModel({
+              id: item.id,
+              externalId: item.id,
 
-      for (const query of interests) {
+              source: "youtube",
+              type: "video",
 
-        try {
+              title: item.title,
+              content: item.contentSnippet || "",
+              author: feed.title,
 
-          const response = await axios.get(
-            `${this.api}/search`,
-            {
-              params: {
-                key: this.key,
-                part: "snippet",
-                q: query,
-                type: "video",
-                maxResults: 5,
-                order: "relevance",
-                regionCode: region
-              }
-            }
+              url: item.link,
+
+              thumbnail:
+                item.mediaThumbnail?.url ||
+                item.enclosure?.url ||
+                "",
+
+              publishedAt: item.pubDate,
+            })
           );
-
-
-          for (const video of response.data.items) {
-
-            results.push(
-              new ContentModel({
-
-                id: video.id.videoId,
-                externalId: video.id.videoId,
-
-                source: "youtube",
-                type: "video",
-
-                title: video.snippet.title,
-
-                content:
-                  video.snippet.description,
-
-                author:
-                  video.snippet.channelTitle,
-
-                url:
-                  `https://youtube.com/watch?v=${video.id.videoId}`,
-
-                thumbnail:
-                  video.snippet.thumbnails?.high?.url ||
-                  video.snippet.thumbnails?.default?.url,
-
-                publishedAt:
-                  video.snippet.publishedAt
-
-              })
-            );
-
-          }
-
-
-        } catch(error) {
-
-          console.error(
-            "[YouTubeConnector]",
-            error.response?.data || error.message
-          );
-
         }
-
+      } catch (error) {
+        console.error(
+          `[YouTube RSS] ${channel.name}`,
+          error.message
+        );
       }
-
     }
 
+    console.log("[YouTube] videos:", results.length);
 
     return results;
-
   }
-
 }
 
 module.exports = YouTubeConnector;
