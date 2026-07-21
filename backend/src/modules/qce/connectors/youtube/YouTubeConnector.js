@@ -26,9 +26,26 @@ class YouTubeConnector extends BaseConnector {
         for (const item of (feed.items || []).slice(0, 5)) {
           results.push(
             new ContentModel({
-              id: item.id,
-              externalId: item.id,
+              const videoId =
+  item.id?.replace("yt:video:", "") ||
+  item.link?.split("v=")[1] ||
+  item.link?.split("/shorts/")[1] ||
+  "";
 
+results.push(
+  new ContentModel({
+    id: videoId,
+    externalId: videoId,
+    source: "youtube",
+    type: "video",
+    title: item.title,
+    content: item.contentSnippet || "",
+    author: feed.title,
+    url: item.link,
+    thumbnail: item.mediaThumbnail?.url || "",
+    publishedAt: item.pubDate,
+  })
+);
               source: "youtube",
               type: "video",
 

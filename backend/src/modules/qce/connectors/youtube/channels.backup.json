@@ -1,0 +1,570 @@
+[
+  {
+    "name": "OpenAI",
+    "channelId": "",
+    "category": "artificial_intelligence",
+    "language": "en",
+    "priority": 10,
+    "trustScore": 100
+  },
+  {
+    "name": "Google DeepMind",
+    "channelId": "",
+    "category": "artificial_intelligence",
+    "language": "en",
+    "priority": 10,
+    "trustScore": 100
+  },
+  {
+    "name": "NVIDIA",
+    "channelId": "",
+    "category": "artificial_intelligence",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "Andrej Karpathy",
+    "channelId": "",
+    "category": "artificial_intelligence",
+    "language": "en",
+    "priority": 10,
+    "trustScore": 100
+  },
+  {
+    "name": "Two Minute Papers",
+    "channelId": "",
+    "category": "artificial_intelligence",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "freeCodeCamp.org",
+    "channelId": "",
+    "category": "programming",
+    "language": "en",
+    "priority": 10,
+    "trustScore": 100
+  },
+  {
+    "name": "Fireship",
+    "channelId": "",
+    "category": "programming",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "Traversy Media",
+    "channelId": "",
+    "category": "programming",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "The Net Ninja",
+    "channelId": "",
+    "category": "programming",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "Programming with Mosh",
+    "channelId": "",
+    "category": "programming",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "NetworkChuck",
+    "channelId": "",
+    "category": "cybersecurity",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "John Hammond",
+    "channelId": "",
+    "category": "cybersecurity",
+    "language": "en",
+    "priority": 10,
+    "trustScore": 95
+  },
+  {
+    "name": "LiveOverflow",
+    "channelId": "",
+    "category": "cybersecurity",
+    "language": "en",
+    "priority": 10,
+    "trustScore": 95
+  },
+  {
+    "name": "MIT OpenCourseWare",
+    "channelId": "",
+    "category": "education",
+    "language": "en",
+    "priority": 10,
+    "trustScore": 100
+  },
+  {
+    "name": "TED-Ed",
+    "channelId": "",
+    "category": "education",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "Veritasium",
+    "channelId": "",
+    "category": "science",
+    "language": "en",
+    "priority": 10,
+    "trustScore": 100
+  },
+  {
+    "name": "Kurzgesagt",
+    "channelId": "",
+    "category": "science",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "Y Combinator",
+    "channelId": "",
+    "category": "business",
+    "language": "en",
+    "priority": 10,
+    "trustScore": 100
+  },
+  {
+    "name": "Elzero Web School",
+    "channelId": "",
+    "category": "arabic_tech",
+    "language": "ar",
+    "priority": 10,
+    "trustScore": 100
+  },
+  {
+    "name": "أكاديمية حسوب",
+    "channelId": "",
+    "category": "arabic_tech",
+    "language": "ar",
+    "priority": 9,
+    "trustScore": 90
+  },
+  {
+    "name": "دروس أونلاين",
+    "channelId": "",
+    "category": "arabic_education",
+    "language": "ar",
+    "priority": 9,
+    "trustScore": 90
+  },
+  {
+    "name": "Google Developers",
+    "channelId": "",
+    "category": "technology",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "Microsoft Developer",
+    "channelId": "",
+    "category": "technology",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "AWS",
+    "channelId": "",
+    "category": "cloud",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "IBM Technology",
+    "channelId": "",
+    "category": "technology",
+    "language": "en",
+    "priority": 8,
+    "trustScore": 90
+  },
+  {
+    "name": "Web Dev Simplified",
+    "channelId": "",
+    "category": "programming",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "Kevin Powell",
+    "channelId": "",
+    "category": "frontend",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "Academind",
+    "channelId": "",
+    "category": "programming",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "CodeWithHarry",
+    "channelId": "",
+    "category": "programming",
+    "language": "en",
+    "priority": 8,
+    "trustScore": 90
+  },
+  {
+    "name": "The Cyber Mentor",
+    "channelId": "",
+    "category": "cybersecurity",
+    "language": "en",
+    "priority": 10,
+    "trustScore": 95
+  },
+  {
+    "name": "HackerSploit",
+    "channelId": "",
+    "category": "cybersecurity",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 90
+  },
+  {
+    "name": "IppSec",
+    "channelId": "",
+    "category": "cybersecurity",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "Professor Messer",
+    "channelId": "",
+    "category": "cybersecurity",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "3Blue1Brown",
+    "channelId": "",
+    "category": "mathematics",
+    "language": "en",
+    "priority": 10,
+    "trustScore": 100
+  },
+  {
+    "name": "Vsauce",
+    "channelId": "",
+    "category": "science",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "SmarterEveryDay",
+    "channelId": "",
+    "category": "science",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "Harvard Online",
+    "channelId": "",
+    "category": "education",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "Bloomberg Technology",
+    "channelId": "",
+    "category": "business",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "CNBC",
+    "channelId": "",
+    "category": "finance",
+    "language": "en",
+    "priority": 8,
+    "trustScore": 90
+  },
+  {
+    "name": "Ali Abdaal",
+    "channelId": "",
+    "category": "productivity",
+    "language": "en",
+    "priority": 8,
+    "trustScore": 90
+  },
+  {
+    "name": "Marques Brownlee",
+    "channelId": "",
+    "category": "technology_reviews",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "Linus Tech Tips",
+    "channelId": "",
+    "category": "technology_reviews",
+    "language": "en",
+    "priority": 8,
+    "trustScore": 90
+  },
+  {
+    "name": "The Verge",
+    "channelId": "",
+    "category": "technology_news",
+    "language": "en",
+    "priority": 8,
+    "trustScore": 85
+  },
+  {
+    "name": "أسامة الزيرو",
+    "channelId": "",
+    "category": "arabic_tech",
+    "language": "ar",
+    "priority": 10,
+    "trustScore": 95
+  },
+  {
+    "name": "Codezilla",
+    "channelId": "",
+    "category": "arabic_tech",
+    "language": "ar",
+    "priority": 9,
+    "trustScore": 90
+  },
+  {
+    "name": "Elzero Web School",
+    "channelId": "",
+    "category": "arabic_programming",
+    "language": "ar",
+    "priority": 10,
+    "trustScore": 100
+  },
+  {
+    "name": "Quran",
+    "channelId": "",
+    "category": "islamic_knowledge",
+    "language": "ar",
+    "priority": 10,
+    "trustScore": 100
+  },
+  {
+    "name": "Tafsir Quran",
+    "channelId": "",
+    "category": "islamic_knowledge",
+    "language": "ar",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "Islamic Guidance",
+    "channelId": "",
+    "category": "islamic_knowledge",
+    "language": "ar",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "Ministry of Islamic Affairs",
+    "channelId": "",
+    "category": "islamic_knowledge",
+    "language": "ar",
+    "priority": 8,
+    "trustScore": 90
+  },
+  {
+    "name": "Zad Academy",
+    "channelId": "",
+    "category": "islamic_education",
+    "language": "ar",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "Bayyinah Institute",
+    "channelId": "",
+    "category": "quran_arabic_studies",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "Yaqeen Institute",
+    "channelId": "",
+    "category": "islamic_research",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "Omar Suleiman",
+    "channelId": "",
+    "category": "islamic_lectures",
+    "language": "en",
+    "priority": 8,
+    "trustScore": 90
+  },
+  {
+    "name": "Mufti Menk",
+    "channelId": "",
+    "category": "islamic_lectures",
+    "language": "en",
+    "priority": 8,
+    "trustScore": 90
+  },
+  {
+    "name": "Nouman Ali Khan",
+    "channelId": "",
+    "category": "quran_studies",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "Stanford Online",
+    "channelId": "",
+    "category": "education",
+    "language": "en",
+    "priority": 10,
+    "trustScore": 100
+  },
+  {
+    "name": "Caltech",
+    "channelId": "",
+    "category": "science",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "NASA",
+    "channelId": "",
+    "category": "space_science",
+    "language": "en",
+    "priority": 10,
+    "trustScore": 100
+  },
+  {
+    "name": "European Space Agency",
+    "channelId": "",
+    "category": "space_science",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "TechLinked",
+    "channelId": "",
+    "category": "technology_news",
+    "language": "en",
+    "priority": 8,
+    "trustScore": 90
+  },
+  {
+    "name": "Android Authority",
+    "channelId": "",
+    "category": "mobile_technology",
+    "language": "en",
+    "priority": 8,
+    "trustScore": 90
+  },
+  {
+    "name": "Mrwhosetheboss",
+    "channelId": "",
+    "category": "technology_reviews",
+    "language": "en",
+    "priority": 8,
+    "trustScore": 90
+  },
+  {
+    "name": "HubSpot",
+    "channelId": "",
+    "category": "marketing",
+    "language": "en",
+    "priority": 8,
+    "trustScore": 90
+  },
+  {
+    "name": "Google Cloud",
+    "channelId": "",
+    "category": "cloud",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "Docker",
+    "channelId": "",
+    "category": "devops",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "Kubernetes",
+    "channelId": "",
+    "category": "devops",
+    "language": "en",
+    "priority": 9,
+    "trustScore": 95
+  },
+  {
+    "name": "Fazt",
+    "channelId": "",
+    "category": "arabic_programming",
+    "language": "es",
+    "priority": 8,
+    "trustScore": 90
+  },
+  {
+    "name": "MoureDev",
+    "channelId": "",
+    "category": "programming",
+    "language": "es",
+    "priority": 8,
+    "trustScore": 90
+  },
+  {
+    "name": "Al Jazeera Documentary",
+    "channelId": "",
+    "category": "documentary",
+    "language": "ar",
+    "priority": 8,
+    "trustScore": 90
+  },
+  {
+    "name": "DW Documentary",
+    "channelId": "",
+    "category": "documentary",
+    "language": "en",
+    "priority": 8,
+    "trustScore": 90
+  }
+]
