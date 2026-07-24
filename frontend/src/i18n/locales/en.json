@@ -1,0 +1,62 @@
+{
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "cloudIDE": "Cloud IDE",
+    "aiAssistant": "AI Assistant",
+    "courses": "Courses",
+    "marketplace": "Marketplace",
+    "hosting": "Hosting",
+    "community": "Community",
+    "analytics": "Analytics",
+    "profile": "Profile",
+    "settings": "Settings",
+    "admin": "Admin"
+  },
+
+  "dashboard": {
+    "welcome": "Welcome to Quavron",
+    "overview": "Overview",
+    "projects": "Projects",
+    "activity": "Activity",
+    "statistics": "Statistics"
+  },
+
+  "ide": {
+    "title": "Cloud Development Environment",
+    "explorer": "Explorer",
+    "editor": "Editor",
+    "terminal": "Terminal",
+    "run": "Run",
+    "save": "Save"
+  },
+
+  "community": {
+    "title": "Community",
+    "createPost": "Create Post",
+    "posts": "Posts",
+    "comments": "Comments",
+    "likes": "Likes",
+    "share": "Share",
+    "bookmark": "Bookmark"
+  },
+
+  "profile": {
+    "profile": "Profile",
+    "followers": "Followers",
+    "following": "Following",
+    "editProfile": "Edit Profile",
+    "verified": "Verified"
+  },
+
+  "common": {
+    "search": "Search",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "share": "Share",
+    "loading": "Loading...",
+    "success": "Success",
+    "error": "An error occurred"
+  }
+}

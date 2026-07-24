@@ -1,0 +1,84 @@
+{
+  "sidebar": {
+    "dashboard": "لوحة التحكم",
+    "cloudIDE": "بيئة التطوير السحابية",
+    "aiAssistant": "المساعد الذكي",
+    "courses": "الدورات",
+    "marketplace": "السوق",
+    "hosting": "الاستضافة",
+    "community": "المجتمع",
+    "analytics": "التحليلات",
+    "profile": "الملف الشخصي",
+    "settings": "الإعدادات",
+    "admin": "الإدارة"
+  },
+
+  "dashboard": {
+    "welcome": "مرحباً بك في Quavron",
+    "overview": "نظرة عامة",
+    "projects": "المشاريع",
+    "activity": "النشاط",
+    "statistics": "الإحصائيات",
+
+    "aiRequests": "طلبات الذكاء الاصطناعي",
+    "deployments": "عمليات النشر",
+    "community": "المجتمع",
+
+    "recentProjects": "آخر المشاريع",
+    "newProject": "مشروع جديد",
+
+    "active": "نشط",
+    "inProgress": "قيد التطوير",
+
+    "twoHoursAgo": "منذ ساعتين",
+    "yesterday": "أمس",
+    "threeDaysAgo": "منذ 3 أيام",
+
+    "aiAssistant": "المساعد الذكي",
+    "aiSubtitle": "رفيقك الذكي للبرمجة.",
+
+    "aiDescription": "اطلب من Quavron AI إنشاء الأكواد، وشرح الخوارزميات، وإصلاح الأخطاء، وتحسين الأداء، وإنشاء التوثيق، أو بناء تطبيقات كاملة.",
+
+    "openAI": "فتح الذكاء الاصطناعي",
+    "history": "السجل"
+  },
+
+  "ide": {
+    "title": "بيئة التطوير السحابية",
+    "explorer": "المستكشف",
+    "editor": "المحرر",
+    "terminal": "الطرفية",
+    "run": "تشغيل",
+    "save": "حفظ"
+  },
+
+  "community": {
+    "title": "المجتمع",
+    "createPost": "إنشاء منشور",
+    "posts": "المنشورات",
+    "comments": "التعليقات",
+    "likes": "الإعجابات",
+    "share": "مشاركة",
+    "bookmark": "حفظ"
+  },
+
+  "profile": {
+    "profile": "الملف الشخصي",
+    "followers": "المتابعون",
+    "following": "يتابع",
+    "editProfile": "تعديل الملف",
+    "verified": "موثق"
+  },
+
+  "common": {
+    "search": "بحث",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "share": "مشاركة",
+    "loading": "جاري التحميل...",
+    "success": "تم بنجاح",
+    "error": "حدث خطأ"
+  }
+}

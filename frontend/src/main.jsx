@@ -1,8 +1,14 @@
+import TranslationProvider from "./providers/TranslationProvider";
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { SocialHubProvider } from "./modules/socialhub/providers/SocialHubProvider";
-import App from "./App";
+
+import "./i18n";
 import "./style.css";
+
+
+import App from "./App";
+
+import { SocialHubProvider } from "./modules/socialhub/providers/SocialHubProvider";
 
 import { AuthProvider } from "./components/auth/AuthProvider";
 
@@ -13,15 +19,21 @@ import { PostProvider } from "./context/PostContext";
 import { TabProvider } from "./context/TabContext";
 import { TerminalProvider } from "./context/TerminalContext";
 
+
 import { WorkspaceProvider } from "./modules/workspace/context/WorkspaceContext";
 import { CommentsProvider } from "./modules/community/context/CommentsContext";
 
+
 import { ThemeProvider } from "./theme/ThemeProvider";
+
 
 ReactDOM.createRoot(
   document.getElementById("root")
 ).render(
+
   <React.StrictMode>
+
+<TranslationProvider>
 
     <ThemeProvider>
 
@@ -42,10 +54,14 @@ ReactDOM.createRoot(
                     <TerminalProvider>
 
                       <SocialHubProvider>
-  <WorkspaceProvider>
-    <App />
-  </WorkspaceProvider>
-</SocialHubProvider>
+
+                        <WorkspaceProvider>
+
+                          <App />
+
+                        </WorkspaceProvider>
+
+                      </SocialHubProvider>
 
                     </TerminalProvider>
 
@@ -65,5 +81,8 @@ ReactDOM.createRoot(
 
     </ThemeProvider>
 
+</TranslationProvider>
+
   </React.StrictMode>
+
 );

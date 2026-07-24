@@ -1,0 +1,62 @@
+{
+  "sidebar": {
+    "dashboard": "ダッシュボード",
+    "cloudIDE": "クラウドIDE",
+    "aiAssistant": "AIアシスタント",
+    "courses": "コース",
+    "marketplace": "マーケット",
+    "hosting": "ホスティング",
+    "community": "コミュニティ",
+    "analytics": "分析",
+    "profile": "プロフィール",
+    "settings": "設定",
+    "admin": "管理"
+  },
+
+  "dashboard": {
+    "welcome": "Quavronへようこそ",
+    "overview": "概要",
+    "projects": "プロジェクト",
+    "activity": "アクティビティ",
+    "statistics": "統計"
+  },
+
+  "ide": {
+    "title": "クラウド開発環境",
+    "explorer": "エクスプローラー",
+    "editor": "エディター",
+    "terminal": "ターミナル",
+    "run": "実行",
+    "save": "保存"
+  },
+
+  "community": {
+    "title": "コミュニティ",
+    "createPost": "投稿を作成",
+    "posts": "投稿",
+    "comments": "コメント",
+    "likes": "いいね",
+    "share": "共有",
+    "bookmark": "保存"
+  },
+
+  "profile": {
+    "profile": "プロフィール",
+    "followers": "フォロワー",
+    "following": "フォロー中",
+    "editProfile": "プロフィール編集",
+    "verified": "認証済み"
+  },
+
+  "common": {
+    "search": "検索",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "edit": "編集",
+    "share": "共有",
+    "loading": "読み込み中...",
+    "success": "成功",
+    "error": "エラーが発生しました"
+  }
+}

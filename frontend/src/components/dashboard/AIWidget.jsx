@@ -1,10 +1,15 @@
 import { Bot, Sparkles } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import Card from "../ui/Card";
 import Button from "../ui/Button";
 
 export default function AIWidget() {
+
+  const { t } = useTranslation("dashboard");
+
   return (
+
     <Card>
 
       <div className="flex items-center gap-3">
@@ -17,11 +22,11 @@ export default function AIWidget() {
         <div>
 
           <h2 className="text-2xl font-bold text-white">
-            AI Assistant
+            {t("aiAssistant")}
           </h2>
 
           <p className="text-slate-400">
-            Your intelligent coding companion.
+            {t("aiSubtitle")}
           </p>
 
         </div>
@@ -32,12 +37,7 @@ export default function AIWidget() {
 
         <p className="leading-7 text-slate-300">
 
-          Ask Quavron AI to generate code,
-          explain algorithms,
-          fix bugs,
-          optimize performance,
-          create documentation
-          or build complete applications.
+          {t("aiDescription")}
 
         </p>
 
@@ -49,19 +49,20 @@ export default function AIWidget() {
 
           <Sparkles size={18} />
 
-          Open AI
+          {t("openAI")}
 
         </Button>
 
         <Button variant="outline">
 
-          History
+          {t("history")}
 
         </Button>
 
       </div>
 
     </Card>
-  );
-}
 
+  );
+
+}

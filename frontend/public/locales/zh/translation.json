@@ -1,0 +1,62 @@
+{
+  "sidebar": {
+    "dashboard": "控制面板",
+    "cloudIDE": "云端 IDE",
+    "aiAssistant": "AI 助手",
+    "courses": "课程",
+    "marketplace": "市场",
+    "hosting": "托管",
+    "community": "社区",
+    "analytics": "分析",
+    "profile": "个人资料",
+    "settings": "设置",
+    "admin": "管理"
+  },
+
+  "dashboard": {
+    "welcome": "欢迎来到 Quavron",
+    "overview": "概览",
+    "projects": "项目",
+    "activity": "活动",
+    "statistics": "统计"
+  },
+
+  "ide": {
+    "title": "云端开发环境",
+    "explorer": "资源管理器",
+    "editor": "编辑器",
+    "terminal": "终端",
+    "run": "运行",
+    "save": "保存"
+  },
+
+  "community": {
+    "title": "社区",
+    "createPost": "创建帖子",
+    "posts": "帖子",
+    "comments": "评论",
+    "likes": "点赞",
+    "share": "分享",
+    "bookmark": "收藏"
+  },
+
+  "profile": {
+    "profile": "个人资料",
+    "followers": "粉丝",
+    "following": "关注",
+    "editProfile": "编辑资料",
+    "verified": "已认证"
+  },
+
+  "common": {
+    "search": "搜索",
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "share": "分享",
+    "loading": "加载中...",
+    "success": "成功",
+    "error": "发生错误"
+  }
+}

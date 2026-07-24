@@ -5,33 +5,44 @@ import {
   Users,
 } from "lucide-react";
 
+import { useTranslation } from "react-i18next";
+
 import Card from "../ui/Card";
 
-const stats = [
-  {
-    title: "Projects",
-    value: "12",
-    icon: FolderOpen,
-  },
-  {
-    title: "AI Requests",
-    value: "1,284",
-    icon: Bot,
-  },
-  {
-    title: "Deployments",
-    value: "36",
-    icon: Rocket,
-  },
-  {
-    title: "Community",
-    value: "8.2K",
-    icon: Users,
-  },
-];
-
 export default function StatsCards() {
+
+  const { t } = useTranslation("dashboard");
+
+  const stats = [
+
+    {
+      title: t("projects"),
+      value: "12",
+      icon: FolderOpen,
+    },
+
+    {
+      title: t("aiRequests"),
+      value: "1,284",
+      icon: Bot,
+    },
+
+    {
+      title: t("deployments"),
+      value: "36",
+      icon: Rocket,
+    },
+
+    {
+      title: t("community"),
+      value: "8.2K",
+      icon: Users,
+    },
+
+  ];
+
   return (
+
     <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
 
       {stats.map((item) => {
@@ -47,15 +58,11 @@ export default function StatsCards() {
               <div>
 
                 <p className="text-slate-400">
-
                   {item.title}
-
                 </p>
 
                 <h2 className="mt-2 text-3xl font-bold">
-
                   {item.value}
-
                 </h2>
 
               </div>
@@ -78,6 +85,7 @@ export default function StatsCards() {
       })}
 
     </div>
-  );
-}
 
+  );
+
+}

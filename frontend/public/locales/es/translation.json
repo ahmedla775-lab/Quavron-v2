@@ -1,0 +1,62 @@
+{
+  "sidebar": {
+    "dashboard": "Panel de control",
+    "cloudIDE": "IDE en la nube",
+    "aiAssistant": "Asistente de IA",
+    "courses": "Cursos",
+    "marketplace": "Mercado",
+    "hosting": "Alojamiento",
+    "community": "Comunidad",
+    "analytics": "Analítica",
+    "profile": "Perfil",
+    "settings": "Configuración",
+    "admin": "Administración"
+  },
+
+  "dashboard": {
+    "welcome": "Bienvenido a Quavron",
+    "overview": "Resumen",
+    "projects": "Proyectos",
+    "activity": "Actividad",
+    "statistics": "Estadísticas"
+  },
+
+  "ide": {
+    "title": "Entorno de desarrollo en la nube",
+    "explorer": "Explorador",
+    "editor": "Editor",
+    "terminal": "Terminal",
+    "run": "Ejecutar",
+    "save": "Guardar"
+  },
+
+  "community": {
+    "title": "Comunidad",
+    "createPost": "Crear publicación",
+    "posts": "Publicaciones",
+    "comments": "Comentarios",
+    "likes": "Me gusta",
+    "share": "Compartir",
+    "bookmark": "Guardar"
+  },
+
+  "profile": {
+    "profile": "Perfil",
+    "followers": "Seguidores",
+    "following": "Siguiendo",
+    "editProfile": "Editar perfil",
+    "verified": "Verificado"
+  },
+
+  "common": {
+    "search": "Buscar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "share": "Compartir",
+    "loading": "Cargando...",
+    "success": "Éxito",
+    "error": "Ha ocurrido un error"
+  }
+}

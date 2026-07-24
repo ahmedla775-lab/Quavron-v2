@@ -12,72 +12,134 @@ import {
   Menu,
   X,
 } from "lucide-react";
+
 import { useAuth } from "../auth/AuthProvider";
 import { NavLink } from "react-router-dom";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+
 import useResponsive from "../../hooks/useResponsive";
+
 
 const menu = [
 
-  { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
+  {
+    key: "dashboard",
+    icon: LayoutDashboard,
+    path: "/dashboard",
+  },
 
-  { title: "Cloud IDE", icon: Code2, path: "/ide" },
+  {
+    key: "cloudIDE",
+    icon: Code2,
+    path: "/ide",
+  },
 
-  { title: "AI Assistant", icon: Bot, path: "/ai" },
+  {
+    key: "aiAssistant",
+    icon: Bot,
+    path: "/ai",
+  },
 
-  { title: "Courses", icon: BookOpen, path: "/courses" },
+  {
+    key: "courses",
+    icon: BookOpen,
+    path: "/courses",
+  },
 
-  { title: "Marketplace", icon: ShoppingCart, path: "/marketplace" },
+  {
+    key: "marketplace",
+    icon: ShoppingCart,
+    path: "/marketplace",
+  },
 
-  { title: "Hosting", icon: Cloud, path: "/hosting" },
+  {
+    key: "hosting",
+    icon: Cloud,
+    path: "/hosting",
+  },
 
-  { title: "Community", icon: Users, path: "/community" },
+  {
+    key: "community",
+    icon: Users,
+    path: "/community",
+  },
 
-  { title: "Analytics", icon: BarChart3, path: "/analytics" },
+  {
+    key: "analytics",
+    icon: BarChart3,
+    path: "/analytics",
+  },
 
-  { title: "Profile", icon: User, path: "/profile" },
+  {
+    key: "profile",
+    icon: User,
+    path: "/profile",
+  },
 
-  { title: "Settings", icon: Settings, path: "/settings" },
+  {
+    key: "settings",
+    icon: Settings,
+    path: "/settings",
+  },
 
 ];
+
+
 export default function Sidebar() {
+
+  const { t } = useTranslation();
+
   const [open, setOpen] = useState(false);
 
   const {
     isDesktop,
-    isTablet,
-    isMobile,
   } = useResponsive();
 
-  const showSidebar = isDesktop || open;
 
-const { profile } = useAuth();
+  const {
+    profile,
+  } = useAuth();
 
-const navigation = [...menu];
 
-if (
-  profile?.role === "owner" ||
-  profile?.role === "admin"
-) {
 
-  navigation.push({
+  const navigation = [...menu];
 
-    title: "Admin",
 
-    icon: Settings,
+  if (
+    profile?.role === "owner" ||
+    profile?.role === "admin"
+  ) {
 
-    path: "/admin",
+    navigation.push({
 
-  });
+      key: "admin",
 
-}
+      icon: Settings,
+
+      path: "/admin",
+
+    });
+
+  }
+
+
+
+  const showSidebar =
+    isDesktop || open;
+
+
 
   return (
+
     <>
-      {/* Mobile / Tablet Menu Button */}
+
       {!isDesktop && (
+
         <button
+
           onClick={() => setOpen(true)}
+
           className="
             fixed
             left-4
@@ -89,27 +151,40 @@ if (
             text-white
             shadow-lg
           "
+
         >
-          <Menu size={22} />
+
+          <Menu size={22}/>
+
         </button>
+
       )}
 
-      {/* Overlay */}
+
+
       {showSidebar && !isDesktop && (
+
         <div
+
           onClick={() => setOpen(false)}
+
           className="
             fixed
             inset-0
             z-40
             bg-black/60
           "
+
         />
+
       )}
 
-      {/* Sidebar */}
+
+
       <aside
+
         className={`
+
           fixed
           left-0
           top-0
@@ -131,11 +206,14 @@ if (
               ? "translate-x-0"
               : "-translate-x-full"
           }
+
         `}
+
       >
 
-        {/* Header */}
+
         <div
+
           className="
             flex
             items-center
@@ -144,48 +222,82 @@ if (
             border-slate-800
             p-5
           "
+
         >
+
           <img
+
             src="/quavron-logo.png"
+
             alt="Quavron"
-            className="h-16 w-auto object-contain"
+
+            className="
+              h-16
+              w-auto
+              object-contain
+            "
+
           />
 
+
           {!isDesktop && (
+
             <button
+
               onClick={() => setOpen(false)}
+
               className="text-white"
+
             >
-              <X size={24} />
+
+              <X size={24}/>
+
             </button>
+
           )}
+
         </div>
 
 
-        {/* Navigation */}
+
         <nav
+
           className="
             flex-1
             space-y-2
             overflow-y-auto
             p-4
           "
+
         >
-          {navigation.map((item) => {
+
+          {navigation.map((item)=>{
 
             const Icon = item.icon;
 
+
             return (
+
               <NavLink
+
                 key={item.path}
+
                 to={item.path}
+
                 onClick={() => {
-                  if (!isDesktop) {
+
+                  if(!isDesktop){
+
                     setOpen(false);
+
                   }
+
                 }}
-                className={({ isActive }) =>
+
+                className={({isActive}) =>
+
                   `
+
                   flex
                   items-center
                   gap-4
@@ -196,28 +308,48 @@ if (
 
                   ${
                     isActive
-                      ? "bg-blue-600 text-white"
-                      : "text-slate-300 hover:bg-slate-800"
+                    ? "bg-blue-600 text-white"
+                    : "text-slate-300 hover:bg-slate-800"
                   }
+
                   `
+
                 }
+
               >
-                <Icon size={20} />
-                <span>{item.title}</span>
+
+                <Icon size={20}/>
+
+
+                <span>
+
+                  {t(`sidebar.${item.key}`)}
+
+                </span>
+
+
               </NavLink>
+
             );
 
           })}
+
         </nav>
+
 
       </aside>
 
 
-      {/* Desktop Space Reservation */}
+
       {isDesktop && (
-        <div className="w-72 shrink-0" />
+
+        <div className="w-72 shrink-0"/>
+
       )}
 
+
     </>
+
   );
+
 }

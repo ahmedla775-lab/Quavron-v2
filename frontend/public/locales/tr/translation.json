@@ -1,0 +1,62 @@
+{
+  "sidebar": {
+    "dashboard": "Kontrol Paneli",
+    "cloudIDE": "Bulut IDE",
+    "aiAssistant": "Yapay Zeka Asistanı",
+    "courses": "Kurslar",
+    "marketplace": "Pazar Yeri",
+    "hosting": "Barındırma",
+    "community": "Topluluk",
+    "analytics": "Analizler",
+    "profile": "Profil",
+    "settings": "Ayarlar",
+    "admin": "Yönetim"
+  },
+
+  "dashboard": {
+    "welcome": "Quavron'a Hoş Geldiniz",
+    "overview": "Genel Bakış",
+    "projects": "Projeler",
+    "activity": "Aktivite",
+    "statistics": "İstatistikler"
+  },
+
+  "ide": {
+    "title": "Bulut Geliştirme Ortamı",
+    "explorer": "Gezgin",
+    "editor": "Editör",
+    "terminal": "Terminal",
+    "run": "Çalıştır",
+    "save": "Kaydet"
+  },
+
+  "community": {
+    "title": "Topluluk",
+    "createPost": "Gönderi Oluştur",
+    "posts": "Gönderiler",
+    "comments": "Yorumlar",
+    "likes": "Beğeniler",
+    "share": "Paylaş",
+    "bookmark": "Kaydet"
+  },
+
+  "profile": {
+    "profile": "Profil",
+    "followers": "Takipçiler",
+    "following": "Takip Edilenler",
+    "editProfile": "Profili Düzenle",
+    "verified": "Doğrulanmış"
+  },
+
+  "common": {
+    "search": "Ara",
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "share": "Paylaş",
+    "loading": "Yükleniyor...",
+    "success": "Başarılı",
+    "error": "Bir hata oluştu"
+  }
+}

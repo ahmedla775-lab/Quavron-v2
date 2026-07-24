@@ -1,0 +1,62 @@
+{
+  "sidebar": {
+    "dashboard": "Панель управления",
+    "cloudIDE": "Облачная IDE",
+    "aiAssistant": "ИИ-ассистент",
+    "courses": "Курсы",
+    "marketplace": "Маркетплейс",
+    "hosting": "Хостинг",
+    "community": "Сообщество",
+    "analytics": "Аналитика",
+    "profile": "Профиль",
+    "settings": "Настройки",
+    "admin": "Администрирование"
+  },
+
+  "dashboard": {
+    "welcome": "Добро пожаловать в Quavron",
+    "overview": "Обзор",
+    "projects": "Проекты",
+    "activity": "Активность",
+    "statistics": "Статистика"
+  },
+
+  "ide": {
+    "title": "Облачная среда разработки",
+    "explorer": "Проводник",
+    "editor": "Редактор",
+    "terminal": "Терминал",
+    "run": "Запустить",
+    "save": "Сохранить"
+  },
+
+  "community": {
+    "title": "Сообщество",
+    "createPost": "Создать публикацию",
+    "posts": "Публикации",
+    "comments": "Комментарии",
+    "likes": "Нравится",
+    "share": "Поделиться",
+    "bookmark": "Сохранить"
+  },
+
+  "profile": {
+    "profile": "Профиль",
+    "followers": "Подписчики",
+    "following": "Подписки",
+    "editProfile": "Редактировать профиль",
+    "verified": "Подтверждено"
+  },
+
+  "common": {
+    "search": "Поиск",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "delete": "Удалить",
+    "edit": "Изменить",
+    "share": "Поделиться",
+    "loading": "Загрузка...",
+    "success": "Успешно",
+    "error": "Произошла ошибка"
+  }
+}

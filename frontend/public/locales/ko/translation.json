@@ -1,0 +1,62 @@
+{
+  "sidebar": {
+    "dashboard": "대시보드",
+    "cloudIDE": "클라우드 IDE",
+    "aiAssistant": "AI 어시스턴트",
+    "courses": "강좌",
+    "marketplace": "마켓플레이스",
+    "hosting": "호스팅",
+    "community": "커뮤니티",
+    "analytics": "분석",
+    "profile": "프로필",
+    "settings": "설정",
+    "admin": "관리"
+  },
+
+  "dashboard": {
+    "welcome": "Quavron에 오신 것을 환영합니다",
+    "overview": "개요",
+    "projects": "프로젝트",
+    "activity": "활동",
+    "statistics": "통계"
+  },
+
+  "ide": {
+    "title": "클라우드 개발 환경",
+    "explorer": "탐색기",
+    "editor": "편집기",
+    "terminal": "터미널",
+    "run": "실행",
+    "save": "저장"
+  },
+
+  "community": {
+    "title": "커뮤니티",
+    "createPost": "게시물 만들기",
+    "posts": "게시물",
+    "comments": "댓글",
+    "likes": "좋아요",
+    "share": "공유",
+    "bookmark": "저장"
+  },
+
+  "profile": {
+    "profile": "프로필",
+    "followers": "팔로워",
+    "following": "팔로잉",
+    "editProfile": "프로필 수정",
+    "verified": "인증됨"
+  },
+
+  "common": {
+    "search": "검색",
+    "save": "저장",
+    "cancel": "취소",
+    "delete": "삭제",
+    "edit": "수정",
+    "share": "공유",
+    "loading": "로딩 중...",
+    "success": "성공",
+    "error": "오류가 발생했습니다"
+  }
+}
