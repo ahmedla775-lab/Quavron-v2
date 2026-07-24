@@ -5,17 +5,17 @@ class PostService {
   async getPosts() {
 
     return await supabase
-      .from("community_feed")
+      .from("posts")
       .select(`
         *,
-profiles (
-  id,
-  username,
-  full_name,
-  avatar_url,
-  verified,
-  verification_type
-)
+        profiles!posts_author_id_fkey (
+          id,
+          username,
+          full_name,
+          avatar_url,
+          verified,
+          verification_type
+        ),
         post_media (
           id,
           type,
@@ -23,6 +23,7 @@ profiles (
           file_name,
           file_size,
           url,
+          position,
           created_at
         )
       `)
@@ -35,24 +36,25 @@ profiles (
   async getUserPosts(userId) {
 
     return await supabase
-      .from("community_feed")
+      .from("posts")
       .select(`
         *,
-profiles (
-  id,
-  username,
-  full_name,
-  avatar_url,
-  verified,
-  verification_type
-)
-      post_media (
+        profiles!posts_author_id_fkey (
+          id,
+          username,
+          full_name,
+          avatar_url,
+          verified,
+          verification_type
+        ),
+        post_media (
           id,
           type,
           mime_type,
           file_name,
           file_size,
           url,
+          position,
           created_at
         )
       `)
@@ -64,46 +66,59 @@ profiles (
   }
 
   async getSavedPosts(userId) {
-  const { data: bookmarks, error } = await supabase
-    .from("post_bookmarks")
-    .select("post_id")
-    .eq("user_id", userId);
 
-  if (error) return { data: [], error };
+    const { data: bookmarks, error } = await supabase
+      .from("post_bookmarks")
+      .select("post_id")
+      .eq("user_id", userId);
 
-  if (!bookmarks?.length) {
-    return { data: [] };
+    if (error) {
+      return {
+        data: [],
+        error,
+      };
+    }
+
+    if (!bookmarks?.length) {
+      return {
+        data: [],
+      };
+    }
+
+    const ids = bookmarks.map(
+      (b) => b.post_id
+    );
+
+    return await supabase
+      .from("posts")
+      .select(`
+        *,
+        profiles!posts_author_id_fkey (
+          id,
+          username,
+          full_name,
+          avatar_url,
+          verified,
+          verification_type
+        ),
+        post_media (
+          id,
+          type,
+          mime_type,
+          file_name,
+          file_size,
+          url,
+          position,
+          created_at
+        )
+      `)
+      .in("id", ids)
+      .order("created_at", {
+        ascending: false,
+      });
+
   }
 
-  const ids = bookmarks.map((b) => b.post_id);
-
-  return await supabase
-    .from("community_feed")
-    .select(`
-      *,
-profiles (
-  id,
-  username,
-  full_name,
-  avatar_url,
-  verified,
-  verification_type
-)
-    post_media (
-        id,
-        type,
-        mime_type,
-        file_name,
-        file_size,
-        url,
-        created_at
-      )
-    `)
-    .in("id", ids)
-    .order("created_at", {
-      ascending: false,
-    });
-}
   async createPost(values) {
 
     const { data: inserted, error } = await supabase
@@ -112,56 +127,40 @@ profiles (
       .select("id")
       .single();
 
-    if (error) return { error };
+    if (error) {
+      return {
+        error,
+      };
+    }
 
-    return await supabase
-      .from("community_feed")
-      .select(`
-        *,
-profiles (
-  id,
-  username,
-  full_name,
-  avatar_url,
-  verified,
-  verification_type
-)
-      post_media (
-          id,
-          type,
-          mime_type,
-          file_name,
-          file_size,
-          url,
-          created_at
-        )
-      `)
-      .eq("id", inserted.id)
-      .single();
+    return await this.getPost(
+      inserted.id
+    );
 
   }
 
   async getPost(id) {
 
     return await supabase
-      .from("community_feed")
+      .from("posts")
       .select(`
         *,
-profiles (
-  id,
-  username,
-  full_name,
-  avatar_url,
-  verified,
-  verification_type
-)
-      post_media (
+        profiles!posts_author_id_fkey (
+          id,
+          username,
+          full_name,
+          avatar_url,
+          verified,
+          verification_type
+        ),
+        post_media (
           id,
           type,
           mime_type,
           file_name,
           file_size,
           url,
+          position,
           created_at
         )
       `)
@@ -177,32 +176,15 @@ profiles (
       .update(values)
       .eq("id", id);
 
-    if (error) return { error };
+    if (error) {
+      return {
+        error,
+      };
+    }
 
-    return await supabase
-      .from("community_feed")
-      .select(`
-        *,
-profiles (
-  id,
-  username,
-  full_name,
-  avatar_url,
-  verified,
-  verification_type
-)
-      post_media (
-          id,
-          type,
-          mime_type,
-          file_name,
-          file_size,
-          url,
-          created_at
-        )
-      `)
-      .eq("id", id)
-      .single();
+    return await this.getPost(
+      id
+    );
 
   }
 
