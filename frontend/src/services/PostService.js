@@ -8,12 +8,14 @@ class PostService {
       .from("community_feed")
       .select(`
         *,
-        profiles (
-          id,
-          username,
-          full_name,
-          avatar_url
-        ),
+profiles (
+  id,
+  username,
+  full_name,
+  avatar_url,
+  verified,
+  verification_type
+)
         post_media (
           id,
           type,
@@ -36,13 +38,15 @@ class PostService {
       .from("community_feed")
       .select(`
         *,
-        profiles (
-          id,
-          username,
-          full_name,
-          avatar_url
-        ),
-        post_media (
+profiles (
+  id,
+  username,
+  full_name,
+  avatar_url,
+  verified,
+  verification_type
+)
+      post_media (
           id,
           type,
           mime_type,
@@ -77,13 +81,15 @@ class PostService {
     .from("community_feed")
     .select(`
       *,
-      profiles (
-        id,
-        username,
-        full_name,
-        avatar_url
-      ),
-      post_media (
+profiles (
+  id,
+  username,
+  full_name,
+  avatar_url,
+  verified,
+  verification_type
+)
+    post_media (
         id,
         type,
         mime_type,
@@ -112,13 +118,15 @@ class PostService {
       .from("community_feed")
       .select(`
         *,
-        profiles (
-          id,
-          username,
-          full_name,
-          avatar_url
-        ),
-        post_media (
+profiles (
+  id,
+  username,
+  full_name,
+  avatar_url,
+  verified,
+  verification_type
+)
+      post_media (
           id,
           type,
           mime_type,
@@ -139,13 +147,15 @@ class PostService {
       .from("community_feed")
       .select(`
         *,
-        profiles (
-          id,
-          username,
-          full_name,
-          avatar_url
-        ),
-        post_media (
+profiles (
+  id,
+  username,
+  full_name,
+  avatar_url,
+  verified,
+  verification_type
+)
+      post_media (
           id,
           type,
           mime_type,
@@ -173,13 +183,15 @@ class PostService {
       .from("community_feed")
       .select(`
         *,
-        profiles (
-          id,
-          username,
-          full_name,
-          avatar_url
-        ),
-        post_media (
+profiles (
+  id,
+  username,
+  full_name,
+  avatar_url,
+  verified,
+  verification_type
+)
+      post_media (
           id,
           type,
           mime_type,

@@ -19,13 +19,23 @@ import Marketplace from "./pages/Marketplace";
 import Hosting from "./pages/Hosting";
 import Community from "./pages/Community";
 import Analytics from "./pages/Analytics";
+
 import Profile from "./pages/Profile";
+import UserProfile from "./pages/UserProfile";
 import Settings from "./pages/Settings";
 import UserSettings from "./pages/UserSettings";
 import PostDetails from "./pages/PostDetails";
 
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import UserManagement from "./pages/admin/UserManagement";
+import VerificationManagement from "./pages/admin/VerificationManagement";
+import ReportsManagement from "./pages/admin/ReportsManagement";
+import AdsManagement from "./pages/admin/AdsManagement";
+import SystemSettings from "./pages/admin/SystemSettings";
+
 import Layout from "./components/layout/Layout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import AdminRoute from "./components/admin/AdminRoute";
 
 function App() {
 
@@ -44,25 +54,10 @@ function App() {
           }
         />
 
-        <Route
-          path="/login"
-          element={<Login />}
-        />
-
-        <Route
-          path="/register"
-          element={<Register />}
-        />
-
-        <Route
-          path="/forgot-password"
-          element={<ForgotPassword />}
-        />
-
-        <Route
-          path="/reset-password"
-          element={<ResetPassword />}
-        />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         <Route
           path="/dashboard"
@@ -155,6 +150,15 @@ function App() {
         />
 
         <Route
+          path="/profile/:id"
+          element={
+            <ProtectedRoute>
+              <UserProfile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/settings"
           element={
             <ProtectedRoute>
@@ -175,6 +179,60 @@ function App() {
         <Route
           path="/post/:id"
           element={<PostDetails />}
+        />
+
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/users"
+          element={
+            <AdminRoute>
+              <UserManagement />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/verifications"
+          element={
+            <AdminRoute>
+              <VerificationManagement />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/reports"
+          element={
+            <AdminRoute>
+              <ReportsManagement />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/ads"
+          element={
+            <AdminRoute>
+              <AdsManagement />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/system"
+          element={
+            <AdminRoute>
+              <SystemSettings />
+            </AdminRoute>
+          }
         />
 
         <Route

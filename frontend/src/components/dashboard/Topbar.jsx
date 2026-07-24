@@ -1,3 +1,4 @@
+import VerificationBadge from "../profile/VerificationBadge";
 import { useState } from "react";
 import {
   Bell,
@@ -184,8 +185,17 @@ export default function Topbar() {
 
                   <p className="font-semibold text-white">
 
-                    {profile?.full_name || "Quavron User"}
+                    <div className="flex items-center gap-2">
+  <span>
+    {profile?.full_name || "Quavron User"}
+  </span>
 
+  <VerificationBadge
+    verified={profile?.verified}
+    verificationType={profile?.verification_type}
+    size={16}
+  />
+</div>
                   </p>
 
 

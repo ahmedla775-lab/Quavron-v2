@@ -10,11 +10,12 @@ class CommentService {
       .from("comments")
       .select(`
         *,
-        profiles!comments_author_id_fkey (
-          username,
-          full_name,
-          avatar_url
-        )
+profiles!comments_author_id_fkey (
+  username,
+  full_name,
+  avatar_url,
+  verification_type
+)        
       `)
       .eq("post_id", postId)
       .order("created_at", {
@@ -32,12 +33,13 @@ class CommentService {
       .insert(values)
       .select(`
         *,
-        profiles!comments_author_id_fkey (
-          username,
-          full_name,
-          avatar_url
-        )
-      `)
+profiles!comments_author_id_fkey (
+  username,
+  full_name,
+  avatar_url,
+  verification_type
+)        
+     `)
       .single();
 
   }

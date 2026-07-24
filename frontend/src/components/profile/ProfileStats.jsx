@@ -1,19 +1,51 @@
-export default function ProfileStats({
+import { useState, useEffect } from "react";
 
-  profile,
+import FollowersModal from "./follow/FollowersModal";
+import FollowingModal from "./follow/FollowingModal";
 
-}) {
+import ProfileService from "../../services/ProfileService";
+
+export default function ProfileStats({ profile }) {
+
+  const [followersOpen, setFollowersOpen] = useState(false);
+  const [followingOpen, setFollowingOpen] = useState(false);
+
+  const [followers, setFollowers] = useState([]);
+  const [following, setFollowing] = useState([]);
+
+  useEffect(() => {
+
+    if (!profile?.id) return;
+
+    async function load() {
+
+      const followersResult =
+        await ProfileService.getFollowers(profile.id);
+
+      const followingResult =
+        await ProfileService.getFollowing(profile.id);
+
+      setFollowers(followersResult.data || []);
+      setFollowing(followingResult.data || []);
+
+    }
+
+    load();
+
+  }, [profile?.id]);
 
   const stats = [
 
     {
       title: "Followers",
-      value: profile?.followers_count || 0,
+      value: followers.length,
+      action: () => setFollowersOpen(true),
     },
 
     {
       title: "Following",
-      value: profile?.following_count || 0,
+      value: following.length,
+      action: () => setFollowingOpen(true),
     },
 
     {
@@ -40,32 +72,49 @@ export default function ProfileStats({
 
   return (
 
-    <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
+    <>
 
-      {stats.map((item) => (
+      <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
 
-        <div
-          key={item.title}
-          className="rounded-2xl border border-slate-800 bg-slate-900 p-5 text-center transition hover:border-blue-500"
-        >
+        {stats.map((item) => (
 
-          <p className="text-3xl font-bold text-white">
+          <button
+            key={item.title}
+            onClick={item.action}
+            className="rounded-2xl border border-slate-800 bg-slate-900 p-5 text-center transition hover:border-blue-500"
+          >
 
-            {item.value}
+            <p className="text-3xl font-bold text-white">
 
-          </p>
+              {item.value}
 
-          <p className="mt-2 text-sm text-slate-400">
+            </p>
 
-            {item.title}
+            <p className="mt-2 text-sm text-slate-400">
 
-          </p>
+              {item.title}
 
-        </div>
+            </p>
 
-      ))}
+          </button>
 
-    </div>
+        ))}
+
+      </div>
+
+      <FollowersModal
+        open={followersOpen}
+        users={followers}
+        onClose={() => setFollowersOpen(false)}
+      />
+
+      <FollowingModal
+        open={followingOpen}
+        users={following}
+        onClose={() => setFollowingOpen(false)}
+      />
+
+    </>
 
   );
 

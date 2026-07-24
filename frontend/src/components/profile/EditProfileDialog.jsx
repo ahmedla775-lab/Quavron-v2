@@ -1,5 +1,7 @@
+import VerificationRequestService from "../../services/VerificationRequestService";
 import { useEffect, useState } from "react";
-
+import VerificationCard from "./verification/VerificationCard";
+import VerificationDialog from "./verification/VerificationDialog";
 import { useProfile } from "../../context/ProfileContext";
 import ProfileService from "../../services/ProfileService";
 
@@ -16,13 +18,16 @@ export default function EditProfileDialog({
   const [bio, setBio] = useState("");
   const [website, setWebsite] = useState("");
   const [location, setLocation] = useState("");
-
+const [request,setRequest]=useState(null);
   const [avatar, setAvatar] = useState(null);
   const [cover, setCover] = useState(null);
 
   const [saving, setSaving] = useState(false);
   const [usernameError, setUsernameError] =
     useState("");
+
+const [verificationOpen,setVerificationOpen]=
+useState(false);
 
   useEffect(() => {
 
@@ -266,6 +271,32 @@ export default function EditProfileDialog({
           </div>
 
         </div>
+
+<VerificationCard
+
+status={
+profile.verified
+? "Verified"
+: "Not Verified"
+}
+
+onRequest={()=>
+setVerificationOpen(true)
+}
+
+/>
+
+<VerificationDialog
+
+profile={profile}
+
+open={verificationOpen}
+
+onClose={()=>
+setVerificationOpen(false)
+}
+
+/>
 
         <div className="mt-10 flex justify-end gap-4">
 

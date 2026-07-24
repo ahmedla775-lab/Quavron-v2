@@ -12,24 +12,34 @@ import {
   Menu,
   X,
 } from "lucide-react";
-
+import { useAuth } from "../auth/AuthProvider";
 import { NavLink } from "react-router-dom";
 import { useState } from "react";
 import useResponsive from "../../hooks/useResponsive";
 
 const menu = [
-  { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-  { title: "Cloud IDE", icon: Code2, path: "/ide" },
-  { title: "AI Assistant", icon: Bot, path: "/ai" },
-  { title: "Courses", icon: BookOpen, path: "/courses" },
-  { title: "Marketplace", icon: ShoppingCart, path: "/marketplace" },
-  { title: "Hosting", icon: Cloud, path: "/hosting" },
-  { title: "Community", icon: Users, path: "/community" },
-  { title: "Analytics", icon: BarChart3, path: "/analytics" },
-  { title: "Profile", icon: User, path: "/profile" },
-  { title: "Settings", icon: Settings, path: "/settings" },
-];
 
+  { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
+
+  { title: "Cloud IDE", icon: Code2, path: "/ide" },
+
+  { title: "AI Assistant", icon: Bot, path: "/ai" },
+
+  { title: "Courses", icon: BookOpen, path: "/courses" },
+
+  { title: "Marketplace", icon: ShoppingCart, path: "/marketplace" },
+
+  { title: "Hosting", icon: Cloud, path: "/hosting" },
+
+  { title: "Community", icon: Users, path: "/community" },
+
+  { title: "Analytics", icon: BarChart3, path: "/analytics" },
+
+  { title: "Profile", icon: User, path: "/profile" },
+
+  { title: "Settings", icon: Settings, path: "/settings" },
+
+];
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
 
@@ -40,6 +50,27 @@ export default function Sidebar() {
   } = useResponsive();
 
   const showSidebar = isDesktop || open;
+
+const { profile } = useAuth();
+
+const navigation = [...menu];
+
+if (
+  profile?.role === "owner" ||
+  profile?.role === "admin"
+) {
+
+  navigation.push({
+
+    title: "Admin",
+
+    icon: Settings,
+
+    path: "/admin",
+
+  });
+
+}
 
   return (
     <>
@@ -140,7 +171,7 @@ export default function Sidebar() {
             p-4
           "
         >
-          {menu.map((item) => {
+          {navigation.map((item) => {
 
             const Icon = item.icon;
 

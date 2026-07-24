@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-
+import VerificationBadge from "../../profile/VerificationBadge";
 import { REACTIONS } from "../../../modules/community/constants/reactions";
 
 export default function ReactionUsersModal({
@@ -113,7 +113,17 @@ export default function ReactionUsersModal({
                         <div>
 
                           <div className="font-medium">
-                            {profile.full_name || "User"}
+                            <div className="flex items-center gap-2">
+  <span>
+    {profile.full_name || "User"}
+  </span>
+
+  <VerificationBadge
+    verified={profile.verified}
+    verificationType={profile.verification_type}
+    size={15}
+  />
+</div>
                           </div>
 
                           <div className="text-sm text-slate-400">
