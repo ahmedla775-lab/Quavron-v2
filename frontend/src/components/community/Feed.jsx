@@ -63,21 +63,20 @@ export default function Feed() {
           <CreatePost />
 
 
-          <p
-            className="
-              px-4
-              py-2
-              text-sm
-              text-slate-400
-            "
-          >
-            {
-              loading
-              ? "Loading posts..."
-              : `${posts.length} Posts`
-            }
-          </p>
-
+        <div
+  className="
+    px-4
+    py-2
+    text-sm
+    text-slate-500
+  "
+>
+  {
+    loading
+      ? "Loading..."
+      : `Today • ${posts.length} Posts`
+  }
+</div>
 
 
           <div

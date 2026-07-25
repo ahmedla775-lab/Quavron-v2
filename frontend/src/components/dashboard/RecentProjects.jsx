@@ -4,7 +4,6 @@ import Card from "../ui/Card";
 import Button from "../ui/Button";
 
 export default function RecentProjects() {
-
   const { t } = useTranslation("dashboard");
 
   const projects = [
@@ -32,12 +31,11 @@ export default function RecentProjects() {
   ];
 
   return (
-
     <Card>
 
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-5 flex items-center justify-between">
 
-        <h2 className="text-2xl font-bold text-white">
+        <h2 className="text-xl font-bold lg:text-2xl">
           {t("recentProjects")}
         </h2>
 
@@ -47,38 +45,55 @@ export default function RecentProjects() {
 
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
 
         {projects.map((project) => (
 
           <div
             key={project.id}
-            className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900 p-4 transition hover:border-blue-500"
+            className="
+              rounded-2xl
+              border
+              border-slate-800
+              bg-slate-900
+              p-4
+              transition
+              hover:border-blue-500
+            "
           >
 
-            <div>
+            <div className="flex items-start justify-between gap-4">
 
-              <h3 className="font-semibold text-white">
-                {project.name}
-              </h3>
+              <div className="min-w-0 flex-1">
 
-              <p className="mt-1 text-sm text-slate-400">
-                {project.language}
-              </p>
+                <h3 className="truncate font-semibold text-white">
+                  {project.name}
+                </h3>
 
-            </div>
+                <p className="mt-1 text-sm text-slate-400">
+                  {project.language}
+                </p>
 
-            <div className="text-right">
+              </div>
 
-              <p className="text-sm text-blue-400">
+              <span
+                className="
+                  rounded-full
+                  bg-blue-600/20
+                  px-3
+                  py-1
+                  text-xs
+                  text-blue-400
+                "
+              >
                 {project.status}
-              </p>
-
-              <p className="mt-1 text-xs text-slate-500">
-                {project.updated}
-              </p>
+              </span>
 
             </div>
+
+            <p className="mt-3 text-xs text-slate-500">
+              {project.updated}
+            </p>
 
           </div>
 
@@ -87,7 +102,5 @@ export default function RecentProjects() {
       </div>
 
     </Card>
-
   );
-
 }

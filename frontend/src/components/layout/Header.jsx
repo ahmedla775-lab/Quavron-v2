@@ -1,5 +1,8 @@
 import { NavLink } from "react-router-dom";
+import { Menu, Bell, User } from "lucide-react";
 import Button from "../ui/Button";
+import { useState } from "react";
+
 
 const navItems = [
   { name: "Home", path: "/" },
@@ -10,58 +13,212 @@ const navItems = [
   { name: "Marketplace", path: "/marketplace" },
 ];
 
-export default function Header() {
-  return (
-    <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/90 backdrop-blur-lg">
 
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+export default function Header() {
+
+  const [open, setOpen] = useState(false);
+
+
+  return (
+
+    <header
+      className="
+        sticky
+        top-0
+        z-40
+        border-b
+        border-slate-800
+        bg-slate-950/90
+        backdrop-blur-lg
+      "
+    >
+
+      <div
+        className="
+          flex
+          h-16
+          items-center
+          justify-between
+          px-4
+          lg:px-6
+        "
+      >
+
+        {/* Mobile Menu */}
+
+        <button
+          className="
+            flex
+            lg:hidden
+            text-slate-300
+          "
+          onClick={() => setOpen(!open)}
+        >
+          <Menu size={24}/>
+        </button>
+
+
+
+        {/* Logo */}
 
         <NavLink
           to="/"
-          className="text-3xl font-extrabold tracking-tight text-blue-500"
+          className="
+            text-2xl
+            font-extrabold
+            tracking-tight
+            text-blue-500
+          "
         >
           Quavron
         </NavLink>
 
-        <nav className="hidden items-center gap-8 lg:flex">
 
-          {navItems.map((item) => (
+
+        {/* Desktop Navigation */}
+
+        <nav
+          className="
+            hidden
+            items-center
+            gap-8
+            lg:flex
+          "
+        >
+
+          {navItems.map((item)=>(
+
             <NavLink
               key={item.path}
               to={item.path}
-              className={({ isActive }) =>
-                `transition ${
+              className={({isActive}) =>
+                `
+                transition
+                ${
                   isActive
-                    ? "text-blue-500"
-                    : "text-slate-300 hover:text-white"
-                }`
+                  ? "text-blue-500"
+                  : "text-slate-300 hover:text-white"
+                }
+                `
               }
             >
               {item.name}
             </NavLink>
+
           ))}
 
         </nav>
 
-        <div className="flex items-center gap-3">
 
-          <NavLink to="/login">
-            <Button variant="ghost">
-              Login
-            </Button>
+
+        {/* Actions */}
+
+        <div
+          className="
+            flex
+            items-center
+            gap-3
+          "
+        >
+
+          <button
+            className="
+              lg:hidden
+              text-slate-300
+            "
+          >
+            <Bell size={21}/>
+          </button>
+
+
+          <NavLink
+            to="/profile"
+            className="
+              lg:hidden
+              text-slate-300
+            "
+          >
+            <User size={21}/>
           </NavLink>
 
-          <NavLink to="/register">
-            <Button>
-              Get Started
-            </Button>
-          </NavLink>
+
+          <div className="hidden lg:flex gap-3">
+
+            <NavLink to="/login">
+              <Button variant="ghost">
+                Login
+              </Button>
+            </NavLink>
+
+
+            <NavLink to="/register">
+              <Button>
+                Get Started
+              </Button>
+            </NavLink>
+
+          </div>
+
 
         </div>
 
+
       </div>
 
+
+
+      {/* Mobile Menu Drawer */}
+
+      {open && (
+
+        <div
+          className="
+            absolute
+            left-0
+            right-0
+            border-b
+            border-slate-800
+            bg-slate-950
+            p-4
+            lg:hidden
+          "
+        >
+
+          <nav
+            className="
+              flex
+              flex-col
+              gap-3
+            "
+          >
+
+            {navItems.map((item)=>(
+
+              <NavLink
+                key={item.path}
+                to={item.path}
+                onClick={()=>setOpen(false)}
+                className="
+                  rounded-lg
+                  px-3
+                  py-2
+                  text-slate-300
+                  hover:bg-slate-800
+                "
+              >
+                {item.name}
+              </NavLink>
+
+            ))}
+
+          </nav>
+
+        </div>
+
+      )}
+
+
     </header>
+
   );
 }
-

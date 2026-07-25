@@ -1,33 +1,54 @@
+import useResponsive from "../../hooks/useResponsive";
+
 export default function CommunityHeader() {
+  const { isMobile } = useResponsive();
+
   return (
-    <div
+    <header
       className="
-        flex
-        items-center
-        justify-between
+        sticky
+        top-0
+        z-20
         border-b
         border-slate-800
-        bg-slate-950
-        px-4
-        py-4
+        bg-slate-950/95
+        backdrop-blur
       "
     >
+      <div
+        className="
+          flex
+          items-center
+          justify-between
+          gap-3
+          px-4
+          py-4
+          sm:px-6
+        "
+      >
+        <div className="min-w-0 flex-1">
+          <h1
+            className="
+              truncate
+              text-xl
+              font-bold
+              text-white
+              sm:text-2xl
+            "
+          >
+            Community
+          </h1>
 
-      <div>
-        <h1 className="text-2xl font-bold text-white">
-          Community
-        </h1>
-
-        <p className="mt-1 text-sm text-slate-400">
-          Connect, share and build with the Quavron community
-        </p>
-      </div>
-
-
-      <div className="hidden md:flex items-center gap-3">
+          {!isMobile && (
+            <p className="mt-1 text-sm text-slate-400">
+              Connect, share and build with the Quavron community
+            </p>
+          )}
+        </div>
 
         <button
           className="
+            shrink-0
             rounded-xl
             bg-blue-600
             px-4
@@ -37,14 +58,12 @@ export default function CommunityHeader() {
             text-white
             transition
             hover:bg-blue-700
+            active:scale-95
           "
         >
           Discover
         </button>
-
       </div>
-
-
-    </div>
+    </header>
   );
 }

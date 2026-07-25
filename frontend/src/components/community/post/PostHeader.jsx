@@ -10,7 +10,6 @@ export default function PostHeader({
   onShare,
   onBookmark,
 }) {
-
   const navigate = useNavigate();
 
   function openProfile() {
@@ -36,42 +35,74 @@ export default function PostHeader({
   return (
     <div className="flex items-start gap-3">
 
-      {avatar ? (
-        <img
-          src={avatar}
-          alt={fullName}
-          onClick={openProfile}
-          className="h-11 w-11 cursor-pointer rounded-full object-cover"
-        />
-      ) : (
-        <div
-          onClick={openProfile}
-          className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-blue-600 font-bold text-white"
-        >
-          {username.charAt(0).toUpperCase()}
-        </div>
-      )}
+      <div
+        onClick={openProfile}
+        className="shrink-0 cursor-pointer"
+      >
+        {avatar ? (
+          <img
+            src={avatar}
+            alt={fullName}
+            className="
+              h-11
+              w-11
+              rounded-full
+              object-cover
+            "
+          />
+        ) : (
+          <div
+            className="
+              flex
+              h-11
+              w-11
+              items-center
+              justify-center
+              rounded-full
+              bg-blue-600
+              font-bold
+              text-white
+            "
+          >
+            {username.charAt(0).toUpperCase()}
+          </div>
+        )}
+      </div>
 
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
 
-        <div
-          onClick={openProfile}
-          className="flex cursor-pointer items-center gap-2"
-        >
-          <h3 className="font-semibold text-white transition hover:text-blue-400">
+        <div className="flex items-center gap-2">
+
+          <h3
+            onClick={openProfile}
+            className="
+              truncate
+              cursor-pointer
+              font-semibold
+              text-white
+              hover:text-blue-400
+            "
+          >
             {fullName}
           </h3>
 
           <VerificationBadge
             verified={profile.verified}
-            type={profile.verification_type}
-            size={18}
+            verificationType={profile.verification_type}
+            size={16}
           />
+
         </div>
 
         <p
           onClick={openProfile}
-          className="cursor-pointer text-sm text-slate-400 transition hover:text-blue-400"
+          className="
+            truncate
+            cursor-pointer
+            text-sm
+            text-slate-400
+            hover:text-blue-400
+          "
         >
           @{username}
         </p>
@@ -92,5 +123,4 @@ export default function PostHeader({
 
     </div>
   );
-
 }

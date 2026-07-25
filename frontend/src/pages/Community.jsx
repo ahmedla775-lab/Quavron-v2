@@ -49,10 +49,10 @@ export default function Community() {
   switch (activeSection) {
     case "Home":
       return (
-        <>
-          <TrendingBar />
-          <Feed />
-        </>
+<>
+  {isDesktop && <TrendingBar />}
+  <Feed />
+</>        
       );
 
     case "Explore":
@@ -99,6 +99,7 @@ export default function Community() {
 
     <DashboardLayout>
 
+<div className="h-full w-full">
 
       <div
         className="
@@ -200,9 +201,10 @@ export default function Community() {
         <CommunityLayout
 
           header={
-            <CommunityHeader />
-          }
-
+  isDesktop
+    ? <CommunityHeader />
+    : null
+}
           sidebar={
             isDesktop ? sidebar : null
           }
@@ -218,6 +220,7 @@ export default function Community() {
 
       </div>
 
+</div>
 
     </DashboardLayout>
 

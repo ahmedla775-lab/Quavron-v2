@@ -1,39 +1,52 @@
-import DashboardLayout from "../components/dashboard/DashboardLayout";
 import { useEffect, useState } from "react";
-import PostService from "../services/PostService";
+
+import DashboardLayout from "../components/dashboard/DashboardLayout";
+
 import { useProfile } from "../context/ProfileContext";
-import ProfileProjects from "../components/profile/ProfileProjects";
-import ProfileReels from "../components/profile/ProfileReels";
-import ProfileStories from "../components/profile/ProfileStories";
-import ProfileActivity from "../components/profile/ProfileActivity";
+
 import ProfileHeader from "../components/profile/ProfileHeader";
 import ProfileStats from "../components/profile/ProfileStats";
 import ProfileTabs from "../components/profile/ProfileTabs";
-import ProfilePosts from "../components/profile/ProfilePosts";
-import ProfileAbout from "../components/profile/ProfileAbout";
-import ProfileMedia from "../components/profile/ProfileMedia";
-import ProfileSaved from "../components/profile/ProfileSaved";
+import ProfileContent from "../components/profile/ProfileContent";
 import EditProfileDialog from "../components/profile/EditProfileDialog";
 
+import PostService from "../services/PostService";
+
 export default function Profile() {
+
   const { profile } = useProfile();
-const [postsCount, setPostsCount] = useState(0);
 
-useEffect(() => {
-  async function loadCount() {
-    if (!profile?.id) return;
-
-    const { data } = await PostService.getUserPosts(profile.id);
-    setPostsCount(data?.length || 0);
-  }
-
-  loadCount();
-}, [profile]);
   const [tab, setTab] = useState("Posts");
+
+  const [postsCount, setPostsCount] = useState(0);
+
   const [openEdit, setOpenEdit] = useState(false);
 
+  useEffect(() => {
+
+    async function loadCount() {
+
+      if (!profile?.id) return;
+
+      const { data } =
+        await PostService.getUserPosts(
+          profile.id
+        );
+
+      setPostsCount(
+        data?.length || 0
+      );
+
+    }
+
+    loadCount();
+
+  }, [profile]);
+
   return (
+
     <DashboardLayout>
+
       <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
 
         <ProfileHeader
@@ -42,47 +55,21 @@ useEffect(() => {
         />
 
         <ProfileStats
-  profile={{
-    ...profile,
-    posts_count: postsCount,
-  }}
-/>
+          profile={{
+            ...profile,
+            posts_count: postsCount,
+          }}
+        />
+
         <ProfileTabs
           activeTab={tab}
           onChange={setTab}
         />
 
-        {tab === "Posts" && (
-          <ProfilePosts profile={profile} />
-        )}
-
-        {tab === "Media" && (
-          <ProfileMedia profile={profile} />
-        )}
-
-        {tab === "Projects" && (
-  <ProfileProjects profile={profile} />
-)}
-
-{tab === "Reels" && (
-  <ProfileReels />
-)}
-
-{tab === "Stories" && (
-  <ProfileStories />
-)}
-
-{tab === "Activity" && (
-  <ProfileActivity />
-)}
-    
-        {tab === "About" && (
-          <ProfileAbout profile={profile} />
-        )}
-
-{tab === "Saved" && (
-  <ProfileSaved profile={profile} />
-)}        
+        <ProfileContent
+          tab={tab}
+          profile={profile}
+        />
 
         <EditProfileDialog
           open={openEdit}
@@ -91,6 +78,9 @@ useEffect(() => {
         />
 
       </div>
+
     </DashboardLayout>
+
   );
+
 }

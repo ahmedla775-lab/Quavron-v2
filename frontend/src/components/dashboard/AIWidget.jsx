@@ -5,27 +5,29 @@ import Card from "../ui/Card";
 import Button from "../ui/Button";
 
 export default function AIWidget() {
-
   const { t } = useTranslation("dashboard");
 
   return (
-
     <Card>
 
       <div className="flex items-center gap-3">
 
-        <Bot
-          size={32}
-          className="text-blue-500"
-        />
+        <div className="rounded-2xl bg-blue-600/20 p-3">
+
+          <Bot
+            size={26}
+            className="text-blue-400"
+          />
+
+        </div>
 
         <div>
 
-          <h2 className="text-2xl font-bold text-white">
+          <h2 className="text-xl font-bold lg:text-2xl">
             {t("aiAssistant")}
           </h2>
 
-          <p className="text-slate-400">
+          <p className="text-sm text-slate-400">
             {t("aiSubtitle")}
           </p>
 
@@ -33,19 +35,35 @@ export default function AIWidget() {
 
       </div>
 
-      <div className="mt-8 rounded-xl border border-slate-800 bg-slate-900 p-5">
+      <div
+        className="
+          mt-5
+          rounded-2xl
+          border
+          border-slate-800
+          bg-slate-900
+          p-4
+        "
+      >
 
         <p className="leading-7 text-slate-300">
-
           {t("aiDescription")}
-
         </p>
 
       </div>
 
-      <div className="mt-8 flex gap-4">
+      <div
+        className="
+          mt-5
+          flex
+          flex-col
+          gap-3
 
-        <Button>
+          sm:flex-row
+        "
+      >
+
+        <Button className="w-full sm:w-auto">
 
           <Sparkles size={18} />
 
@@ -53,16 +71,15 @@ export default function AIWidget() {
 
         </Button>
 
-        <Button variant="outline">
-
+        <Button
+          variant="outline"
+          className="w-full sm:w-auto"
+        >
           {t("history")}
-
         </Button>
 
       </div>
 
     </Card>
-
   );
-
 }

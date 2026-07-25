@@ -1,24 +1,24 @@
-import VerificationBadge from "../profile/VerificationBadge";
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Bell,
   ChevronDown,
   LogOut,
   Settings,
   User,
+  Search,
 } from "lucide-react";
 
-import { Link, useNavigate } from "react-router-dom";
-
 import Input from "../ui/Input";
+import VerificationBadge from "../profile/VerificationBadge";
+
 import { useAuth } from "../auth/AuthProvider";
 import { useProfile } from "../../context/ProfileContext";
+
 import { logout } from "../../services/AuthService";
 import useResponsive from "../../hooks/useResponsive";
 
-
 export default function Topbar() {
-
   const navigate = useNavigate();
 
   const { user } = useAuth();
@@ -28,18 +28,12 @@ export default function Topbar() {
 
   const [openMenu, setOpenMenu] = useState(false);
 
-
   async function handleLogout() {
-
     await logout();
-
     navigate("/login");
-
   }
 
-
   return (
-
     <header
       className="
         sticky
@@ -48,78 +42,64 @@ export default function Topbar() {
         border-b
         border-slate-800
         bg-slate-950/95
-        px-4
-        py-4
-        backdrop-blur
-        lg:px-8
+        backdrop-blur-xl
       "
     >
-
       <div
         className="
+          mx-auto
           flex
+          h-16
           items-center
           justify-between
-          gap-4
+          gap-3
+          px-3
+          sm:px-4
+          lg:px-8
         "
       >
+        {/* Left */}
 
-
-        {/* Search */}
-        {!isMobile && (
-
+        {isMobile ? (
+          <div className="ml-12 font-bold text-lg">
+            Quavron
+          </div>
+        ) : (
           <div
             className={`
+              w-full
               ${
                 isTablet
                   ? "max-w-xs"
                   : "max-w-md"
               }
-              w-full
             `}
           >
-
-            <Input placeholder="Search..." />
-
+            <Input
+              placeholder="Search..."
+              icon={<Search size={18} />}
+            />
           </div>
-
         )}
 
+        {/* Right */}
 
-
-        {/* Mobile Logo Space */}
-        {isMobile && (
-
-          <div className="font-bold text-white">
-            Quavron
-          </div>
-
-        )}
-
-
-
-        {/* Actions */}
-        <div
-          className="
-            flex
-            items-center
-            gap-3
-          "
-        >
-
-
-          {/* Notifications */}
+        <div className="flex items-center gap-2">
 
           <button
             className="
               relative
+              flex
+              h-10
+              w-10
+              items-center
+              justify-center
               rounded-xl
-              p-2
+              transition
               hover:bg-slate-800
             "
           >
-
-            <Bell size={22}/>
+            <Bell size={20} />
 
             <span
               className="
@@ -132,97 +112,67 @@ export default function Topbar() {
                 bg-red-500
               "
             />
-
           </button>
-
-
-
-          {/* Profile */}
 
           <div className="relative">
 
-
             <button
-
               onClick={() => setOpenMenu(!openMenu)}
-
               className="
                 flex
                 items-center
                 gap-3
                 rounded-xl
-                px-2
-                py-2
+                p-1
                 transition
                 hover:bg-slate-800
               "
-
             >
-
               <img
-
                 src={
                   profile?.avatar_url ||
                   "https://ui-avatars.com/api/?background=2563eb&color=fff&name=Q"
                 }
-
                 alt="Avatar"
-
                 className="
                   h-10
                   w-10
                   rounded-full
                   object-cover
                 "
-
               />
 
-
-
               {!isMobile && (
-
-                <div className="hidden text-left md:block">
-
-                  <p className="font-semibold text-white">
+                <>
+                  <div className="text-left">
 
                     <div className="flex items-center gap-2">
-  <span>
-    {profile?.full_name || "Quavron User"}
-  </span>
 
-  <VerificationBadge
-    verified={profile?.verified}
-    verificationType={profile?.verification_type}
-    size={16}
-  />
-</div>
-                  </p>
+                      <span className="font-semibold">
+                        {profile?.full_name || "Quavron User"}
+                      </span>
 
+                      <VerificationBadge
+                        verified={profile?.verified}
+                        verificationType={profile?.verification_type}
+                        size={15}
+                      />
 
-                  <p className="text-xs text-slate-400">
+                    </div>
 
-                    @{profile?.username || user?.email || "user"}
+                    <p className="text-xs text-slate-400">
+                      @{profile?.username || user?.email || "user"}
+                    </p>
 
-                  </p>
+                  </div>
 
-                </div>
-
+                  <ChevronDown
+                    size={18}
+                    className="text-slate-500"
+                  />
+                </>
               )}
-
-
-
-              {!isMobile && (
-
-                <ChevronDown
-                  size={18}
-                  className="text-slate-400"
-                />
-
-              )}
-
             </button>
-
-
 
             {openMenu && (
 
@@ -231,7 +181,7 @@ export default function Topbar() {
                   absolute
                   right-0
                   mt-2
-                  w-56
+                  w-60
                   overflow-hidden
                   rounded-2xl
                   border
@@ -249,13 +199,13 @@ export default function Topbar() {
                     gap-3
                     px-4
                     py-3
+                    transition
                     hover:bg-slate-800
                   "
                 >
-                  <User size={18}/>
+                  <User size={18} />
                   Profile
                 </Link>
-
 
                 <Link
                   to="/settings"
@@ -265,21 +215,16 @@ export default function Topbar() {
                     gap-3
                     px-4
                     py-3
+                    transition
                     hover:bg-slate-800
                   "
                 >
-
-                  <Settings size={18}/>
+                  <Settings size={18} />
                   Settings
-
                 </Link>
 
-
-
                 <button
-
                   onClick={handleLogout}
-
                   className="
                     flex
                     w-full
@@ -289,32 +234,23 @@ export default function Topbar() {
                     py-3
                     text-left
                     text-red-400
+                    transition
                     hover:bg-slate-800
                   "
                 >
-
-                  <LogOut size={18}/>
+                  <LogOut size={18} />
                   Logout
-
                 </button>
-
 
               </div>
 
             )}
 
-
           </div>
-
 
         </div>
 
-
       </div>
-
-
     </header>
-
   );
-
 }

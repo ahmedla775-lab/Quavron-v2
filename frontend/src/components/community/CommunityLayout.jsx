@@ -6,35 +6,26 @@ export default function CommunityLayout({
   feed,
   rightSidebar,
 }) {
-  const {
-    isDesktop,
-    isTablet,
-  } = useResponsive();
-
+  const { isDesktop } = useResponsive();
 
   return (
     <div
       className="
         flex
         h-full
+        min-h-0
         w-full
-        min-w-0
         flex-col
         overflow-hidden
         bg-slate-950
         text-white
       "
     >
-
-      {/* Community Header */}
-
       {header && (
         <div className="shrink-0">
           {header}
         </div>
       )}
-
-
 
       <div
         className="
@@ -42,11 +33,9 @@ export default function CommunityLayout({
           min-h-0
           flex-1
           w-full
+          overflow-hidden
         "
       >
-
-        {/* Left Sidebar */}
-
         {isDesktop && (
           <aside
             className="
@@ -61,23 +50,16 @@ export default function CommunityLayout({
           </aside>
         )}
 
-
-
-        {/* Feed */}
-
         <main
           className="
             min-w-0
             flex-1
-            overflow-hidden
+            overflow-y-auto
+            overflow-x-hidden
           "
         >
           {feed}
         </main>
-
-
-
-        {/* Right Sidebar */}
 
         {isDesktop && (
           <aside
@@ -92,20 +74,7 @@ export default function CommunityLayout({
             {rightSidebar}
           </aside>
         )}
-
-
-
-        {/* Tablet preparation */}
-
-        {isTablet && (
-          <div className="hidden">
-            {rightSidebar}
-          </div>
-        )}
-
-
       </div>
-
     </div>
   );
 }
