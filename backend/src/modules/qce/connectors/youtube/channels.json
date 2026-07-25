@@ -1,7 +1,7 @@
 [
   {
     "name": "OpenAI",
-    "channelId": "",
+    "channelId": "UCXZCJLdBC09xxGZ6gcdrc6A",
     "category": "artificial_intelligence",
     "language": "en",
     "priority": 10,
@@ -9,7 +9,7 @@
   },
   {
     "name": "Google DeepMind",
-    "channelId": "",
+    "channelId": "UCP7jMXSY2xbc3KCAE0MHQ-A",
     "category": "artificial_intelligence",
     "language": "en",
     "priority": 10,
@@ -17,7 +17,7 @@
   },
   {
     "name": "NVIDIA",
-    "channelId": "",
+    "channelId": "UCHuiy8bXnmK5nisYHUd1J5g",
     "category": "artificial_intelligence",
     "language": "en",
     "priority": 9,
@@ -25,7 +25,7 @@
   },
   {
     "name": "Andrej Karpathy",
-    "channelId": "",
+    "channelId": "UCXUPKJO5MZQN11PqgIvyuvQ",
     "category": "artificial_intelligence",
     "language": "en",
     "priority": 10,
@@ -33,7 +33,7 @@
   },
   {
     "name": "Two Minute Papers",
-    "channelId": "",
+    "channelId": "UCbfYPyITQ-7l4upoX8nvctg",
     "category": "artificial_intelligence",
     "language": "en",
     "priority": 9,
@@ -41,7 +41,7 @@
   },
   {
     "name": "freeCodeCamp.org",
-    "channelId": "",
+    "channelId": "UC8butISFwT-Wl7EV0hUK0BQ",
     "category": "programming",
     "language": "en",
     "priority": 10,
@@ -49,7 +49,7 @@
   },
   {
     "name": "Fireship",
-    "channelId": "",
+    "channelId": "UCsBjURrPoezykLs9EqgamOA",
     "category": "programming",
     "language": "en",
     "priority": 9,
@@ -57,7 +57,7 @@
   },
   {
     "name": "Traversy Media",
-    "channelId": "",
+    "channelId": "UC29ju8bIPH5as8OGnQzwJyA",
     "category": "programming",
     "language": "en",
     "priority": 9,
@@ -65,7 +65,7 @@
   },
   {
     "name": "The Net Ninja",
-    "channelId": "",
+    "channelId": "UCW5YeuERMmlnqo4oq8vwUpg",
     "category": "programming",
     "language": "en",
     "priority": 9,
@@ -73,7 +73,7 @@
   },
   {
     "name": "Programming with Mosh",
-    "channelId": "",
+    "channelId": "UCWv7vMbMWH4-V0ZXdmDpPBA",
     "category": "programming",
     "language": "en",
     "priority": 9,
@@ -81,7 +81,7 @@
   },
   {
     "name": "NetworkChuck",
-    "channelId": "",
+    "channelId": "UC9x0AN7BWHpCDHSm9NiJFJQ",
     "category": "cybersecurity",
     "language": "en",
     "priority": 9,
@@ -89,7 +89,7 @@
   },
   {
     "name": "John Hammond",
-    "channelId": "",
+    "channelId": "UCVeW9qkBjo3zosnqUbG7CFw",
     "category": "cybersecurity",
     "language": "en",
     "priority": 10,
@@ -97,7 +97,7 @@
   },
   {
     "name": "LiveOverflow",
-    "channelId": "",
+    "channelId": "UClcE-kVhqyiHCcjYwcpfj9w",
     "category": "cybersecurity",
     "language": "en",
     "priority": 10,
@@ -105,7 +105,7 @@
   },
   {
     "name": "MIT OpenCourseWare",
-    "channelId": "",
+    "channelId": "UCEBb1b_L6zDS3xTUrIALZOw",
     "category": "education",
     "language": "en",
     "priority": 10,
@@ -113,7 +113,7 @@
   },
   {
     "name": "TED-Ed",
-    "channelId": "",
+    "channelId": "UCsooa4yRKGN_zEE8iknghZA",
     "category": "education",
     "language": "en",
     "priority": 9,
@@ -121,7 +121,7 @@
   },
   {
     "name": "Veritasium",
-    "channelId": "",
+    "channelId": "UCHnyfMqiRRG1u-2MsSQLbXA",
     "category": "science",
     "language": "en",
     "priority": 10,
@@ -129,7 +129,7 @@
   },
   {
     "name": "Kurzgesagt",
-    "channelId": "",
+    "channelId": "UCsXVk37bltHxD1rDPwtNM8Q",
     "category": "science",
     "language": "en",
     "priority": 9,
@@ -137,7 +137,7 @@
   },
   {
     "name": "Y Combinator",
-    "channelId": "",
+    "channelId": "UCcefcZRL2oaA_uBNeo5UOWg",
     "category": "business",
     "language": "en",
     "priority": 10,
@@ -145,7 +145,7 @@
   },
   {
     "name": "Elzero Web School",
-    "channelId": "",
+    "channelId": "UCSNkfKl4cU-55Nm-ovsvOHQ",
     "category": "arabic_tech",
     "language": "ar",
     "priority": 10,
@@ -153,7 +153,7 @@
   },
   {
     "name": "أكاديمية حسوب",
-    "channelId": "",
+    "channelId": "UCJv37tcBvJlBF2MoVMRMvbQ",
     "category": "arabic_tech",
     "language": "ar",
     "priority": 9,
@@ -161,7 +161,7 @@
   },
   {
     "name": "دروس أونلاين",
-    "channelId": "",
+    "channelId": "UCEHvaZ336u7TIsUQ2c6SAeQ",
     "category": "arabic_education",
     "language": "ar",
     "priority": 9,
@@ -169,7 +169,7 @@
   },
   {
     "name": "Google Developers",
-    "channelId": "",
+    "channelId": "UC_x5XG1OV2P6uZZ5FSM9Ttw",
     "category": "technology",
     "language": "en",
     "priority": 9,
@@ -177,7 +177,7 @@
   },
   {
     "name": "Microsoft Developer",
-    "channelId": "",
+    "channelId": "UCsMica-v34Irf9KVTh6xx-g",
     "category": "technology",
     "language": "en",
     "priority": 9,
@@ -185,7 +185,7 @@
   },
   {
     "name": "AWS",
-    "channelId": "",
+    "channelId": "UCd6MoB9NC6uYN2grvUNT-Zg",
     "category": "cloud",
     "language": "en",
     "priority": 9,
@@ -193,7 +193,7 @@
   },
   {
     "name": "IBM Technology",
-    "channelId": "",
+    "channelId": "UCKWaEZ-_VweaEx1j62do_vQ",
     "category": "technology",
     "language": "en",
     "priority": 8,
@@ -201,7 +201,7 @@
   },
   {
     "name": "Web Dev Simplified",
-    "channelId": "",
+    "channelId": "UCFbNIlppjAuEX4znoulh0Cw",
     "category": "programming",
     "language": "en",
     "priority": 9,
@@ -209,7 +209,7 @@
   },
   {
     "name": "Kevin Powell",
-    "channelId": "",
+    "channelId": "UCJZv4d5rbIKd4QHMPkcABCw",
     "category": "frontend",
     "language": "en",
     "priority": 9,
@@ -217,7 +217,7 @@
   },
   {
     "name": "Academind",
-    "channelId": "",
+    "channelId": "UCSJbGtTlrDami-tDGPUV9-w",
     "category": "programming",
     "language": "en",
     "priority": 9,
@@ -225,7 +225,7 @@
   },
   {
     "name": "CodeWithHarry",
-    "channelId": "",
+    "channelId": "UCeVMnSShP_Iviwkknt83cww",
     "category": "programming",
     "language": "en",
     "priority": 8,
@@ -233,7 +233,7 @@
   },
   {
     "name": "The Cyber Mentor",
-    "channelId": "",
+    "channelId": "UC0ArlFuFYMpEewyRBzdLHiw",
     "category": "cybersecurity",
     "language": "en",
     "priority": 10,
@@ -241,7 +241,7 @@
   },
   {
     "name": "HackerSploit",
-    "channelId": "",
+    "channelId": "UC0ZTPkdxlAKf-V33tqXwi3Q",
     "category": "cybersecurity",
     "language": "en",
     "priority": 9,
@@ -249,7 +249,7 @@
   },
   {
     "name": "IppSec",
-    "channelId": "",
+    "channelId": "UCa6eh7gCkpPo5XXUDfygQQA",
     "category": "cybersecurity",
     "language": "en",
     "priority": 9,
@@ -257,7 +257,7 @@
   },
   {
     "name": "Professor Messer",
-    "channelId": "",
+    "channelId": "UCkefXKtInZ9PLsoGRtml2FQ",
     "category": "cybersecurity",
     "language": "en",
     "priority": 9,
@@ -265,7 +265,7 @@
   },
   {
     "name": "3Blue1Brown",
-    "channelId": "",
+    "channelId": "UCYO_jab_esuFRV4b17AJtAw",
     "category": "mathematics",
     "language": "en",
     "priority": 10,
@@ -273,7 +273,7 @@
   },
   {
     "name": "Vsauce",
-    "channelId": "",
+    "channelId": "UC6nSFpj9HTCZ5t-N3Rm3-HA",
     "category": "science",
     "language": "en",
     "priority": 9,
@@ -281,7 +281,7 @@
   },
   {
     "name": "SmarterEveryDay",
-    "channelId": "",
+    "channelId": "UC6107grRI4m0o2-emgoDnAA",
     "category": "science",
     "language": "en",
     "priority": 9,
@@ -289,7 +289,7 @@
   },
   {
     "name": "Harvard Online",
-    "channelId": "",
+    "channelId": "UCKJyv_uNh3LhYFKmwaB63bA",
     "category": "education",
     "language": "en",
     "priority": 9,
@@ -297,7 +297,7 @@
   },
   {
     "name": "Bloomberg Technology",
-    "channelId": "",
+    "channelId": "UCrM7B7SL_g1edFOnmj-SDKg",
     "category": "business",
     "language": "en",
     "priority": 9,
@@ -305,7 +305,7 @@
   },
   {
     "name": "CNBC",
-    "channelId": "",
+    "channelId": "UCrp_UI8XtuYfpiqluWLD7Lw",
     "category": "finance",
     "language": "en",
     "priority": 8,
@@ -313,7 +313,7 @@
   },
   {
     "name": "Ali Abdaal",
-    "channelId": "",
+    "channelId": "UCoOae5nYA7VqaXzerajD0lg",
     "category": "productivity",
     "language": "en",
     "priority": 8,
@@ -321,7 +321,7 @@
   },
   {
     "name": "Marques Brownlee",
-    "channelId": "",
+    "channelId": "UCBJycsmduvYEL83R_U4JriQ",
     "category": "technology_reviews",
     "language": "en",
     "priority": 9,
@@ -329,7 +329,7 @@
   },
   {
     "name": "Linus Tech Tips",
-    "channelId": "",
+    "channelId": "UCXuqSBlHAE6Xw-yeJA0Tunw",
     "category": "technology_reviews",
     "language": "en",
     "priority": 8,
@@ -337,7 +337,7 @@
   },
   {
     "name": "The Verge",
-    "channelId": "",
+    "channelId": "UCddiUEpeqJcYeBxX1IVBKvQ",
     "category": "technology_news",
     "language": "en",
     "priority": 8,
@@ -345,7 +345,7 @@
   },
   {
     "name": "أسامة الزيرو",
-    "channelId": "",
+    "channelId": "UCSNkfKl4cU-55Nm-ovsvOHQ",
     "category": "arabic_tech",
     "language": "ar",
     "priority": 10,
@@ -353,7 +353,7 @@
   },
   {
     "name": "Codezilla",
-    "channelId": "",
+    "channelId": "UCveX_0uBOHVHbpV838OGXVA",
     "category": "arabic_tech",
     "language": "ar",
     "priority": 9,
@@ -361,7 +361,7 @@
   },
   {
     "name": "Elzero Web School",
-    "channelId": "",
+    "channelId": "UCSNkfKl4cU-55Nm-ovsvOHQ",
     "category": "arabic_programming",
     "language": "ar",
     "priority": 10,
@@ -369,7 +369,7 @@
   },
   {
     "name": "Quran",
-    "channelId": "",
+    "channelId": "UChX8evby6lpOyQ-6UKZhb4g",
     "category": "islamic_knowledge",
     "language": "ar",
     "priority": 10,
@@ -377,7 +377,7 @@
   },
   {
     "name": "Tafsir Quran",
-    "channelId": "",
+    "channelId": "UCzPBBUB3SQlDx7EO00YawkQ",
     "category": "islamic_knowledge",
     "language": "ar",
     "priority": 9,
@@ -385,7 +385,7 @@
   },
   {
     "name": "Islamic Guidance",
-    "channelId": "",
+    "channelId": "UCNDpwS2nEiGiJAW3Oe-3zBg",
     "category": "islamic_knowledge",
     "language": "ar",
     "priority": 9,
@@ -393,7 +393,7 @@
   },
   {
     "name": "Ministry of Islamic Affairs",
-    "channelId": "",
+    "channelId": "UCVMd_BAthMh7pN2d75Wbk-g",
     "category": "islamic_knowledge",
     "language": "ar",
     "priority": 8,
@@ -401,7 +401,7 @@
   },
   {
     "name": "Zad Academy",
-    "channelId": "",
+    "channelId": "UCBoe29aQT-zMECFyyyO7H4Q",
     "category": "islamic_education",
     "language": "ar",
     "priority": 9,
@@ -409,7 +409,7 @@
   },
   {
     "name": "Bayyinah Institute",
-    "channelId": "",
+    "channelId": "UCRtiU-lpcBSi-ipFKyfIkug",
     "category": "quran_arabic_studies",
     "language": "en",
     "priority": 9,
@@ -417,7 +417,7 @@
   },
   {
     "name": "Yaqeen Institute",
-    "channelId": "",
+    "channelId": "UC3vHW2h22WE-pNi5WJtRIjg",
     "category": "islamic_research",
     "language": "en",
     "priority": 9,
@@ -425,7 +425,7 @@
   },
   {
     "name": "Omar Suleiman",
-    "channelId": "",
+    "channelId": "UCtm8rtofLSnaIBi3noB0INg",
     "category": "islamic_lectures",
     "language": "en",
     "priority": 8,
@@ -433,7 +433,7 @@
   },
   {
     "name": "Mufti Menk",
-    "channelId": "",
+    "channelId": "UCNB_OaI4524fASt8h0IL8dw",
     "category": "islamic_lectures",
     "language": "en",
     "priority": 8,
@@ -441,7 +441,7 @@
   },
   {
     "name": "Nouman Ali Khan",
-    "channelId": "",
+    "channelId": "UCRtiU-lpcBSi-ipFKyfIkug",
     "category": "quran_studies",
     "language": "en",
     "priority": 9,
@@ -449,7 +449,7 @@
   },
   {
     "name": "Stanford Online",
-    "channelId": "",
+    "channelId": "UCBa5G_ESCn8Yd4vw5U-gIcg",
     "category": "education",
     "language": "en",
     "priority": 10,
@@ -457,7 +457,7 @@
   },
   {
     "name": "Caltech",
-    "channelId": "",
+    "channelId": "UClGTZDyz3CSl92TgDqIr0nw",
     "category": "science",
     "language": "en",
     "priority": 9,
@@ -465,7 +465,7 @@
   },
   {
     "name": "NASA",
-    "channelId": "",
+    "channelId": "UCLA_DiR1FfKNvjuUpBHmylQ",
     "category": "space_science",
     "language": "en",
     "priority": 10,
@@ -473,7 +473,7 @@
   },
   {
     "name": "European Space Agency",
-    "channelId": "",
+    "channelId": "UCIBaDdAbGlFDeS33shmlD0A",
     "category": "space_science",
     "language": "en",
     "priority": 9,
@@ -481,7 +481,7 @@
   },
   {
     "name": "TechLinked",
-    "channelId": "",
+    "channelId": "UCeeFfhMcJa1kjtfZAGskOCA",
     "category": "technology_news",
     "language": "en",
     "priority": 8,
@@ -489,7 +489,7 @@
   },
   {
     "name": "Android Authority",
-    "channelId": "",
+    "channelId": "UCgyqtNWZmIxTx3b6OxTSALw",
     "category": "mobile_technology",
     "language": "en",
     "priority": 8,
@@ -497,7 +497,7 @@
   },
   {
     "name": "Mrwhosetheboss",
-    "channelId": "",
+    "channelId": "UCMiJRAwDNSNzuYeN2uWa0pA",
     "category": "technology_reviews",
     "language": "en",
     "priority": 8,
@@ -505,7 +505,7 @@
   },
   {
     "name": "HubSpot",
-    "channelId": "",
+    "channelId": "UCVeuau7DLrg7zlAjxxDbdww",
     "category": "marketing",
     "language": "en",
     "priority": 8,
@@ -513,7 +513,7 @@
   },
   {
     "name": "Google Cloud",
-    "channelId": "",
+    "channelId": "UCTMRxtyHoE3LPcrl-kT4AQQ",
     "category": "cloud",
     "language": "en",
     "priority": 9,
@@ -521,7 +521,7 @@
   },
   {
     "name": "Docker",
-    "channelId": "",
+    "channelId": "UC76AVf2JkrwjxNKMuPpscHQ",
     "category": "devops",
     "language": "en",
     "priority": 9,
@@ -529,7 +529,7 @@
   },
   {
     "name": "Kubernetes",
-    "channelId": "",
+    "channelId": "UCZ2bu0qutTOM0tHYa_jkIwg",
     "category": "devops",
     "language": "en",
     "priority": 9,
@@ -537,7 +537,7 @@
   },
   {
     "name": "Fazt",
-    "channelId": "",
+    "channelId": "UCX9NJ471o7Wie1DQe94RVIg",
     "category": "arabic_programming",
     "language": "es",
     "priority": 8,
@@ -545,7 +545,7 @@
   },
   {
     "name": "MoureDev",
-    "channelId": "",
+    "channelId": "UCxPD7bsocoAMq8Dj18kmGyQ",
     "category": "programming",
     "language": "es",
     "priority": 8,
@@ -553,7 +553,7 @@
   },
   {
     "name": "Al Jazeera Documentary",
-    "channelId": "",
+    "channelId": "UC0LSnqrwqtMwl2YwfUpO66g",
     "category": "documentary",
     "language": "ar",
     "priority": 8,
@@ -561,7 +561,7 @@
   },
   {
     "name": "DW Documentary",
-    "channelId": "",
+    "channelId": "UCW39zufHfsuGgpLviKh297Q",
     "category": "documentary",
     "language": "en",
     "priority": 8,
