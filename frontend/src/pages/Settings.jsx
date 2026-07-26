@@ -1,7 +1,16 @@
+import { useState } from "react";
+
 import DashboardLayout from "../components/dashboard/DashboardLayout";
-import LanguageSwitcher from "../components/common/LanguageSwitcher";
+
+import SettingsSidebar from "../components/settings/SettingsSidebar";
+import SettingsSearch from "../components/settings/SettingsSearch";
+import SettingsContent from "../components/settings/SettingsContent";
 
 export default function Settings() {
+
+  const [selected, setSelected] = useState("account");
+
+  const [search, setSearch] = useState("");
 
   return (
 
@@ -9,67 +18,43 @@ export default function Settings() {
 
       <div
         className="
+          flex
+          h-[calc(100vh-40px)]
+          overflow-hidden
           rounded-2xl
           border
           border-slate-800
-          bg-slate-900
-          p-8
+          bg-slate-950
         "
       >
 
-        <h1
-          className="
-            text-3xl
-            font-bold
-            text-white
-          "
-        >
-          Settings
-        </h1>
-
-
-        <p
-          className="
-            mt-2
-            text-slate-400
-          "
-        >
-          Manage your Quavron preferences.
-        </p>
-
-
+        <SettingsSidebar
+          selected={selected}
+          onSelect={setSelected}
+        />
 
         <div
           className="
-            mt-8
-            rounded-2xl
-            border
-            border-slate-800
-            bg-slate-950
-            p-6
+            flex
+            min-w-0
+            flex-1
+            flex-col
           "
         >
 
-          <h2
-            className="
-              mb-4
-              text-xl
-              font-semibold
-              text-white
-            "
-          >
-            Language
-          </h2>
+          <SettingsSearch
+            value={search}
+            onChange={setSearch}
+          />
 
-
-          <LanguageSwitcher />
-
+          <SettingsContent
+            selected={selected}
+            search={search}
+          />
 
         </div>
 
-
       </div>
-
 
     </DashboardLayout>
 

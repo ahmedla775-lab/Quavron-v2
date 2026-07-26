@@ -1,19 +1,25 @@
+import SocialAggregator from "./SocialAggregator";
+import YouTubeService from "./YouTubeService";
+
 class FeedService {
-  async getFeed() {
-    const API =
-      import.meta.env.VITE_API_URL ||
-      "http://localhost:5000";
 
-    const response = await fetch(`${API}/api/qce/feed`);
+  constructor() {
+    SocialAggregator.register("youtube", YouTubeService);
+  }
 
-    if (!response.ok) {
-      throw new Error("Failed to load Social Hub.");
-    }
+
+  async getFeed(options = {}) {
+
+    const response = await fetch(
+      "http://192.168.254.31:5000/api/qce/feed"
+    );
 
     const result = await response.json();
 
     return result.data || [];
+
   }
+
 }
 
 export default new FeedService();

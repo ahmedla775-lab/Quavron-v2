@@ -1,3 +1,4 @@
+import { SettingsProvider } from "./context/SettingsContext";
 import TranslationProvider from "./providers/TranslationProvider";
 import React from "react";
 import ReactDOM from "react-dom/client";
@@ -39,7 +40,9 @@ ReactDOM.createRoot(
 
       <AuthProvider>
 
-        <ProjectProvider>
+  <SettingsProvider>
+
+    <ProjectProvider>
 
           <FileProvider>
 
@@ -75,9 +78,11 @@ ReactDOM.createRoot(
 
           </FileProvider>
 
-        </ProjectProvider>
+                </ProjectProvider>
 
-      </AuthProvider>
+      </SettingsProvider>
+
+    </AuthProvider>
 
     </ThemeProvider>
 
