@@ -1,125 +1,83 @@
 import { useWorkspace as useWorkspaceContext } from "../context/WorkspaceContext";
 
 export default function useWorkspace() {
+  const context = useWorkspaceContext();
 
   const {
-
     tree,
-
     refresh,
-
     actions,
 
-    activeFileId,
-
-    setActiveFileId,
-
     selectedNodeId,
-
     setSelectedNodeId,
 
-  } = useWorkspaceContext();
+    tabs,
+    activeTab,
+    setActiveTab,
 
-  function createFile(
+    openFile,
+    closeTab,
+  } = context;
 
-    parentId,
-
-    name,
-
-    options = {}
-
-  ) {
-
+  function createFile(parentId, name, options = {}) {
     const file = actions.createFile(
-
       parentId,
-
       name,
-
       options
-
     );
 
     refresh();
 
-    return file;
+    if (file) {
+      openFile(file.id);
+    }
 
+    return file;
   }
 
-  function createFolder(
-
-    parentId,
-
-    name
-
-  ) {
-
+  function createFolder(parentId, name) {
     const folder = actions.createFolder(
-
       parentId,
-
       name
-
     );
 
     refresh();
 
     return folder;
-
   }
 
-  function rename(
-
-    id,
-
-    newName
-
-  ) {
-
-    actions.rename(
-
-      id,
-
-      newName
-
-    );
+  function rename(id, newName) {
+    actions.rename(id, newName);
 
     refresh();
-
   }
 
   function remove(id) {
-
     actions.delete(id);
 
     refresh();
-
   }
 
   return {
-
     tree,
-
-    activeFileId,
-
-    setActiveFileId,
-
-    selectedNodeId,
-
-    setSelectedNodeId,
-
-    createFile,
-
-    createFolder,
-
-    rename,
-
-    remove,
 
     actions,
 
     refresh,
 
-  };
+    selectedNodeId,
+    setSelectedNodeId,
 
+    tabs,
+    activeTab,
+    setActiveTab,
+
+    openFile,
+    closeTab,
+
+    createFile,
+    createFolder,
+    rename,
+    remove,
+  };
 }

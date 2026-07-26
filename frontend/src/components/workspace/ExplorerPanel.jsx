@@ -3,48 +3,48 @@ import ExplorerToolbar from "./ExplorerToolbar";
 
 import useExplorer from "../../modules/workspace/hooks/useExplorer";
 
-export default function ExplorerPanel() {
+export default function ExplorerPanel({
+  onClose,
+}) {
 
-  const {
-
-    tree,
-
-  } = useExplorer();
+  const { tree } = useExplorer();
 
   return (
-
-    <div className="h-full overflow-y-auto bg-slate-900">
+    <div className="flex h-full flex-col bg-[#1e1e1e]">
 
       <ExplorerToolbar />
 
-      <div className="border-b border-slate-800 p-4">
+      <div className="border-b border-slate-800 px-4 py-2">
 
-        <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">
-
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
           Explorer
-
-        </h2>
+        </p>
 
       </div>
 
-      <div className="p-2">
+      <div className="flex-1 overflow-y-auto py-2">
 
-        {tree.map((item) => (
+        {tree.length === 0 ? (
 
-          <ExplorerItem
+          <div className="px-4 py-8 text-center text-sm text-slate-500">
+            Empty Workspace
+          </div>
 
-            key={item.id}
+        ) : (
 
-            item={item}
+          tree.map((item) => (
+            <ExplorerItem
+              key={item.id}
+              item={item}
+              onClose={onClose}
+            />
+          ))
 
-          />
-
-        ))}
+        )}
 
       </div>
 
     </div>
-
   );
 
 }

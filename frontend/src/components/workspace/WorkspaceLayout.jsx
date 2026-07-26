@@ -1,108 +1,97 @@
 import { useState } from "react";
-import BackButton from "../common/BackButton";
+
 import ActivityBar from "./ActivityBar";
 import ExplorerPanel from "./ExplorerPanel";
+import TopBar from "./topbar/TopBar";
+import EditorTabs from "./EditorTabs";
+import TerminalPanel from "./TerminalPanel";
+import StatusBar from "./StatusBar";
+
+import useMobile from "../../hooks/useMobile";
 
 export default function WorkspaceLayout({
-
   children,
-
 }) {
 
-  const [activePanel, setActivePanel] =
-    useState("explorer");
+  const mobile = useMobile();
+
+  const [sidebarOpen, setSidebarOpen] =
+    useState(false);
 
   return (
+    <div className="flex h-screen overflow-hidden bg-slate-950 text-white">
 
-    <div className="flex h-screen overflow-hidden bg-slate-950">
+      {!mobile && <ActivityBar />}
 
-      <ActivityBar
-        active={activePanel}
-        onChange={setActivePanel}
-      />
+      {mobile && sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-      <div className="w-72 border-r border-slate-800">
+      {mobile && (
+        <div
+          className={`
+            fixed
+            left-0
+            top-0
+            z-50
+            h-full
+            w-[82%]
+            max-w-[340px]
+            bg-[#1e1e1e]
+            transition-transform
+            duration-300
+            ${
+              sidebarOpen
+                ? "translate-x-0"
+                : "-translate-x-full"
+            }
+          `}
+        >
+          <div className="flex h-full">
 
-        {activePanel === "explorer" && (
+            <ActivityBar />
 
+            <div className="flex-1 overflow-hidden">
+
+              <ExplorerPanel
+                onClose={() => setSidebarOpen(false)}
+              />
+
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {!mobile && (
+        <div className="w-80 border-r border-slate-800">
           <ExplorerPanel />
+        </div>
+      )}
 
-        )}
+      <div className="flex flex-1 flex-col overflow-hidden">
 
-        {activePanel === "search" && (
+        <TopBar
+          onMenu={() =>
+            setSidebarOpen((v) => !v)
+          }
+        />
 
-          <div className="p-6 text-slate-400">
+        <EditorTabs />
 
-            Search Panel
+        <div className="min-w-0 flex-1 overflow-hidden">
+  {children}
+</div>
+        {!mobile && <TerminalPanel />}
 
-          </div>
-
-        )}
-
-        {activePanel === "git" && (
-
-          <div className="p-6 text-slate-400">
-
-            Source Control
-
-          </div>
-
-        )}
-
-        {activePanel === "debug" && (
-
-          <div className="p-6 text-slate-400">
-
-            Debug
-
-          </div>
-
-        )}
-
-        {activePanel === "extensions" && (
-
-          <div className="p-6 text-slate-400">
-
-            Extensions
-
-          </div>
-
-        )}
-
-        {activePanel === "ai" && (
-
-          <div className="p-6 text-slate-400">
-
-            AI Assistant
-
-          </div>
-
-        )}
-
-        {activePanel === "settings" && (
-
-          <div className="p-6 text-slate-400">
-
-            Workspace Settings
-
-          </div>
-
-        )}
+        <StatusBar />
 
       </div>
 
-      <main className="flex-1 overflow-hidden">
-<div className="border-b border-slate-800 bg-slate-950 p-3">
-
-  <BackButton />
-
-</div>
-        {children}
-
-      </main>
-
     </div>
-
   );
 
 }

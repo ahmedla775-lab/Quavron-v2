@@ -6,7 +6,6 @@ import FollowingModal from "./follow/FollowingModal";
 import ProfileService from "../../services/ProfileService";
 
 export default function ProfileStats({ profile }) {
-
   const [followersOpen, setFollowersOpen] = useState(false);
   const [followingOpen, setFollowingOpen] = useState(false);
 
@@ -14,11 +13,9 @@ export default function ProfileStats({ profile }) {
   const [following, setFollowing] = useState([]);
 
   useEffect(() => {
-
     if (!profile?.id) return;
 
     async function load() {
-
       const followersResult =
         await ProfileService.getFollowers(profile.id);
 
@@ -27,79 +24,70 @@ export default function ProfileStats({ profile }) {
 
       setFollowers(followersResult.data || []);
       setFollowing(followingResult.data || []);
-
     }
 
     load();
-
   }, [profile?.id]);
 
   const stats = [
-
+    {
+      title: "Posts",
+      value: profile?.posts_count || 0,
+    },
     {
       title: "Followers",
       value: followers.length,
       action: () => setFollowersOpen(true),
     },
-
     {
       title: "Following",
       value: following.length,
       action: () => setFollowingOpen(true),
     },
-
     {
       title: "Projects",
       value: profile?.projects_count || 0,
     },
-
-    {
-      title: "Posts",
-      value: profile?.posts_count || 0,
-    },
-
-    {
-      title: "Reputation",
-      value: profile?.reputation || 0,
-    },
-
     {
       title: "Level",
       value: profile?.level || 1,
     },
-
+    {
+      title: "Reputation",
+      value: profile?.reputation || 0,
+    },
   ];
 
   return (
-
     <>
+      <div className="mt-5 border-y border-slate-800">
+        <div className="grid grid-cols-3">
+          {stats.map((item) => (
+            <button
+              key={item.title}
+              onClick={item.action}
+              disabled={!item.action}
+              className="
+                flex
+                flex-col
+                items-center
+                justify-center
+                py-4
+                transition
+                hover:bg-slate-900/40
+                disabled:cursor-default
+              "
+            >
+              <span className="text-2xl font-bold text-white">
+                {item.value}
+              </span>
 
-      <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
-
-        {stats.map((item) => (
-
-          <button
-            key={item.title}
-            onClick={item.action}
-            className="rounded-2xl border border-slate-800 bg-slate-900 p-5 text-center transition hover:border-blue-500"
-          >
-
-            <p className="text-3xl font-bold text-white">
-
-              {item.value}
-
-            </p>
-
-            <p className="mt-2 text-sm text-slate-400">
-
-              {item.title}
-
-            </p>
-
-          </button>
-
-        ))}
-
+              <span className="mt-1 text-xs text-slate-400">
+                {item.title}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <FollowersModal
@@ -113,9 +101,6 @@ export default function ProfileStats({ profile }) {
         users={following}
         onClose={() => setFollowingOpen(false)}
       />
-
     </>
-
   );
-
 }

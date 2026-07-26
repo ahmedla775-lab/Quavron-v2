@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   FilePlus2,
   FolderPlus,
@@ -5,132 +6,96 @@ import {
   Search,
 } from "lucide-react";
 
+import NewFileDialog from "./NewFileDialog";
+import NewFolderDialog from "./NewFolderDialog";
+
 import useExplorer from "../../modules/workspace/hooks/useExplorer";
 import useWorkspace from "../../modules/workspace/hooks/useWorkspace";
 
 export default function ExplorerToolbar() {
 
   const {
-
     search,
     setSearch,
-
   } = useExplorer();
 
   const {
-
-    selectedNodeId,
-    createFile,
-    createFolder,
     refresh,
-
   } = useWorkspace();
 
-  function handleNewFile() {
+  const [newFileOpen, setNewFileOpen] =
+    useState(false);
 
-    const name = prompt("File name");
-
-    if (!name) return;
-
-    createFile(
-
-      selectedNodeId,
-
-      name,
-
-      {
-
-        language: "javascript",
-
-      }
-
-    );
-
-  }
-
-  function handleNewFolder() {
-
-    const name = prompt("Folder name");
-
-    if (!name) return;
-
-    createFolder(
-
-      selectedNodeId,
-
-      name
-
-    );
-
-  }
+  const [newFolderOpen, setNewFolderOpen] =
+    useState(false);
 
   return (
 
-    <div className="border-b border-slate-800 bg-slate-900 p-2">
+    <>
 
-      <div className="mb-2 flex items-center gap-2">
+      <div className="border-b border-slate-800 bg-[#252526] p-3">
 
-        <button
+        <div className="mb-3 flex items-center justify-between">
 
-          onClick={handleNewFile}
+          <span className="text-xs font-semibold uppercase tracking-widest text-slate-400">
 
-          className="rounded p-2 hover:bg-slate-800"
+            Workspace
 
-        >
+          </span>
 
-          <FilePlus2 className="h-4 w-4 text-slate-300" />
+          <div className="flex items-center gap-1">
 
-        </button>
+            <button
+              onClick={() => setNewFileOpen(true)}
+              className="rounded p-2 hover:bg-slate-700"
+            >
+              <FilePlus2 className="h-4 w-4 text-slate-300"/>
+            </button>
 
-        <button
+            <button
+              onClick={() => setNewFolderOpen(true)}
+              className="rounded p-2 hover:bg-slate-700"
+            >
+              <FolderPlus className="h-4 w-4 text-slate-300"/>
+            </button>
 
-          onClick={handleNewFolder}
+            <button
+              onClick={refresh}
+              className="rounded p-2 hover:bg-slate-700"
+            >
+              <RefreshCw className="h-4 w-4 text-slate-300"/>
+            </button>
 
-          className="rounded p-2 hover:bg-slate-800"
+          </div>
 
-        >
+        </div>
 
-          <FolderPlus className="h-4 w-4 text-slate-300" />
+        <div className="relative">
 
-        </button>
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"/>
 
-        <button
+          <input
+            value={search}
+            onChange={(e)=>setSearch(e.target.value)}
+            placeholder="Search files..."
+            className="w-full rounded-md border border-slate-700 bg-slate-900 py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-sky-500"
+          />
 
-          onClick={refresh}
-
-          className="rounded p-2 hover:bg-slate-800"
-
-        >
-
-          <RefreshCw className="h-4 w-4 text-slate-300" />
-
-        </button>
-
-      </div>
-
-      <div className="relative">
-
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-
-        <input
-
-          value={search}
-
-          onChange={(e) =>
-
-            setSearch(e.target.value)
-
-          }
-
-          placeholder="Search..."
-
-          className="w-full rounded-lg border border-slate-700 bg-slate-800 py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-blue-500"
-
-        />
+        </div>
 
       </div>
 
-    </div>
+      <NewFileDialog
+        open={newFileOpen}
+        onClose={() => setNewFileOpen(false)}
+      />
+
+      <NewFolderDialog
+        open={newFolderOpen}
+        onClose={() => setNewFolderOpen(false)}
+      />
+
+    </>
 
   );
 

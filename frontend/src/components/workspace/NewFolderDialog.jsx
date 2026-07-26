@@ -1,56 +1,85 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-export default function NewFolderDialog({ open,onClose }){
+import useWorkspace from "../../modules/workspace/hooks/useWorkspace";
 
-const[name,setName]=useState("");
+export default function NewFolderDialog({
+  open,
+  onClose,
+}) {
 
-if(!open)return null;
+  const [name, setName] = useState("");
 
-return(
+  const {
+    selectedNodeId,
+    createFolder,
+  } = useWorkspace();
 
-<div className="fixed inset-0 flex items-center justify-center bg-black/60">
+  useEffect(() => {
+    if (open) {
+      setName("");
+    }
+  }, [open]);
 
-<div className="w-96 rounded-2xl bg-slate-900 p-6">
+  if (!open) return null;
 
-<h2 className="mb-4 text-xl font-bold text-white">
+  function handleCreate() {
 
-New Folder
+    if (!name.trim()) return;
 
-</h2>
+    createFolder(
+      selectedNodeId,
+      name.trim()
+    );
 
-<input
+    onClose();
 
-value={name}
+  }
 
-onChange={(e)=>setName(e.target.value)}
+  return (
 
-className="w-full rounded-xl bg-slate-800 p-3 text-white"
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
 
-/>
+      <div className="w-96 rounded-xl border border-slate-700 bg-slate-900 p-6">
 
-<div className="mt-6 flex justify-end gap-3">
+        <h2 className="mb-5 text-lg font-semibold text-white">
+          New Folder
+        </h2>
 
-<button
-onClick={onClose}
-className="rounded-xl bg-slate-700 px-5 py-2 text-white">
+        <input
+          autoFocus
+          value={name}
+          onChange={(e)=>setName(e.target.value)}
+          onKeyDown={(e)=>{
+            if(e.key==="Enter"){
+              handleCreate();
+            }
+          }}
+          placeholder="components"
+          className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-white outline-none focus:border-sky-500"
+        />
 
-Cancel
+        <div className="mt-6 flex justify-end gap-3">
 
-</button>
+          <button
+            onClick={onClose}
+            className="rounded-lg bg-slate-700 px-4 py-2 text-white"
+          >
+            Cancel
+          </button>
 
-<button
-className="rounded-xl bg-sky-600 px-5 py-2 text-white">
+          <button
+            onClick={handleCreate}
+            className="rounded-lg bg-sky-600 px-4 py-2 text-white hover:bg-sky-500"
+          >
+            Create
+          </button>
 
-Create
+        </div>
 
-</button>
+      </div>
 
-</div>
+    </div>
 
-</div>
-
-</div>
-
-);
+  );
 
 }

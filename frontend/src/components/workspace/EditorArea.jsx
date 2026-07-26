@@ -1,117 +1,180 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-import useEditor from "../../modules/workspace/hooks/useEditor";
+import CodeMirror from "@uiw/react-codemirror";
+import { oneDark } from "@codemirror/theme-one-dark";
+
+import { javascript } from "@codemirror/lang-javascript";
+import { json } from "@codemirror/lang-json";
+import { html } from "@codemirror/lang-html";
+import { css } from "@codemirror/lang-css";
+import { markdown } from "@codemirror/lang-markdown";
+
+import { keymap } from "@codemirror/view";
+import { defaultKeymap } from "@codemirror/commands";
+import { searchKeymap } from "@codemirror/search";
+import { autocompletion } from "@codemirror/autocomplete";
+
+import EmptyEditor from "./EmptyEditor";
+import MobileEditorToolbar from "./MobileEditorToolbar";
+
 import useWorkspace from "../../modules/workspace/hooks/useWorkspace";
 
 export default function EditorArea() {
-
   const {
-
-    activeFileId,
-
+    activeTab,
     actions,
-
   } = useWorkspace();
 
-  const {
-
-    save,
-
-  } = useEditor();
-
-  const file = activeFileId
-
-    ? actions.openFile(activeFileId)
-
+  const file = activeTab
+    ? actions.openFile(activeTab)
     : null;
 
-  const [content, setContent] =
-    useState("");
+  const editorRef = useRef(null);
+
+  const [content, setContent] = useState("");
 
   useEffect(() => {
-
     if (file) {
-
       setContent(file.content || "");
-
     }
-
   }, [file]);
 
   useEffect(() => {
-
-    if (!file) {
-
-      return;
-
-    }
+    if (!file) return;
 
     const timer = setTimeout(() => {
-
-      save(content);
-
-    }, 500);
+      actions.saveFile(activeTab, content);
+    }, 300);
 
     return () => clearTimeout(timer);
+  }, [content, activeTab, file]);
 
-  }, [content]);
+  const extensions = useMemo(() => {
+    const ext = [
+      keymap.of([
+        ...defaultKeymap,
+        ...searchKeymap,
+      ]),
+      autocompletion(),
+    ];
+
+    if (!file) return ext;
+
+    switch (file.language) {
+      case "javascript":
+      case "js":
+      case "jsx":
+        ext.unshift(
+          javascript({
+            jsx: true,
+          })
+        );
+        break;
+
+      case "typescript":
+      case "ts":
+      case "tsx":
+        ext.unshift(
+          javascript({
+            jsx: true,
+            typescript: true,
+          })
+        );
+        break;
+
+      case "json":
+        ext.unshift(json());
+        break;
+
+      case "html":
+        ext.unshift(html());
+        break;
+
+      case "css":
+        ext.unshift(css());
+        break;
+
+      case "md":
+      case "markdown":
+        ext.unshift(markdown());
+        break;
+    }
+
+    return ext;
+  }, [file]);  function insertText(text) {
+    const view = editorRef.current;
+
+    if (!view) return;
+
+    const insert = text === "Tab" ? "  " : text;
+
+    const { state } = view;
+    const { from, to } = state.selection.main;
+
+    view.dispatch({
+      changes: {
+        from,
+        to,
+        insert,
+      },
+      selection: {
+        anchor: from + insert.length,
+      },
+    });
+
+    view.focus();
+  }
 
   if (!file) {
-
-    return (
-
-      <div className="flex h-full items-center justify-center bg-slate-950 text-slate-500">
-
-        Open a file from Explorer
-
-      </div>
-
-    );
-
+    return <EmptyEditor />;
   }
 
   return (
+    <div className="flex h-full w-full flex-col bg-[#1e1e1e]">
+      <div className="flex h-10 items-center justify-between border-b border-slate-800 bg-slate-900 px-4">
+        <span className="text-sm font-medium text-white">
+          {file.name}
+        </span>
 
-    <div className="flex h-full flex-col bg-slate-950">
-
-      <div className="border-b border-slate-800 px-4 py-2 text-sm text-slate-300">
-
-        <div className="flex items-center justify-between">
-
-          <span>
-
-            {file.name}
-
-          </span>
-
-          <span className="text-xs text-slate-500">
-
-            {file.language || "plaintext"}
-
-          </span>
-
-        </div>
-
+        <span className="text-xs text-slate-400">
+          {file.language || "plaintext"}
+        </span>
       </div>
 
-      <textarea
+      <div className="flex-1 h-full overflow-hidden">
+        <CodeMirror
+          value={content}
+          height="100%"
+          theme={oneDark}
+          extensions={extensions}
+          onCreateEditor={(view) => {
+            editorRef.current = view;
+          }}
+          onChange={(value) => {
+            setContent(value);
+          }}
+          style={{
+            fontSize: 15,
+            height: "100%",
+          }}
+          basicSetup={{
+            lineNumbers: true,
+            foldGutter: true,
+            highlightActiveLine: true,
+            highlightActiveLineGutter: true,
+            highlightSelectionMatches: true,
+            autocompletion: true,
+            bracketMatching: true,
+            closeBrackets: true,
+            indentOnInput: true,
+            tabSize: 2,
+          }}
+        />
+      </div>
 
-        value={content}
-
-        onChange={(e) =>
-
-          setContent(e.target.value)
-
-        }
-
-        spellCheck={false}
-
-        className="h-full w-full resize-none bg-slate-950 p-4 font-mono text-sm text-slate-200 outline-none"
-
+      <MobileEditorToolbar
+        onInsert={insertText}
       />
-
     </div>
-
   );
-
 }

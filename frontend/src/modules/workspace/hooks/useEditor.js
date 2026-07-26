@@ -1,101 +1,61 @@
-import { useState } from "react";
-
 import useWorkspace from "./useWorkspace";
 
 export default function useEditor() {
 
   const {
-
     actions,
-
+    activeTab,
+    openFile,
   } = useWorkspace();
 
-  const [activeFileId, setActiveFileId] =
-    useState(null);
-
   function open(fileId) {
-
-    const file =
-      actions.openFile(fileId);
-
-    if (!file) {
-
-      return null;
-
-    }
-
-    setActiveFileId(fileId);
-
-    return file;
-
+    return openFile(fileId);
   }
 
   function save(content) {
 
-    if (!activeFileId) {
-
+    if (!activeTab) {
       return;
-
     }
 
     actions.saveFile(
-
-      activeFileId,
-
+      activeTab,
       content
-
     );
 
   }
 
   function changeLanguage(language) {
 
-    if (!activeFileId) {
-
+    if (!activeTab) {
       return;
-
     }
 
     actions.changeLanguage(
-
-      activeFileId,
-
+      activeTab,
       language
-
     );
 
   }
 
   function duplicate() {
 
-    if (!activeFileId) {
-
+    if (!activeTab) {
       return;
-
     }
 
     return actions.duplicateFile(
-
-      activeFileId
-
+      activeTab
     );
 
   }
 
   return {
-
-    activeFileId,
-
-    setActiveFileId,
-
+    activeFileId: activeTab,
     open,
-
     save,
-
     changeLanguage,
-
     duplicate,
-
   };
 
 }
