@@ -18,3 +18,17 @@ frontend/frontend_files.txt
 # OS files
 .DS_Store
 Thumbs.db
+
+# Generated tree images and scripts
+*.png
+tree.txt
+quavron-tree.txt
+quavron-clean-tree.txt
+tree_to_png.py
+quavron_poster.py
+
+# Local dependencies
+node_modules/
+
+# Old archived code
+frontend/src/archive/
