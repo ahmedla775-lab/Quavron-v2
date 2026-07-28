@@ -14,7 +14,7 @@ import MarketplaceSettings from "./pages/MarketplaceSettings";
 import DeveloperSettings from "./pages/DeveloperSettings";
 import BillingSettings from "./pages/BillingSettings";
 import APISettings from "./pages/APISettings";
-
+import { SETTINGS_SEARCH } from "../../constants/settingsSearch";
 export default function SettingsContent({
   selected,
   search,

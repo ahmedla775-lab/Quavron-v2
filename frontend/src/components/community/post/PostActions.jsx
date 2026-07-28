@@ -4,8 +4,7 @@ import {
   Share2,
   Bookmark,
 } from "lucide-react";
-import { useEffect, useState } from "react";
-
+import { useEffect, useRef, useState } from "react";
 import BookmarkService from "../../../modules/community/services/BookmarkService";
 import useReaction from "../../../modules/community/hooks/useReaction";
 import useBookmark from "../../../modules/community/hooks/useBookmark";
@@ -51,6 +50,8 @@ export default function PostActions({ post }) {
   const [openComments, setOpenComments] = useState(false);
 
   const [showReactions, setShowReactions] = useState(false);
+const [animateReaction, setAnimateReaction] = useState(false);
+const pickerRef = useRef(null);
 
   const [showUsersModal, setShowUsersModal] = useState(false);
 
@@ -72,6 +73,25 @@ export default function PostActions({ post }) {
   useEffect(() => {
   loadReactionSummary();
   loadBookmarkState();
+}, []);
+
+useEffect(() => {
+  function handleClick(e) {
+    if (
+      pickerRef.current &&
+      !pickerRef.current.contains(e.target)
+    ) {
+      setShowReactions(false);
+    }
+  }
+
+  document.addEventListener("mousedown", handleClick);
+  document.addEventListener("touchstart", handleClick);
+
+  return () => {
+    document.removeEventListener("mousedown", handleClick);
+    document.removeEventListener("touchstart", handleClick);
+  };
 }, []);
 
   async function loadReactionSummary() {
@@ -105,13 +125,19 @@ async function loadBookmarkState() {
 }
   async function handleReaction(type) {
 
-    await toggleReaction(post, type);
+  await toggleReaction(post, type);
 
-    setShowReactions(false);
+  setAnimateReaction(true);
 
-    await loadReactionSummary();
+  setTimeout(() => {
+    setAnimateReaction(false);
+  }, 350);
 
-  }
+  setShowReactions(false);
+
+  await loadReactionSummary();
+
+}
 
   async function handleBookmark() {
 
@@ -184,8 +210,10 @@ async function loadBookmarkState() {
       <div className="mt-5 flex items-center justify-between border-t border-slate-800 pt-4">
 
         {/* Reactions */}
-        <div className="relative">
-
+        <div
+  ref={pickerRef}
+  className="relative"
+>
           <ReactionPicker
             visible={showReactions}
             onSelect={handleReaction}
@@ -195,11 +223,16 @@ async function loadBookmarkState() {
             onClick={() => setShowReactions((v) => !v)}
             className="flex items-center gap-2 text-slate-400 transition hover:text-red-500"
           >
-            {currentReaction ? (
-  <span className="text-xl">{currentReaction.emoji}</span>
-) : (
-  <ThumbsUp size={20} />
-)}
+           <span
+  className={`
+    text-xl
+    transition-all
+    duration-300
+    ${animateReaction ? "scale-150" : "scale-100"}
+  `}
+>
+  {currentReaction ? currentReaction.emoji : <ThumbsUp size={20} />}
+</span>
 
             <span>
               {currentReaction

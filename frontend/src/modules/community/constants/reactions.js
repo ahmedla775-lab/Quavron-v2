@@ -2,101 +2,51 @@ export const REACTIONS = [
   {
     type: "LIKE",
     emoji: "👍",
-    label: "Like",
+    label: "أعجبني",
   },
   {
     type: "LOVE",
     emoji: "❤️",
-    label: "Love",
-  },
-  {
-    type: "LOVE_EYES",
-    emoji: "😍",
-    label: "Love Eyes",
-  },
-  {
-    type: "ADORE",
-    emoji: "🥰",
-    label: "Adore",
-  },
-  {
-    type: "HAHA",
-    emoji: "😂",
-    label: "Haha",
-  },
-  {
-    type: "ROFL",
-    emoji: "🤣",
-    label: "ROFL",
-  },
-  {
-    type: "WOW",
-    emoji: "😮",
-    label: "Wow",
-  },
-  {
-    type: "AMAZING",
-    emoji: "🤩",
-    label: "Amazing",
-  },
-  {
-    type: "FIRE",
-    emoji: "🔥",
-    label: "Fire",
-  },
-  {
-    type: "CLAP",
-    emoji: "👏",
-    label: "Clap",
-  },
-  {
-    type: "CELEBRATE",
-    emoji: "🎉",
-    label: "Celebrate",
-  },
-  {
-    type: "PERFECT",
-    emoji: "💯",
-    label: "Perfect",
+    label: "أحببته",
   },
   {
     type: "SUPPORT",
     emoji: "🤝",
-    label: "Support",
+    label: "أدعمه",
   },
   {
-    type: "THINKING",
-    emoji: "🤔",
-    label: "Thinking",
+    type: "AMAZING",
+    emoji: "🤩",
+    label: "رائع",
   },
   {
-    type: "SAD",
-    emoji: "😢",
-    label: "Sad",
-  },
-  {
-    type: "ANGRY",
-    emoji: "😡",
-    label: "Angry",
-  },
-  {
-    type: "DISLIKE",
-    emoji: "👎",
-    label: "Dislike",
-  },
-  {
-    type: "DISCUSS",
-    emoji: "🗣️",
-    label: "Discuss",
-  },
-  {
-    type: "SPARKLE",
-    emoji: "✨",
-    label: "Brilliant",
+    type: "CELEBRATE",
+    emoji: "🎉",
+    label: "تهانينا",
   },
   {
     type: "BOOM",
     emoji: "💥",
-    label: "Mind Blown",
+    label: "بوم",
+  },
+  {
+    type: "PERFECT",
+    emoji: "💯",
+    label: "100%",
+  },
+  {
+    type: "SAD",
+    emoji: "😢",
+    label: "أحزنني",
+  },
+  {
+    type: "ANGRY",
+    emoji: "😡",
+    label: "أغضبني",
+  },
+  {
+    type: "DISLIKE",
+    emoji: "👎",
+    label: "لم يعجبني",
   },
 ];

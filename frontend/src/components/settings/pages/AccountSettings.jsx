@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../../auth/AuthProvider";
+import { useProfile } from "../../../context/ProfileContext";
 
 export default function AccountSettings() {
-
-  const { user } = useAuth();
+  const { profile, saveProfile } = useProfile();
 
   const [form, setForm] = useState({
     fullName: "",
@@ -15,82 +14,68 @@ export default function AccountSettings() {
     bio: "",
   });
 
-  useEffect(() => {
+  const [saving, setSaving] = useState(false);
 
-    if (!user) return;
+  useEffect(() => {
+    if (!profile) return;
 
     setForm({
-
-      fullName:
-        user.user_metadata?.full_name || "",
-
-      username:
-        user.user_metadata?.username || "",
-
-      email:
-        user.email || "",
-
-      phone:
-        user.user_metadata?.phone || "",
-
-      website:
-        user.user_metadata?.website || "",
-
-      location:
-        user.user_metadata?.location || "",
-
-      bio:
-        user.user_metadata?.bio || "",
-
+      fullName: profile.full_name || "",
+      username: profile.username || "",
+      email: profile.email || "",
+      phone: profile.phone || "",
+      website: profile.website || "",
+      location: profile.location || "",
+      bio: profile.bio || "",
     });
-
-  }, [user]);
+  }, [profile]);
 
   function update(key, value) {
-
     setForm((prev) => ({
       ...prev,
       [key]: value,
     }));
-
   }
 
-  function save() {
+  async function save() {
+    try {
+      setSaving(true);
 
-    alert(
-      "سيتم ربط هذه الصفحة مع Supabase في المرحلة القادمة."
-    );
+      await saveProfile({
+        full_name: form.fullName,
+        username: form.username,
+        phone: form.phone,
+        website: form.website,
+        location: form.location,
+        bio: form.bio,
+      });
 
+      alert("Profile updated successfully.");
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
-
     <div className="mx-auto max-w-4xl p-8">
-
       <h1 className="text-3xl font-bold text-white">
-
         Personal Details
-
       </h1>
 
       <p className="mt-2 text-slate-400">
-
         Manage your account information.
-
       </p>
 
       <div className="mt-10 space-y-8">
-
         <section>
-
           <h2 className="mb-4 text-lg font-semibold text-white">
-
             Basic Information
-
           </h2>
 
           <div className="grid gap-6 md:grid-cols-2">
-
             <Field
               label="Full Name"
               value={form.fullName}
@@ -106,7 +91,8 @@ export default function AccountSettings() {
             <Field
               label="Email"
               value={form.email}
-              onChange={(v) => update("email", v)}
+              onChange={() => {}}
+              disabled
             />
 
             <Field
@@ -114,21 +100,15 @@ export default function AccountSettings() {
               value={form.phone}
               onChange={(v) => update("phone", v)}
             />
-
           </div>
-
         </section>
 
         <section>
-
           <h2 className="mb-4 text-lg font-semibold text-white">
-
             Public Information
-
           </h2>
 
           <div className="space-y-6">
-
             <Field
               label="Website"
               value={form.website}
@@ -142,11 +122,8 @@ export default function AccountSettings() {
             />
 
             <div>
-
               <label className="mb-2 block text-sm text-slate-400">
-
                 Bio
-
               </label>
 
               <textarea
@@ -167,19 +144,15 @@ export default function AccountSettings() {
                   focus:border-blue-500
                 "
               />
-
             </div>
-
           </div>
-
         </section>
-
       </div>
 
       <div className="mt-10 flex justify-end">
-
         <button
           onClick={save}
+          disabled={saving}
           className="
             rounded-xl
             bg-blue-600
@@ -189,39 +162,31 @@ export default function AccountSettings() {
             text-white
             transition
             hover:bg-blue-700
+            disabled:opacity-60
           "
         >
-
-          Save Changes
-
+          {saving ? "Saving..." : "Save Changes"}
         </button>
-
       </div>
-
     </div>
-
   );
-
 }
 
 function Field({
   label,
   value,
   onChange,
+  disabled = false,
 }) {
-
   return (
-
     <div>
-
       <label className="mb-2 block text-sm text-slate-400">
-
         {label}
-
       </label>
 
       <input
         value={value}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         className="
           w-full
@@ -233,11 +198,10 @@ function Field({
           text-white
           outline-none
           focus:border-blue-500
+          disabled:opacity-60
+          disabled:cursor-not-allowed
         "
       />
-
     </div>
-
   );
-
 }

@@ -58,7 +58,7 @@ export default function PostCard({ post }) {
     <article
       className="
         w-full
-        overflow-hidden
+         overflow-visible
         border-b
         border-slate-800
         bg-slate-900

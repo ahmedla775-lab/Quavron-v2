@@ -20,10 +20,9 @@ export default function useReaction(postId) {
         user.id
       );
 
-      if (data) {
-        setReaction(data.reaction);
-      }
-
+     if (data) {
+  setReaction(data.reaction_type);
+}
       setLoading(false);
     }
 

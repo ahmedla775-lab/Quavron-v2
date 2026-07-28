@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -56,11 +57,22 @@ export function SettingsProvider({
 
 }) {
 
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [settings, setSettings] =
+    useState(DEFAULT_SETTINGS);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
-  const [userId, setUserId] = useState(null);
+  const [saving, setSaving] =
+    useState(false);
+
+  const [lastSaved, setLastSaved] =
+    useState(null);
+
+  const [userId, setUserId] =
+    useState(null);
+
+  const saveTimeout = useRef(null);
 
   useEffect(() => {
 
@@ -71,9 +83,7 @@ export function SettingsProvider({
   async function initialize() {
 
     const {
-
       data,
-
     } = await supabase.auth.getUser();
 
     if (!data?.user) {
@@ -86,8 +96,26 @@ export function SettingsProvider({
 
     setUserId(data.user.id);
 
+    const profile = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("auth_id", data.user.id)
+      .single();
+
+    if (!profile.data) {
+
+      setLoading(false);
+
+      return;
+
+    }
+
+    const profileId = profile.data.id;
+
+    setUserId(profileId);
+
     const response =
-      await SettingsService.get(data.user.id);
+      await SettingsService.getSettings(profileId);
 
     if (response.data) {
 
@@ -101,7 +129,15 @@ export function SettingsProvider({
 
     } else {
 
-      await SettingsService.create(data.user.id);
+      await SettingsService.createDefaultSettings(
+
+        profileId,
+
+        DEFAULT_SETTINGS
+
+      );
+
+      setSettings(DEFAULT_SETTINGS);
 
     }
 
@@ -113,23 +149,47 @@ export function SettingsProvider({
 
     if (!userId) return;
 
+    setSaving(true);
+
     setSettings(nextSettings);
 
-    await SettingsService.save(
+    await SettingsService.saveSettings(
 
       userId,
 
-      nextSettings,
+      nextSettings
 
     );
 
+    setSaving(false);
+
+    setLastSaved(new Date());
+
   }
 
-  async function updateSection(
+  function autoSave(nextSettings) {
+
+    setSettings(nextSettings);
+
+    if (saveTimeout.current) {
+
+      clearTimeout(saveTimeout.current);
+
+    }
+
+    saveTimeout.current = setTimeout(() => {
+
+      save(nextSettings);
+
+    }, 500);
+
+  }
+
+  function updateSection(
 
     section,
 
-    values,
+    values
 
   ) {
 
@@ -147,19 +207,7 @@ export function SettingsProvider({
 
     };
 
-    setSettings(next);
-
-    if (userId) {
-
-      await SettingsService.save(
-
-        userId,
-
-        next,
-
-      );
-
-    }
+    autoSave(next);
 
   }
 
@@ -169,20 +217,30 @@ export function SettingsProvider({
 
     if (userId) {
 
-      await SettingsService.reset(userId);
+      await SettingsService.resetSettings(
+
+        userId
+
+      );
 
     }
 
-  }
+    setLastSaved(new Date());
 
+  }
   return (
 
     <SettingsContext.Provider
+
       value={{
 
         settings,
 
         loading,
+
+        saving,
+
+        lastSaved,
 
         save,
 
@@ -191,6 +249,7 @@ export function SettingsProvider({
         updateSection,
 
       }}
+
     >
 
       {children}
@@ -203,6 +262,18 @@ export function SettingsProvider({
 
 export function useSettings() {
 
-  return useContext(SettingsContext);
+  const context = useContext(SettingsContext);
+
+  if (!context) {
+
+    throw new Error(
+
+      "useSettings must be used inside SettingsProvider"
+
+    );
+
+  }
+
+  return context;
 
 }

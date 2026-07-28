@@ -14,7 +14,15 @@ export default function EditProfileDialog({
   open,
   onClose,
 }) {
-  const { saveProfile } = useProfile();
+  const {
+
+  saveProfile,
+
+  updateAvatar,
+
+  updateCover,
+
+} = useProfile();
 
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
@@ -83,11 +91,21 @@ export default function EditProfileDialog({
         return;
       }
 
-      let avatarUrl =
-        profile.avatar_url;
+      let avatarUrl = profile.avatar_url;
 
-      let coverUrl =
-        profile.cover_url;
+if (avatar) {
+
+  avatarUrl = await updateAvatar(avatar);
+
+}
+
+let coverUrl = profile.cover_url;
+
+if (cover) {
+
+  coverUrl = await updateCover(cover);
+
+}
 
       if (avatar) {
         avatarUrl =

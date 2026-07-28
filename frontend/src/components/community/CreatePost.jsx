@@ -1,3 +1,6 @@
+import { Radio } from "lucide-react";
+import GoLiveModal from "./live/GoLiveModal";
+
 import { useState } from "react";
 import {
   Image,
@@ -16,7 +19,7 @@ export default function CreatePost() {
   const [content, setContent] = useState("");
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
-
+const [openLive, setOpenLive] = useState(false);
   function handleFiles(e) {
     const selected = Array.from(e.target.files);
     setFiles((prev) => [...prev, ...selected]);
@@ -161,25 +164,52 @@ export default function CreatePost() {
           </label>
         </div>
 
-        <button
-          onClick={handlePost}
-          disabled={loading}
-          className="
-            w-full
-            rounded-xl
-            bg-blue-600
-            px-5
-            py-3
-            font-semibold
-            text-white
-            transition
-            hover:bg-blue-700
-            disabled:opacity-50
-            sm:w-auto
-          "
-        >
-          {loading ? "Posting..." : "Post"}
-        </button>
+        <div className="flex flex-wrap gap-3">
+
+  <button
+    onClick={() => setOpenLive(true)}
+    className="
+      flex
+      items-center
+      gap-2
+      rounded-xl
+      bg-red-600
+      px-5
+      py-3
+      font-semibold
+      text-white
+      transition
+      hover:bg-red-700
+    "
+  >
+    <Radio size={18} />
+    Go Live
+  </button>
+
+  <button
+    onClick={handlePost}
+    disabled={loading}
+    className="
+      rounded-xl
+      bg-blue-600
+      px-5
+      py-3
+      font-semibold
+      text-white
+      transition
+      hover:bg-blue-700
+      disabled:opacity-50
+    "
+  >
+    {loading ? "Posting..." : "Post"}
+  </button>
+
+</div>
+
+<GoLiveModal
+  open={openLive}
+  onClose={() => setOpenLive(false)}
+/>
       </div>
     </div>
   );

@@ -1,50 +1,43 @@
 import { REACTIONS } from "../../../modules/community/constants/reactions";
 
-export default function ReactionSummary({
-  counts = {},
-}) {
+export default function ReactionSummary({ counts = {} }) {
   const total = Object.values(counts).reduce(
     (sum, value) => sum + value,
     0
   );
 
-  if (total === 0) {
-    return null;
-  }
+  if (total === 0) return null;
+
+  const active = REACTIONS.filter(
+    (reaction) => (counts[reaction.type] ?? 0) > 0
+  );
 
   return (
-    <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-300">
+    <div className="mt-3 flex items-center justify-between">
 
-      {REACTIONS.map((reaction) => {
-        const count = counts[reaction.type] ?? 0;
-
-        if (count === 0) {
-          return null;
-        }
-
-        return (
+      <div className="flex items-center -space-x-2">
+        {active.slice(0, 3).map((reaction) => (
           <div
             key={reaction.type}
             className="
               flex
+              h-8
+              w-8
               items-center
-              gap-1
+              justify-center
               rounded-full
-              border
-              border-slate-700
+              border-2
+              border-slate-900
               bg-slate-800
-              px-2
-              py-1
+              text-lg
             "
           >
-            <span>{reaction.emoji}</span>
-
-            <span>{count}</span>
+            {reaction.emoji}
           </div>
-        );
-      })}
+        ))}
+      </div>
 
-      <span className="ml-auto text-xs text-slate-500">
+      <span className="text-sm text-slate-400">
         {total} Reactions
       </span>
 

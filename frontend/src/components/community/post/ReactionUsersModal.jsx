@@ -1,12 +1,14 @@
 import { X } from "lucide-react";
 import VerificationBadge from "../../profile/VerificationBadge";
 import { REACTIONS } from "../../../modules/community/constants/reactions";
+import { useNavigate } from "react-router-dom";
 
 export default function ReactionUsersModal({
   open,
   users = [],
   onClose,
 }) {
+const navigate = useNavigate();
   if (!open) return null;
 
   return (
@@ -58,9 +60,8 @@ export default function ReactionUsersModal({
 
           {REACTIONS.map((reaction) => {
             const list = users.filter(
-              (item) => item.reaction === reaction.type
-            );
-
+  (item) => item.reaction_type === reaction.type
+);
             if (list.length === 0) {
               return null;
             }
@@ -89,17 +90,26 @@ export default function ReactionUsersModal({
                     const profile = item.profiles ?? {};
 
                     return (
-                      <div
-                        key={index}
-                        className="
-                          flex
-                          items-center
-                          gap-3
-                          rounded-xl
-                          bg-slate-800
-                          p-3
-                        "
-                      >
+                    <div
+  key={index}
+  onClick={() => {
+    if (profile.username) {
+      navigate(`/profile/${profile.username}`);
+      onClose();
+    }
+  }}
+  className="
+    flex
+    cursor-pointer
+    items-center
+    gap-3
+    rounded-xl
+    bg-slate-800
+    p-3
+    transition
+    hover:bg-slate-700
+  "
+>
 
                         <img
                           src={
