@@ -32,3 +32,11 @@ node_modules/
 
 # Old archived code
 frontend/src/archive/
+
+Untracked files:
+
+eslint.config.mjs
+package-lock.json
+
+# Unused config
+eslint.config.mjs
