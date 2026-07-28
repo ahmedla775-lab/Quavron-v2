@@ -1,3 +1,4 @@
+import LiveRoom from "./modules/live/pages/LiveRoom";
 import {
   BrowserRouter,
   Routes,
@@ -131,6 +132,14 @@ function App() {
           }
         />
 
+<Route
+  path="/community/live"
+  element={
+    <ProtectedRoute>
+      <LiveRoom />
+    </ProtectedRoute>
+  }
+/>
         <Route
           path="/analytics"
           element={
