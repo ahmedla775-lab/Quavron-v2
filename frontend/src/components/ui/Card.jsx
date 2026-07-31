@@ -1,39 +1,34 @@
 export default function Card({
-  children,
-  className = "",
-  hover = true,
-}) {
-  return (
-    <div
-      className={`
-        rounded-2xl
+children,
+className="",
+hover=true,
+}){
 
-        border
-        border-slate-800
+return(
 
-        bg-slate-900/70
+<div
+className={`
+rounded-2xl
+border
+shadow-sm
+transition-all
+duration-300
 
-        backdrop-blur-md
+${hover?"hover:-translate-y-1 hover:shadow-xl":""}
 
-        p-4
+${className}
+`}
+style={{
+background:"var(--q-card)",
+borderColor:"var(--q-border)",
+color:"var(--q-text)",
+}}
+>
 
-        lg:p-6
+{children}
 
-        shadow-lg
+</div>
 
-        transition-all
-        duration-300
+);
 
-        ${
-          hover
-            ? "hover:-translate-y-1 hover:border-blue-500 hover:shadow-blue-500/20"
-            : ""
-        }
-
-        ${className}
-      `}
-    >
-      {children}
-    </div>
-  );
 }

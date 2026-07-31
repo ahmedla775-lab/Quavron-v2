@@ -10,7 +10,7 @@ export default function PostContent({ post }) {
             whitespace-pre-wrap
             break-words
             leading-7
-            text-slate-200
+            text-[var(--q-text)]
           "
         >
           {post.content}
@@ -28,8 +28,8 @@ export default function PostContent({ post }) {
                 overflow-hidden
                 rounded-2xl
                 border
-                border-slate-800
-                bg-slate-950
+                border-[var(--q-border)]
+                bg-[var(--q-card)]
               "
             >
 
@@ -99,7 +99,7 @@ export default function PostContent({ post }) {
                     rel="noreferrer"
                     className="
                       break-all
-                      text-blue-400
+                      text-[var(--q-primary)]
                       hover:underline
                     "
                   >

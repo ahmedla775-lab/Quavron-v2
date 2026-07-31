@@ -43,12 +43,7 @@ export default function PostHeader({
           <img
             src={avatar}
             alt={fullName}
-            className="
-              h-11
-              w-11
-              rounded-full
-              object-cover
-            "
+            className="h-11 w-11 rounded-full object-cover"
           />
         ) : (
           <div
@@ -59,7 +54,7 @@ export default function PostHeader({
               items-center
               justify-center
               rounded-full
-              bg-blue-600
+              bg-[var(--q-primary)]
               font-bold
               text-white
             "
@@ -79,8 +74,9 @@ export default function PostHeader({
               truncate
               cursor-pointer
               font-semibold
-              text-white
-              hover:text-blue-400
+              text-[var(--q-text)]
+              transition
+              hover:text-[var(--q-primary)]
             "
           >
             {fullName}
@@ -100,14 +96,21 @@ export default function PostHeader({
             truncate
             cursor-pointer
             text-sm
-            text-slate-400
-            hover:text-blue-400
+            text-[var(--q-muted)]
+            transition
+            hover:text-[var(--q-primary)]
           "
         >
           @{username}
         </p>
 
-        <p className="text-xs text-slate-500">
+        <p
+          className="
+            mt-1
+            text-xs
+            text-[var(--q-muted)]
+          "
+        >
           {new Date(post.created_at).toLocaleString()}
         </p>
 

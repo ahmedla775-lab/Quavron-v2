@@ -10,8 +10,8 @@ export default function CommunityHeader() {
         top-0
         z-20
         border-b
-        border-slate-800
-        bg-slate-950/95
+        border-[var(--q-border)]
+        bg-[var(--q-surface)]
         backdrop-blur
       "
     >
@@ -32,7 +32,7 @@ export default function CommunityHeader() {
               truncate
               text-xl
               font-bold
-              text-white
+              text-[var(--q-text)]
               sm:text-2xl
             "
           >
@@ -40,7 +40,7 @@ export default function CommunityHeader() {
           </h1>
 
           {!isMobile && (
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-[var(--q-muted)]">
               Connect, share and build with the Quavron community
             </p>
           )}
@@ -50,14 +50,14 @@ export default function CommunityHeader() {
           className="
             shrink-0
             rounded-xl
-            bg-blue-600
+            bg-[var(--q-primary)]
             px-4
             py-2
             text-sm
             font-semibold
             text-white
             transition
-            hover:bg-blue-700
+            hover:opacity-90
             active:scale-95
           "
         >

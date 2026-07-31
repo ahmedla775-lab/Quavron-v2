@@ -2,49 +2,47 @@ import MobileBottomNav from "../navigation/MobileBottomNav";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 
-import { useTheme } from "../../theme/ThemeProvider";
-
 export default function DashboardLayout({ children }) {
-  const { isDark } = useTheme();
 
   return (
     <div
-      className={`
-        min-h-screen
-        overflow-hidden
-        transition-colors
-        duration-300
-        ${
-          isDark
-            ? "bg-slate-950 text-white"
-            : "bg-slate-100 text-slate-900"
-        }
-      `}
-    >
-      <div className="flex min-h-screen">
+ className="
+ min-h-screen
+ flex
+ flex-col
+ overflow-x-hidden
+ bg-[var(--q-bg)]
+ text-[var(--q-text)]
+ "
+>
+      <Sidebar />
 
-        <Sidebar />
+      <div
+        className="
+          flex-1
+          min-w-0
+          flex
+          flex-col
+        "
+      >
 
-        <div className="flex min-w-0 flex-1 flex-col">
+        <Topbar />
 
-          <Topbar />
-
-          <main
-            className="
-              flex-1
-              overflow-x-hidden
-              overflow-y-auto
-              pb-20
-            "
-          >
-            {children}
-          </main>
-
-          <MobileBottomNav />
-
-        </div>
+        <main
+ className="
+ flex-1
+ min-h-0
+ w-full
+ overflow-y-auto
+ pb-20
+ "
+>
+  {children}
+</main>
+        <MobileBottomNav />
 
       </div>
+
     </div>
   );
 }

@@ -17,14 +17,21 @@ export default function CommunityLayout({
         w-full
         flex-col
         overflow-hidden
-        bg-slate-950
-        text-white
+        bg-[var(--q-bg)]
+        text-[var(--q-text)]
       "
     >
       {header && (
-        <div className="shrink-0">
+        <header
+          className="
+            shrink-0
+            border-b
+            border-[var(--q-border)]
+            bg-[var(--q-surface)]
+          "
+        >
           {header}
-        </div>
+        </header>
       )}
 
       <div
@@ -33,7 +40,7 @@ export default function CommunityLayout({
           min-h-0
           flex-1
           w-full
-          overflow-hidden
+          bg-[var(--q-bg)]
         "
       >
         {isDesktop && (
@@ -43,7 +50,8 @@ export default function CommunityLayout({
               shrink-0
               overflow-y-auto
               border-r
-              border-slate-800
+              border-[var(--q-border)]
+              bg-[var(--q-surface)]
             "
           >
             {sidebar}
@@ -56,6 +64,7 @@ export default function CommunityLayout({
             flex-1
             overflow-y-auto
             overflow-x-hidden
+            bg-[var(--q-bg)]
           "
         >
           {feed}
@@ -68,7 +77,8 @@ export default function CommunityLayout({
               shrink-0
               overflow-y-auto
               border-l
-              border-slate-800
+              border-[var(--q-border)]
+              bg-[var(--q-surface)]
             "
           >
             {rightSidebar}

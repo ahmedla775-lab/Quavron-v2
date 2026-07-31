@@ -1,160 +1,200 @@
 import { X } from "lucide-react";
-import VerificationBadge from "../../profile/VerificationBadge";
-import { REACTIONS } from "../../../modules/community/constants/reactions";
 import { useNavigate } from "react-router-dom";
+
+import VerificationBadge from "../../profile/VerificationBadge";
 
 export default function ReactionUsersModal({
   open,
   users = [],
   onClose,
 }) {
-const navigate = useNavigate();
+  const navigate = useNavigate();
+
   if (!open) return null;
 
-  return (
-    <>
-      <div
-        onClick={onClose}
-        className="
-          fixed
-          inset-0
-          z-40
-          bg-black/60
-        "
-      />
+  function openProfile(user) {
+    navigate(`/profile/${user.author_id || user.id}`);
+    onClose?.();
+  }
 
+  return (
+    <div
+      className="
+        fixed
+        inset-0
+        z-[100]
+        flex
+        items-center
+        justify-center
+        bg-black/60
+        backdrop-blur-sm
+      "
+    >
       <div
         className="
-          fixed
-          left-1/2
-          top-1/2
-          z-50
-          w-[95%]
+          w-full
           max-w-lg
-          -translate-x-1/2
-          -translate-y-1/2
+          overflow-hidden
           rounded-2xl
           border
-          border-slate-700
-          bg-slate-900
+          border-[var(--q-border)]
+          bg-[var(--q-surface)]
           shadow-2xl
         "
       >
-
-        <div className="flex items-center justify-between border-b border-slate-800 p-4">
-
-          <h2 className="text-lg font-semibold">
+        <div
+          className="
+            flex
+            items-center
+            justify-between
+            border-b
+            border-[var(--q-border)]
+            p-4
+          "
+        >
+          <h2
+            className="
+              text-lg
+              font-bold
+              text-[var(--q-text)]
+            "
+          >
             Reactions
           </h2>
 
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white"
+            className="
+              rounded-lg
+              p-2
+              text-[var(--q-muted)]
+              transition
+              hover:bg-[var(--q-card)]
+              hover:text-[var(--q-text)]
+            "
           >
-            <X size={22} />
+            <X size={20} />
           </button>
-
         </div>
 
-        <div className="max-h-[70vh] overflow-y-auto p-4">
+        <div
+          className="
+            max-h-[70vh]
+            overflow-y-auto
+          "
+        >
+          {users.length === 0 ? (
+            <div
+              className="
+                p-8
+                text-center
+                text-[var(--q-muted)]
+              "
+            >
+              No reactions yet.
+            </div>
+          ) : (
+            users.map((item, index) => {
+              const profile = item.profiles || {};
 
-          {REACTIONS.map((reaction) => {
-            const list = users.filter(
-  (item) => item.reaction_type === reaction.type
-);
-            if (list.length === 0) {
-              return null;
-            }
+              const fullName =
+                profile.full_name ||
+                item.full_name ||
+                "Quavron User";
 
-            return (
-              <div
-                key={reaction.type}
-                className="mb-6"
-              >
+              const username =
+                profile.username ||
+                item.username ||
+                "user";
 
-                <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold">
+              const avatar =
+                profile.avatar_url ||
+                item.avatar_url;
 
-                  <span>{reaction.emoji}</span>
-
-                  <span>{reaction.label}</span>
-
-                  <span className="text-slate-400">
-                    ({list.length})
-                  </span>
-
-                </h3>
-
-                <div className="space-y-2">
-
-                  {list.map((item, index) => {
-                    const profile = item.profiles ?? {};
-
-                    return (
+              return (
+                <button
+                  key={index}
+                  onClick={() => openProfile(item)}
+                  className="
+                    flex
+                    w-full
+                    items-center
+                    gap-3
+                    border-b
+                    border-[var(--q-border)]
+                    p-4
+                    text-left
+                    transition
+                    hover:bg-[var(--q-card)]
+                  "
+                >
+                  {avatar ? (
+                    <img
+                      src={avatar}
+                      alt={fullName}
+                      className="
+                        h-10
+                        w-10
+                        rounded-full
+                        object-cover
+                      "
+                    />
+                  ) : (
                     <div
-  key={index}
-  onClick={() => {
-    if (profile.username) {
-      navigate(`/profile/${profile.username}`);
-      onClose();
-    }
-  }}
-  className="
-    flex
-    cursor-pointer
-    items-center
-    gap-3
-    rounded-xl
-    bg-slate-800
-    p-3
-    transition
-    hover:bg-slate-700
-  "
->
+                      className="
+                        flex
+                        h-10
+                        w-10
+                        items-center
+                        justify-center
+                        rounded-full
+                        bg-[var(--q-primary)]
+                        font-bold
+                        text-white
+                      "
+                    >
+                      {username.charAt(0).toUpperCase()}
+                    </div>
+                  )}
 
-                        <img
-                          src={
-                            profile.avatar_url ||
-                            "https://ui-avatars.com/api/?name=User"
-                          }
-                          alt=""
-                          className="h-10 w-10 rounded-full"
-                        />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="
+                          truncate
+                          font-semibold
+                          text-[var(--q-text)]
+                        "
+                      >
+                        {fullName}
+                      </span>
 
-                        <div>
+                      <VerificationBadge
+                        verified={profile.verified}
+                        verificationType={profile.verification_type}
+                        size={14}
+                      />
+                    </div>
 
-                          <div className="font-medium">
-                            <div className="flex items-center gap-2">
-  <span>
-    {profile.full_name || "User"}
-  </span>
+                    <div
+                      className="
+                        text-sm
+                        text-[var(--q-muted)]
+                      "
+                    >
+                      @{username}
+                    </div>
+                  </div>
 
-  <VerificationBadge
-    verified={profile.verified}
-    verificationType={profile.verification_type}
-    size={15}
-  />
-</div>
-                          </div>
-
-                          <div className="text-sm text-slate-400">
-                            @{profile.username || "unknown"}
-                          </div>
-
-                        </div>
-
-                      </div>
-                    );
-                  })}
-
-                </div>
-
-              </div>
-            );
-          })}
-
+                  <div className="text-xl">
+                    {item.reaction_emoji}
+                  </div>
+                </button>
+              );
+            })
+          )}
         </div>
-
       </div>
-    </>
+    </div>
   );
 }

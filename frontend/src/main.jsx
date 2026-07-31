@@ -5,7 +5,7 @@ import ReactDOM from "react-dom/client";
 
 import "./i18n";
 import "./style.css";
-
+import "./styles/animations.css";
 
 import App from "./App";
 

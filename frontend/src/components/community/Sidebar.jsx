@@ -35,19 +35,26 @@ export default function Sidebar({
       className="
         h-full
         overflow-y-auto
-        bg-slate-900
+        bg-[var(--q-surface)]
+        text-[var(--q-text)]
         p-4
         pb-24
       "
     >
-      <h2 className="mb-6 text-2xl font-bold text-white">
+      <h2
+        className="
+          mb-6
+          text-2xl
+          font-bold
+          text-[var(--q-text)]
+        "
+      >
         Community
       </h2>
 
       <div className="space-y-2">
         {items.map((item) => {
           const Icon = item.icon;
-
           const selected = active === item.label;
 
           return (
@@ -62,18 +69,18 @@ export default function Sidebar({
                 rounded-xl
                 px-4
                 py-3
-                text-left
-                transition
-
+                transition-colors
                 ${
                   selected
-                    ? "bg-blue-600 text-white"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                    ? "bg-[var(--q-primary)] text-white"
+                    : "text-[var(--q-muted)] hover:bg-[var(--q-card)] hover:text-[var(--q-text)]"
                 }
               `}
             >
               <Icon size={20} />
-              <span>{item.label}</span>
+              <span className="font-medium">
+                {item.label}
+              </span>
             </button>
           );
         })}

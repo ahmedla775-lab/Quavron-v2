@@ -33,11 +33,22 @@ export default function PostMenu({
       handleClickOutside
     );
 
-    return () =>
+    document.addEventListener(
+      "touchstart",
+      handleClickOutside
+    );
+
+    return () => {
       document.removeEventListener(
         "mousedown",
         handleClickOutside
       );
+
+      document.removeEventListener(
+        "touchstart",
+        handleClickOutside
+      );
+    };
   }, []);
 
   function close(callback) {
@@ -55,10 +66,10 @@ export default function PostMenu({
         className="
           rounded-xl
           p-2
-          text-slate-400
-          transition
-          hover:bg-slate-800
-          hover:text-white
+          text-[var(--q-muted)]
+          transition-all
+          hover:bg-[var(--q-card)]
+          hover:text-[var(--q-text)]
         "
       >
         <MoreHorizontal size={20} />
@@ -76,8 +87,8 @@ export default function PostMenu({
             overflow-hidden
             rounded-2xl
             border
-            border-slate-700
-            bg-slate-900
+            border-[var(--q-border)]
+            bg-[var(--q-surface)]
             shadow-2xl
           "
         >
@@ -93,9 +104,9 @@ export default function PostMenu({
                   px-4
                   py-3
                   text-left
-                  text-white
-                  transition
-                  hover:bg-slate-800
+                  text-[var(--q-text)]
+                  transition-colors
+                  hover:bg-[var(--q-card)]
                 "
               >
                 <Pencil size={18} />
@@ -112,9 +123,9 @@ export default function PostMenu({
                   px-4
                   py-3
                   text-left
-                  text-red-400
-                  transition
-                  hover:bg-slate-800
+                  text-[var(--q-accent)]
+                  transition-colors
+                  hover:bg-[var(--q-card)]
                 "
               >
                 <Trash2 size={18} />
@@ -133,9 +144,9 @@ export default function PostMenu({
               px-4
               py-3
               text-left
-              text-white
-              transition
-              hover:bg-slate-800
+              text-[var(--q-text)]
+              transition-colors
+              hover:bg-[var(--q-card)]
             "
           >
             <Share2 size={18} />
@@ -152,9 +163,9 @@ export default function PostMenu({
               px-4
               py-3
               text-left
-              text-white
-              transition
-              hover:bg-slate-800
+              text-[var(--q-text)]
+              transition-colors
+              hover:bg-[var(--q-card)]
             "
           >
             <Bookmark size={18} />

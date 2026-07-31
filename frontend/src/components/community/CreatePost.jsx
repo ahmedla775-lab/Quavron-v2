@@ -52,16 +52,14 @@ const [openLive, setOpenLive] = useState(false);
 
   return (
     <div
-      className="
-        border-b
-        border-slate-800
-        bg-slate-900
-        px-3
-        py-4
-        sm:rounded-2xl
-        sm:border
-      "
-    >
+  className="
+    w-full
+    border-b
+    border border-[var(--q-border)]
+    py-5
+    dark:border-slate-800
+  "
+>
       <textarea
         rows={4}
         value={content}
@@ -70,11 +68,12 @@ const [openLive, setOpenLive] = useState(false);
         className="
           w-full
           resize-none
-          rounded-xl
-          bg-slate-800
-          p-4
-          text-white
-          outline-none
+          rounded-none
+bg-transparent
+p-4
+text-[var(--q-text)]
+outline-none
+dark:text-white
           placeholder:text-slate-500
         "
       />
@@ -89,7 +88,7 @@ const [openLive, setOpenLive] = useState(false);
                 items-center
                 justify-between
                 rounded-xl
-                bg-slate-800
+                bg-[var(--q-surface)]
                 px-3
                 py-2
               "

@@ -9,35 +9,23 @@ export default function ReactionPicker({
   return (
     <div
       className="
-absolute
-bottom-14
-left-0
-right-0
-z-[9999]
-
-mx-auto
-w-[95vw]
-max-w-[420px]
-
-overflow-x-auto
-overflow-y-hidden
-
-rounded-full
-border
-border-slate-700
-bg-slate-900/95
-backdrop-blur
-
-px-3
-py-2
-
-flex
-flex-nowrap
-gap-2
-
-shadow-2xl
-scrollbar-hide
-"
+        absolute
+        bottom-full
+        left-0
+        mb-3
+        z-50
+        flex
+        items-center
+        gap-2
+        rounded-full
+        border
+        border-[var(--q-border)]
+        bg-[var(--q-surface)]
+        px-3
+        py-2
+        shadow-2xl
+        backdrop-blur
+      "
     >
       {REACTIONS.map((reaction) => (
         <button
@@ -45,22 +33,19 @@ scrollbar-hide
           onClick={() => onSelect(reaction.type)}
           title={reaction.label}
           className="
-flex-shrink-0
-flex
-h-11
-w-11
-items-center
-justify-center
-rounded-full
-
-text-2xl
-
-transition-all
-duration-200
-
-hover:scale-125
-hover:bg-slate-800
-"
+            flex
+            h-11
+            w-11
+            items-center
+            justify-center
+            rounded-full
+            text-2xl
+            transition-all
+            duration-200
+            hover:scale-125
+            hover:bg-[var(--q-card)]
+            active:scale-110
+          "
         >
           {reaction.emoji}
         </button>

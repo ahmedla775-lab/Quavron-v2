@@ -14,7 +14,10 @@ const Input = forwardRef(
       <div className="w-full">
 
         {label && (
-          <label className="mb-2 block text-sm font-medium text-slate-300">
+          <label
+            className="mb-2 block text-sm font-medium"
+            style={{ color: "var(--q-text)" }}
+          >
             {label}
           </label>
         )}
@@ -24,26 +27,26 @@ const Input = forwardRef(
           className={`
             w-full
             rounded-xl
-            border
-            border-slate-700
-            bg-slate-900
             px-4
             py-3
-            text-white
             outline-none
-            transition
-            duration-300
-            placeholder:text-slate-500
-            focus:border-blue-500
-            focus:ring-2
-            focus:ring-blue-500/20
+            transition-all
+            duration-200
             ${className}
           `}
+          style={{
+            background: "var(--q-card)",
+            color: "var(--q-text)",
+            border: "1px solid var(--q-border)",
+          }}
           {...props}
         />
 
         {error && (
-          <p className="mt-2 text-sm text-red-500">
+          <p
+            className="mt-2 text-sm"
+            style={{ color: "var(--q-danger)" }}
+          >
             {error}
           </p>
         )}
@@ -56,4 +59,3 @@ const Input = forwardRef(
 Input.displayName = "Input";
 
 export default Input;
-

@@ -1,5 +1,16 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+
+import DashboardLayout from "../components/dashboard/DashboardLayout";
+
+import CommunityLayout from "../components/community/CommunityLayout";
+import CommunityHeader from "../components/community/CommunityHeader";
+
+import Sidebar from "../components/community/Sidebar";
+import Feed from "../components/community/Feed";
+import RightSidebar from "../components/community/RightSidebar";
+import TrendingBar from "../components/community/TrendingBar";
+
 import Explore from "../components/community/sections/Explore";
 import Reels from "../components/community/sections/Reels";
 import Videos from "../components/community/sections/Videos";
@@ -11,28 +22,13 @@ import Messages from "../components/community/sections/Messages";
 import Notifications from "../components/community/sections/Notifications";
 import Saved from "../components/community/sections/Saved";
 
-import DashboardLayout from "../components/dashboard/DashboardLayout";
-
-import CommunityLayout from "../components/community/CommunityLayout";
-import CommunityHeader from "../components/community/CommunityHeader";
-
-import Sidebar from "../components/community/Sidebar";
-import Feed from "../components/community/Feed";
-import RightSidebar from "../components/community/RightSidebar";
-
-import TrendingBar from "../components/community/TrendingBar";
-
 import useResponsive from "../hooks/useResponsive";
 
-
 export default function Community() {
-
   const { isDesktop } = useResponsive();
 
   const [communityMenu, setCommunityMenu] = useState(false);
-
   const [activeSection, setActiveSection] = useState("Home");
-
 
   const sidebar = (
     <Sidebar
@@ -44,186 +40,127 @@ export default function Community() {
     />
   );
 
-
   function renderSection() {
-  switch (activeSection) {
-    case "Home":
-      return (
-<>
-  {isDesktop && <TrendingBar />}
-  <Feed />
-</>        
-      );
+    switch (activeSection) {
+      case "Home":
+        return (
+          <>
+            {isDesktop && <TrendingBar />}
+            <Feed />
+          </>
+        );
 
-    case "Explore":
-      return <Explore />;
+      case "Explore":
+        return <Explore />;
 
-    case "Reels":
-      return <Reels />;
+      case "Reels":
+        return <Reels />;
 
-    case "Videos":
-      return <Videos />;
+      case "Videos":
+        return <Videos />;
 
-    case "Developers":
-      return <Developers />;
+      case "Developers":
+        return <Developers />;
 
-    case "Projects":
-      return <Projects />;
+      case "Projects":
+        return <Projects />;
 
-    case "Jobs":
-      return <Jobs />;
+      case "Jobs":
+        return <Jobs />;
 
-    case "Social Hub":
-      return <SocialHub />;
+      case "Social Hub":
+        return <SocialHub />;
 
-    case "Messages":
-      return <Messages />;
+      case "Messages":
+        return <Messages />;
 
-    case "Notifications":
-      return <Notifications />;
+      case "Notifications":
+        return <Notifications />;
 
-    case "Saved":
-      return <Saved />;
+      case "Saved":
+        return <Saved />;
 
-    default:
-      return (
-        <>
-          <TrendingBar />
-          <Feed />
-        </>
-      );
+      default:
+        return (
+          <>
+            {isDesktop && <TrendingBar />}
+            <Feed />
+          </>
+        );
+    }
   }
-}
 
   return (
-
     <DashboardLayout>
-
-<div className="h-full w-full">
-
-      <div
-        className="
-          relative
-          h-full
-          w-full
-          min-w-0
-          overflow-hidden
-        "
-      >
-
-
-        {/* Mobile Menu Button */}
+      <div className="relative h-full w-full">
 
         {!isDesktop && (
-
           <button
             onClick={() => setCommunityMenu(true)}
             className="
               fixed
-              bottom-5
               left-5
-              z-40
+              bottom-24
+              z-[60]
+              flex
+              h-14
+              w-14
+              items-center
+              justify-center
               rounded-full
-              bg-blue-600
-              p-3
-              shadow-lg
+              bg-[var(--q-primary)]
               text-white
+              shadow-xl
+              transition
+              hover:scale-105
+              active:scale-95
             "
           >
-            <Menu size={22}/>
+            <Menu size={24} />
           </button>
-
         )}
 
-
-
-        {/* Mobile Drawer */}
-
         {!isDesktop && communityMenu && (
-
           <>
-
             <div
               onClick={() => setCommunityMenu(false)}
-              className="
-                fixed
-                inset-0
-                z-40
-                bg-black/60
-              "
+              className="fixed inset-0 z-[70] bg-black/60"
             />
-
 
             <aside
               className="
                 fixed
                 left-0
                 top-0
-                z-50
+                z-[80]
                 h-screen
                 w-72
-                bg-slate-900
                 border-r
-                border-slate-800
+                border-[var(--q-border)]
+                bg-[var(--q-surface)]
               "
             >
-
-              <div
-                className="
-                  flex
-                  justify-end
-                  p-4
-                "
-              >
-
+              <div className="flex justify-end p-4">
                 <button
                   onClick={() => setCommunityMenu(false)}
-                  className="text-white"
+                  className="text-[var(--q-text)]"
                 >
-                  <X size={24}/>
+                  <X size={24} />
                 </button>
-
               </div>
 
-
               {sidebar}
-
-
             </aside>
-
-
           </>
-
         )}
 
-
-
         <CommunityLayout
-
-          header={
-  isDesktop
-    ? <CommunityHeader />
-    : null
-}
-          sidebar={
-            isDesktop ? sidebar : null
-          }
-
+          header={isDesktop ? <CommunityHeader /> : null}
+          sidebar={isDesktop ? sidebar : null}
           feed={renderSection()}
-
-          rightSidebar={
-            <RightSidebar />
-          }
-
+          rightSidebar={<RightSidebar />}
         />
-
-
       </div>
-
-</div>
-
     </DashboardLayout>
-
   );
-
 }

@@ -58,17 +58,12 @@ export default function PostCard({ post }) {
     <article
       className="
         w-full
-         overflow-visible
         border-b
-        border-slate-800
-        bg-slate-900
-
-        sm:rounded-2xl
-        sm:border
-        sm:shadow-md
+        border-[var(--q-border)]
+        bg-[var(--q-bg)]
       "
     >
-      <div className="p-4 sm:p-5">
+      <div className="px-4 py-5">
 
         <PostHeader
           post={post}
@@ -90,10 +85,10 @@ export default function PostCard({ post }) {
                 w-full
                 rounded-xl
                 border
-                border-slate-700
-                bg-slate-950
+                border-[var(--q-border)]
+                bg-[var(--q-card)]
                 p-4
-                text-white
+                text-[var(--q-text)]
                 outline-none
               "
             />
@@ -104,7 +99,7 @@ export default function PostCard({ post }) {
                 onClick={handleSave}
                 className="
                   rounded-xl
-                  bg-blue-600
+                  bg-[var(--q-primary)]
                   px-5
                   py-2
                   text-white
@@ -120,10 +115,12 @@ export default function PostCard({ post }) {
                 }}
                 className="
                   rounded-xl
-                  bg-slate-700
+                  border
+                  border-[var(--q-border)]
+                  bg-[var(--q-card)]
                   px-5
                   py-2
-                  text-white
+                  text-[var(--q-text)]
                 "
               >
                 Cancel

@@ -4,9 +4,11 @@ import {
   Bell,
   ChevronDown,
   LogOut,
-  Settings,
-  User,
+  Moon,
   Search,
+  Settings,
+  Sun,
+  User,
 } from "lucide-react";
 
 import Input from "../ui/Input";
@@ -14,7 +16,7 @@ import VerificationBadge from "../profile/VerificationBadge";
 
 import { useAuth } from "../auth/AuthProvider";
 import { useProfile } from "../../context/ProfileContext";
-
+import { useTheme } from "../../theme/ThemeProvider";
 import { logout } from "../../services/AuthService";
 import useResponsive from "../../hooks/useResponsive";
 
@@ -23,10 +25,14 @@ export default function Topbar() {
 
   const { user } = useAuth();
   const { profile } = useProfile();
-
-  const { isMobile, isTablet } = useResponsive();
+  const { isMobile } = useResponsive();
+  const { isDark, toggleTheme } = useTheme();
 
   const [openMenu, setOpenMenu] = useState(false);
+
+  const logo = isDark
+    ? "/branding/logo-horizontal-dark.png"
+    : "/branding/logo-horizontal-light.png";
 
   async function handleLogout() {
     await logout();
@@ -35,46 +41,29 @@ export default function Topbar() {
 
   return (
     <header
-      className="
-        sticky
-        top-0
-        z-30
-        border-b
-        border-slate-800
-        bg-slate-950/95
-        backdrop-blur-xl
-      "
+      className="sticky top-0 z-50 border-b backdrop-blur-xl transition-all"
+      style={{
+        background: isDark
+          ? "rgba(11,13,16,.92)"
+          : "rgba(255,255,255,.92)",
+        borderColor: "var(--q-border)",
+      }}
     >
       <div
-        className="
-          mx-auto
-          flex
-          h-16
-          items-center
-          justify-between
-          gap-3
-          px-3
-          sm:px-4
-          lg:px-8
-        "
+        className={`flex h-16 items-center justify-between gap-4 ${
+          isMobile ? "pl-20 pr-4" : "px-6"
+        }`}
       >
-        {/* Left */}
-
         {isMobile ? (
-          <div className="ml-12 font-bold text-lg">
-            Quavron
+          <div className="ml-16 flex items-center">
+            <img
+              src={logo}
+              alt="Quavron"
+              className="h-10 w-auto object-contain"
+            />
           </div>
         ) : (
-          <div
-            className={`
-              w-full
-              ${
-                isTablet
-                  ? "max-w-xs"
-                  : "max-w-md"
-              }
-            `}
-          >
+          <div className="w-full max-w-md">
             <Input
               placeholder="Search..."
               icon={<Search size={18} />}
@@ -82,174 +71,90 @@ export default function Topbar() {
           </div>
         )}
 
-        {/* Right */}
-
         <div className="flex items-center gap-2">
-
           <button
-            className="
-              relative
-              flex
-              h-10
-              w-10
-              items-center
-              justify-center
-              rounded-xl
-              transition
-              hover:bg-slate-800
-            "
+            onClick={toggleTheme}
+            className="flex h-10 w-10 items-center justify-center rounded-xl transition hover:bg-[var(--q-surface)]"
           >
-            <Bell size={20} />
-
-            <span
-              className="
-                absolute
-                right-2
-                top-2
-                h-2
-                w-2
-                rounded-full
-                bg-red-500
-              "
-            />
+            {isDark ? <Moon size={18} /> : <Sun size={18} />}
           </button>
 
-          <div className="relative">
+          <button className="relative flex h-10 w-10 items-center justify-center rounded-xl transition hover:bg-[var(--q-surface)]">
+            <Bell size={18} />
+            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
+          </button>
 
-            <button
-              onClick={() => setOpenMenu(!openMenu)}
-              className="
-                flex
-                items-center
-                gap-3
-                rounded-xl
-                p-1
-                transition
-                hover:bg-slate-800
-              "
-            >
-              <img
-                src={
-                  profile?.avatar_url ||
-                  "https://ui-avatars.com/api/?background=2563eb&color=fff&name=Q"
-                }
-                alt="Avatar"
-                className="
-                  h-10
-                  w-10
-                  rounded-full
-                  object-cover
-                "
-              />
+          {!isMobile && (
+            <div className="relative">
+              <button
+                onClick={() => setOpenMenu(!openMenu)}
+                className="flex items-center gap-3 rounded-xl p-1 transition hover:bg-[var(--q-surface)]"
+              >
+                <img
+                  src={
+                    profile?.avatar_url ??
+                    "https://ui-avatars.com/api/?background=1E88E5&color=fff&name=Q"
+                  }
+                  alt="avatar"
+                  className="h-10 w-10 rounded-full object-cover"
+                />
 
-              {!isMobile && (
-                <>
-                  <div className="text-left">
+                <div className="text-left">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">
+                      {profile?.full_name ?? "Quavron"}
+                    </span>
 
-                    <div className="flex items-center gap-2">
-
-                      <span className="font-semibold">
-                        {profile?.full_name || "Quavron User"}
-                      </span>
-
-                      <VerificationBadge
-                        verified={profile?.verified}
-                        verificationType={profile?.verification_type}
-                        size={15}
-                      />
-
-                    </div>
-
-                    <p className="text-xs text-slate-400">
-                      @{profile?.username || user?.email || "user"}
-                    </p>
-
+                    <VerificationBadge
+                      verified={profile?.verified}
+                      verificationType={profile?.verification_type}
+                    />
                   </div>
 
-                  <ChevronDown
-                    size={18}
-                    className="text-slate-500"
-                  />
-                </>
+                  <div className="text-xs opacity-70">
+                    @{profile?.username ?? user?.email}
+                  </div>
+                </div>
+
+                <ChevronDown size={18} />
+              </button>
+
+              {openMenu && (
+                <div
+                  className="absolute right-0 mt-2 w-64 overflow-hidden rounded-2xl border shadow-xl"
+                  style={{
+                    background: "var(--q-surface)",
+                    borderColor: "var(--q-border)",
+                  }}
+                >
+                  <Link
+                    to="/profile"
+                    className="flex items-center gap-3 px-4 py-3 transition hover:bg-[var(--q-primary)]/10"
+                  >
+                    <User size={18} />
+                    Profile
+                  </Link>
+
+                  <Link
+                    to="/settings"
+                    className="flex items-center gap-3 px-4 py-3 transition hover:bg-[var(--q-primary)]/10"
+                  >
+                    <Settings size={18} />
+                    Settings
+                  </Link>
+
+                  <button
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-red-600 transition hover:bg-red-500/10"
+                  >
+                    <LogOut size={18} />
+                    Logout
+                  </button>
+                </div>
               )}
-            </button>
-
-            {openMenu && (
-
-              <div
-                className="
-                  absolute
-                  right-0
-                  mt-2
-                  w-60
-                  overflow-hidden
-                  rounded-2xl
-                  border
-                  border-slate-700
-                  bg-slate-900
-                  shadow-2xl
-                "
-              >
-
-                <Link
-                  to="/profile"
-                  className="
-                    flex
-                    items-center
-                    gap-3
-                    px-4
-                    py-3
-                    transition
-                    hover:bg-slate-800
-                  "
-                >
-                  <User size={18} />
-                  Profile
-                </Link>
-
-                <Link
-                  to="/settings"
-                  className="
-                    flex
-                    items-center
-                    gap-3
-                    px-4
-                    py-3
-                    transition
-                    hover:bg-slate-800
-                  "
-                >
-                  <Settings size={18} />
-                  Settings
-                </Link>
-
-                <button
-                  onClick={handleLogout}
-                  className="
-                    flex
-                    w-full
-                    items-center
-                    gap-3
-                    px-4
-                    py-3
-                    text-left
-                    text-red-400
-                    transition
-                    hover:bg-slate-800
-                  "
-                >
-                  <LogOut size={18} />
-                  Logout
-                </button>
-
-              </div>
-
-            )}
-
-          </div>
-
+            </div>
+          )}
         </div>
-
       </div>
     </header>
   );

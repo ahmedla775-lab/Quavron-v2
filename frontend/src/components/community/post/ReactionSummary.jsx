@@ -1,6 +1,12 @@
 import { REACTIONS } from "../../../modules/community/constants/reactions";
 
-export default function ReactionSummary({ counts = {} }) {
+export default function ReactionSummary({
+  counts = {},
+}) {
+  const reactions = REACTIONS.filter(
+    (reaction) => (counts[reaction.type] ?? 0) > 0
+  );
+
   const total = Object.values(counts).reduce(
     (sum, value) => sum + value,
     0
@@ -8,39 +14,65 @@ export default function ReactionSummary({ counts = {} }) {
 
   if (total === 0) return null;
 
-  const active = REACTIONS.filter(
-    (reaction) => (counts[reaction.type] ?? 0) > 0
-  );
-
   return (
-    <div className="mt-3 flex items-center justify-between">
+    <div
+      className="
+        mt-3
+        flex
+        items-center
+        justify-between
+        text-sm
+      "
+    >
+      <div
+        className="
+          flex
+          items-center
+          gap-2
+          text-[var(--q-muted)]
+        "
+      >
+        <div className="flex -space-x-1">
+          {reactions.slice(0, 3).map((reaction) => (
+            <span
+              key={reaction.type}
+              className="
+                flex
+                h-6
+                w-6
+                items-center
+                justify-center
+                rounded-full
+                border-2
+                border-[var(--q-card)]
+                bg-[var(--q-surface)]
+                text-sm
+              "
+            >
+              {reaction.emoji}
+            </span>
+          ))}
+        </div>
 
-      <div className="flex items-center -space-x-2">
-        {active.slice(0, 3).map((reaction) => (
-          <div
-            key={reaction.type}
-            className="
-              flex
-              h-8
-              w-8
-              items-center
-              justify-center
-              rounded-full
-              border-2
-              border-slate-900
-              bg-slate-800
-              text-lg
-            "
-          >
-            {reaction.emoji}
-          </div>
-        ))}
+        <span>
+          {total} {total === 1 ? "Reaction" : "Reactions"}
+        </span>
       </div>
 
-      <span className="text-sm text-slate-400">
-        {total} Reactions
-      </span>
-
+      <div
+        className="
+          text-[var(--q-muted)]
+        "
+      >
+        {reactions.map((reaction) => (
+          <span
+            key={reaction.type}
+            className="ml-3"
+          >
+            {reaction.emoji} {counts[reaction.type]}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
