@@ -5,6 +5,7 @@ const QCEController = require("../controllers/QCEController");
 const router = express.Router();
 
 router.get("/feed", QCEController.feed);
+router.get("/feed/:userId", QCEController.personalFeed);
 
 router.get("/trending", QCEController.trending);
 

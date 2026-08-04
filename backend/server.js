@@ -7,7 +7,7 @@ const bootstrap = require("./src/bootstrap");
 async function start() {
   await bootstrap();
 
-  app.listen(config.port, () => {
+  app.listen(config.port, "0.0.0.0", () => {
     console.log(`Quavron API listening on port ${config.port}`);
   });
 }

@@ -1,4 +1,6 @@
 const Pipeline = require("../pipeline");
+const RankingEngine = require("../ranking/RankingEngine");
+const UserPreferenceService = require("../preferences/UserPreferenceService");
 
 class QCEService {
   async getFeed(options = {}) {
@@ -10,6 +12,22 @@ class QCEService {
 }
   async search(query, options = {}) {
     return [];
+  }
+
+  async getPersonalFeed(userId, options = {}) {
+
+    const feed = await Pipeline.feed({
+      ...options,
+      userId,
+    });
+
+    const preferences =
+      await UserPreferenceService.getPreferences(userId);
+
+    return RankingEngine.rank(
+      feed,
+      preferences
+    );
   }
 }
 

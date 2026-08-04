@@ -19,6 +19,19 @@ class QCEController {
     });
   }
 
+  async personalFeed(req, res) {
+
+    const data = await QCEService.getPersonalFeed(
+      req.params.userId,
+      req.query
+    );
+
+    res.json({
+      success: true,
+      data,
+    });
+  }
+
   async search(req, res) {
     const data = await QCEService.search(
       req.query.q || "",

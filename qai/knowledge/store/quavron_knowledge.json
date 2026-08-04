@@ -1,0 +1,16 @@
+{
+  "company": {
+    "name": "Quavron SARL",
+    "description": "Technology company building an integrated platform."
+  },
+  "modules": {
+    "dashboard": "Control center for users.",
+    "community": "Community for sharing knowledge.",
+    "marketplace": "Digital marketplace.",
+    "learning": "Courses and educational content.",
+    "hosting": "Hosting services.",
+    "analytics": "Analytics and reports.",
+    "profile": "User profile management.",
+    "ide": "Cloud development environment."
+  }
+}
