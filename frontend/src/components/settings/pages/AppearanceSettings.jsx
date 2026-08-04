@@ -1,50 +1,41 @@
-import { useState } from "react";
+import { useTheme } from "../../../theme/ThemeProvider";
+import { useSettings } from "../../../context/SettingsContext";
 
 export default function AppearanceSettings() {
 
-  const [settings, setSettings] = useState({
+  const { theme, setTheme } = useTheme();
 
+  const {
+    settings,
+    updateSection,
+  } = useSettings();
+
+  const appearance = settings.appearance || {
     theme: "dark",
-
-    accent: "blue",
-
+    accent: "green",
     fontSize: "medium",
-
     density: "comfortable",
-
     sidebar: "expanded",
-
     animations: true,
-
     glass: true,
-
     transparency: true,
-
     rounded: true,
-
-  });
+  };
 
   function update(key, value) {
 
-    setSettings((prev) => ({
-
-      ...prev,
-
+    updateSection("appearance", {
+      ...appearance,
       [key]: value,
-
-    }));
+    });
 
   }
 
   function toggle(key) {
 
-    setSettings((prev) => ({
-
-      ...prev,
-
-      [key]: !prev[key],
-
-    }));
+    updateSection("appearance", {
+      [key]: !appearance[key],
+    });
 
   }
 
@@ -52,13 +43,13 @@ export default function AppearanceSettings() {
 
     <div className="mx-auto max-w-5xl p-8">
 
-      <h1 className="text-3xl font-bold text-white">
+      <h1 className="text-3xl font-bold text-[var(--q-text)]">
 
         Appearance
 
       </h1>
 
-      <p className="mt-2 text-slate-400">
+      <p className="mt-2 text-[var(--q-muted)]">
 
         Customize the look and feel of Quavron.
 
@@ -69,7 +60,7 @@ export default function AppearanceSettings() {
         <Card title="Theme">
 
           <Select
-            value={settings.theme}
+            value={appearance.theme}
             onChange={(v)=>update("theme",v)}
             options={[
               "light",
@@ -83,7 +74,7 @@ export default function AppearanceSettings() {
         <Card title="Accent Color">
 
           <Select
-            value={settings.accent}
+            value={appearance.accent}
             onChange={(v)=>update("accent",v)}
             options={[
               "blue",
@@ -100,7 +91,7 @@ export default function AppearanceSettings() {
         <Card title="Font Size">
 
           <Select
-            value={settings.fontSize}
+            value={appearance.fontSize}
             onChange={(v)=>update("fontSize",v)}
             options={[
               "small",
@@ -114,7 +105,7 @@ export default function AppearanceSettings() {
         <Card title="Interface Density">
 
           <Select
-            value={settings.density}
+            value={appearance.density}
             onChange={(v)=>update("density",v)}
             options={[
               "comfortable",
@@ -127,7 +118,7 @@ export default function AppearanceSettings() {
         <Card title="Sidebar">
 
           <Select
-            value={settings.sidebar}
+            value={appearance.sidebar}
             onChange={(v)=>update("sidebar",v)}
             options={[
               "expanded",
@@ -139,37 +130,50 @@ export default function AppearanceSettings() {
 
         <Switch
           title="Animations"
-          value={settings.animations}
+          value={appearance.animations}
           onClick={()=>toggle("animations")}
         />
 
         <Switch
           title="Glass Effect"
-          value={settings.glass}
+          value={appearance.glass}
           onClick={()=>toggle("glass")}
         />
 
         <Switch
           title="Transparency"
-          value={settings.transparency}
+          value={appearance.transparency}
           onClick={()=>toggle("transparency")}
         />
 
         <Switch
           title="Rounded Corners"
-          value={settings.rounded}
+          value={appearance.rounded}
           onClick={()=>toggle("rounded")}
         />
 
       </div>
 
-      <div className="mt-10 flex justify-between">
+      <div className="mt-10 flex justify-start md:justify-between">
 
         <button
+          onClick={() =>
+            updateSection("appearance", {
+              theme:"dark",
+              accent:"green",
+              fontSize:"medium",
+              density:"comfortable",
+              sidebar:"expanded",
+              animations:true,
+              glass:true,
+              transparency:true,
+              rounded:true,
+            })
+          }
           className="
             rounded-xl
             bg-slate-700
-            px-6
+            px-3 md:px-6
             py-3
             text-white
           "
@@ -180,13 +184,16 @@ export default function AppearanceSettings() {
         </button>
 
         <button
+          onClick={() =>
+            updateSection("appearance", appearance)
+          }
           className="
             rounded-xl
             bg-blue-600
             px-8
             py-3
             font-semibold
-            text-white
+            text-[var(--q-text)]
             hover:bg-blue-700
           "
         >
@@ -213,9 +220,9 @@ function Card({
 
   return(
 
-    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+    <div className="rounded-2xl border border-[var(--q-border)] bg-[var(--q-surface)] p-3 md:p-5">
 
-      <h2 className="mb-4 text-lg font-semibold text-white">
+      <h2 className="mb-4 text-sm md:text-base md:text-lg font-semibold text-[var(--q-text)]">
 
         {title}
 
@@ -248,10 +255,10 @@ function Select({
         w-full
         rounded-xl
         border
-        border-slate-700
-        bg-slate-800
+        border-[var(--q-border)]
+        bg-[var(--q-card)]
         p-3
-        text-white
+        text-[var(--q-text)]
       "
     >
 
@@ -286,9 +293,9 @@ function Switch({
 
   return(
 
-    <div className="flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900 p-5">
+    <div className="flex items-center justify-start md:justify-between rounded-2xl border border-[var(--q-border)] bg-[var(--q-surface)] p-3 md:p-5">
 
-      <span className="font-medium text-white">
+      <span className="font-medium text-[var(--q-text)]">
 
         {title}
 
@@ -298,8 +305,8 @@ function Switch({
         onClick={onClick}
         className={`rounded-full px-5 py-2 font-semibold ${
           value
-            ? "bg-green-600 text-white"
-            : "bg-slate-700 text-white"
+            ? "bg-green-600 text-[var(--q-text)]"
+            : "bg-slate-700 text-[var(--q-text)]"
         }`}
       >
 

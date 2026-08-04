@@ -121,6 +121,8 @@ class PostService {
 
   async createPost(values) {
 
+    console.log("POST VALUES:", values);
+
     const { data: inserted, error } = await supabase
       .from("posts")
       .insert(values)

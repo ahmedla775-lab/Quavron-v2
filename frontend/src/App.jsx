@@ -1,9 +1,16 @@
-import LiveRoom from "./modules/live/pages/LiveRoom";
+import { LiveProvider } from "./modules/live/context/LiveContext";
+
+
 import {
   BrowserRouter,
   Routes,
   Route,
 } from "react-router-dom";
+
+import {
+  lazy,
+  Suspense,
+} from "react";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -11,15 +18,14 @@ import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 
-import Dashboard from "./pages/Dashboard";
-import IDE from "./pages/IDE";
+
+
 import Projects from "./pages/Projects";
-import AI from "./pages/AI";
+
 import Courses from "./pages/Courses";
-import Marketplace from "./pages/Marketplace";
+
 import Hosting from "./pages/Hosting";
-import Community from "./pages/Community";
-import Analytics from "./pages/Analytics";
+
 
 import Profile from "./pages/Profile";
 import UserProfile from "./pages/UserProfile";
@@ -38,11 +44,23 @@ import Layout from "./components/layout/Layout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AdminRoute from "./components/admin/AdminRoute";
 
+const QCCDashboard = lazy(() => import("./modules/qcc/pages/QCCDashboard"));
+const LiveRoom = lazy(() => import("./modules/live/pages/LiveRoom"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const IDE = lazy(() => import("./pages/IDE"));
+const AI = lazy(() => import("./pages/AI"));
+const Marketplace = lazy(() => import("./pages/Marketplace"));
+const Community = lazy(() => import("./pages/Community"));
+const Analytics = lazy(() => import("./pages/Analytics"));
+
+
 function App() {
 
   return (
 
     <BrowserRouter>
+
+      <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
 
       <Routes>
 
@@ -136,7 +154,9 @@ function App() {
   path="/community/live"
   element={
     <ProtectedRoute>
-      <LiveRoom />
+      <LiveProvider>
+        <LiveRoom />
+      </LiveProvider>
     </ProtectedRoute>
   }
 />
@@ -244,6 +264,15 @@ function App() {
           }
         />
 
+<Route
+  path="/qcc"
+  element={
+    <ProtectedRoute>
+      <QCCDashboard />
+    </ProtectedRoute>
+  }
+/>
+
         <Route
           path="*"
           element={
@@ -254,6 +283,8 @@ function App() {
         />
 
       </Routes>
+
+      </Suspense>
 
     </BrowserRouter>
 

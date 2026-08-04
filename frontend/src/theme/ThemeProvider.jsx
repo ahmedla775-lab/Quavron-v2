@@ -24,8 +24,10 @@ const themes = {
     "--q-text": "#FFFFFF",
     "--q-muted": "#9CA3AF",
 
-    "--q-primary": "#1E88E5",
-    "--q-accent": "#E10600",
+    "--q-primary": "#16A34A",
+    "--q-primary-rgb": "22,163,74",
+    "--q-glow": "0 0 20px rgba(22,163,74,.35)",
+    "--q-accent": "#16A34A",
 
     "--q-silver": "#D9DDE3",
 
@@ -43,8 +45,10 @@ const themes = {
     "--q-text": "#0B0D10",
     "--q-muted": "#64748B",
 
-    "--q-primary": "#1E88E5",
-    "--q-accent": "#E10600",
+    "--q-primary": "#16A34A",
+    "--q-primary-rgb": "22,163,74",
+    "--q-glow": "0 0 20px rgba(22,163,74,.35)",
+    "--q-accent": "#16A34A",
 
     "--q-silver": "#6B7280",
 

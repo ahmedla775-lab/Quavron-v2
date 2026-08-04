@@ -13,7 +13,8 @@ export default function Reels() {
       return (
         platform.includes("reel") ||
         type === "reel" ||
-        type === "short"
+        type === "short" ||
+        post.is_reel === true
       );
     });
   }, [posts]);

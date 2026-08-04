@@ -78,13 +78,13 @@ export default function IDESettings() {
 
     <div className="mx-auto max-w-5xl p-8">
 
-      <h1 className="text-3xl font-bold text-white">
+      <h1 className="text-3xl font-bold text-[var(--q-text)]">
 
         Cloud IDE
 
       </h1>
 
-      <p className="mt-2 text-slate-400">
+      <p className="mt-2 text-[var(--q-muted)]">
 
         Configure your coding environment.
 
@@ -148,7 +148,7 @@ export default function IDESettings() {
             className="w-full"
           />
 
-          <p className="mt-3 text-slate-300">
+          <p className="mt-3 text-[var(--q-text)]">
 
             {settings.fontSize}px
 
@@ -266,7 +266,7 @@ export default function IDESettings() {
             px-8
             py-3
             font-semibold
-            text-white
+            text-[var(--q-text)]
             hover:bg-blue-700
           "
         >
@@ -287,9 +287,9 @@ function Card({title,children}){
 
   return(
 
-    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+    <div className="rounded-2xl border border-[var(--q-border)] bg-[var(--q-surface)] p-3 md:p-5">
 
-      <h2 className="mb-4 text-lg font-semibold text-white">
+      <h2 className="mb-4 text-sm md:text-base md:text-lg font-semibold text-[var(--q-text)]">
 
         {title}
 
@@ -310,7 +310,7 @@ function Select({value,onChange,options}){
     <select
       value={value}
       onChange={(e)=>onChange(e.target.value)}
-      className="w-full rounded-xl border border-slate-700 bg-slate-800 p-3 text-white"
+      className="w-full rounded-xl border border-[var(--q-border)] bg-[var(--q-card)] p-3 text-[var(--q-text)]"
     >
 
       {options.map(option=>(
@@ -336,9 +336,9 @@ function Switch({title,value,onClick}){
 
   return(
 
-    <div className="flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900 p-5">
+    <div className="flex items-center justify-start md:justify-between rounded-2xl border border-[var(--q-border)] bg-[var(--q-surface)] p-3 md:p-5">
 
-      <span className="font-medium text-white">
+      <span className="font-medium text-[var(--q-text)]">
 
         {title}
 
@@ -348,8 +348,8 @@ function Switch({title,value,onClick}){
         onClick={onClick}
         className={`rounded-full px-5 py-2 font-semibold ${
           value
-          ? "bg-green-600 text-white"
-          : "bg-slate-700 text-white"
+          ? "bg-green-600 text-[var(--q-text)]"
+          : "bg-slate-700 text-[var(--q-text)]"
         }`}
       >
 

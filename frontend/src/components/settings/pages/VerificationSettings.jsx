@@ -40,24 +40,24 @@ export default function VerificationSettings() {
 
     <div className="mx-auto max-w-5xl p-8">
 
-      <h1 className="text-3xl font-bold text-white">
+      <h1 className="text-3xl font-bold text-[var(--q-text)]">
 
         Verification
 
       </h1>
 
-      <p className="mt-2 text-slate-400">
+      <p className="mt-2 text-[var(--q-muted)]">
 
         Verify your identity to unlock official verification
         badges and increase trust across the Quavron platform.
 
       </p>
 
-      <div className="mt-10 rounded-2xl border border-slate-800 bg-slate-900">
+      <div className="mt-10 rounded-2xl border border-[var(--q-border)] bg-[var(--q-surface)]">
 
-        <div className="border-b border-slate-800 p-6">
+        <div className="border-b border-[var(--q-border)] p-3 md:p-6">
 
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="text-xl font-semibold text-[var(--q-text)]">
 
             Current Status
 
@@ -65,17 +65,17 @@ export default function VerificationSettings() {
 
         </div>
 
-        <div className="flex items-center justify-between p-6">
+        <div className="flex items-center justify-start md:justify-between p-3 md:p-6">
 
           <div>
 
-            <p className="text-lg font-semibold text-white">
+            <p className="text-sm md:text-base md:text-lg font-semibold text-[var(--q-text)]">
 
               Verification Badge
 
             </p>
 
-            <p className="mt-2 text-slate-400">
+            <p className="mt-2 text-[var(--q-muted)]">
 
               Your current verification level.
 
@@ -92,11 +92,11 @@ export default function VerificationSettings() {
 
       </div>
 
-      <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-900">
+      <div className="mt-8 rounded-2xl border border-[var(--q-border)] bg-[var(--q-surface)]">
 
-        <div className="border-b border-slate-800 p-6">
+        <div className="border-b border-[var(--q-border)] p-3 md:p-6">
 
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="text-xl font-semibold text-[var(--q-text)]">
 
             Badge Types
 
@@ -104,7 +104,7 @@ export default function VerificationSettings() {
 
         </div>
 
-        <div className="space-y-5 p-6">
+        <div className="space-y-5 p-3 md:p-6">
 
           <Row
             type={VERIFICATION_TYPES.BLUE}
@@ -134,15 +134,15 @@ export default function VerificationSettings() {
 
       </div>
 
-      <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-900 p-6">
+      <div className="mt-8 rounded-2xl border border-[var(--q-border)] bg-[var(--q-surface)] p-3 md:p-6">
 
-        <h2 className="text-xl font-semibold text-white">
+        <h2 className="text-xl font-semibold text-[var(--q-text)]">
 
           Request Verification
 
         </h2>
 
-        <p className="mt-3 text-slate-400">
+        <p className="mt-3 text-[var(--q-muted)]">
 
           Submit your documents for review by the Quavron
           verification team.
@@ -158,7 +158,7 @@ export default function VerificationSettings() {
             px-8
             py-3
             font-semibold
-            text-white
+            text-[var(--q-text)]
             hover:bg-blue-700
           "
         >
@@ -193,7 +193,7 @@ function Row({
 
   return (
 
-    <div className="flex items-center gap-5">
+    <div className="flex items-center gap-3">
 
       <VerificationBadge
         type={type}
@@ -202,13 +202,13 @@ function Row({
 
       <div>
 
-        <h3 className="font-semibold text-white">
+        <h3 className="font-semibold text-[var(--q-text)]">
 
           {title}
 
         </h3>
 
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-[var(--q-muted)]">
 
           {description}
 

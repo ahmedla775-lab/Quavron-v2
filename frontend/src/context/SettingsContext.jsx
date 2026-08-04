@@ -12,19 +12,22 @@ import SettingsService from "../services/SettingsService";
 const SettingsContext = createContext();
 
 const DEFAULT_SETTINGS = {
-
   account: {},
-
   profile: {},
-
   security: {},
-
   privacy: {},
-
   notifications: {},
 
   appearance: {
     theme: "dark",
+    accent: "green",
+    fontSize: "medium",
+    density: "comfortable",
+    sidebar: "expanded",
+    animations: true,
+    glass: true,
+    transparency: true,
+    rounded: true,
   },
 
   language: {
@@ -32,69 +35,107 @@ const DEFAULT_SETTINGS = {
   },
 
   verification: {},
-
   community: {},
-
   ai: {},
-
   ide: {},
-
   hosting: {},
-
   marketplace: {},
-
   developer: {},
-
   billing: {},
-
   api: {},
-
 };
 
-export function SettingsProvider({
+export function SettingsProvider({ children }) {
 
-  children,
+  const [settings, setSettings] = useState(() => {
 
-}) {
+    const saved = localStorage.getItem("settings");
 
-  const [settings, setSettings] =
-    useState(DEFAULT_SETTINGS);
+    if (!saved) return DEFAULT_SETTINGS;
 
-  const [loading, setLoading] =
-    useState(true);
+    try {
 
-  const [saving, setSaving] =
-    useState(false);
+      const parsed = JSON.parse(saved);
 
-  const [lastSaved, setLastSaved] =
-    useState(null);
+      return {
+        ...DEFAULT_SETTINGS,
+        ...parsed,
+        appearance: {
+          ...DEFAULT_SETTINGS.appearance,
+          ...(parsed.appearance || {}),
+        },
+      };
 
-  const [userId, setUserId] =
-    useState(null);
+    } catch {
+
+      return DEFAULT_SETTINGS;
+
+    }
+
+  });
+
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState(null);
+  const [userId, setUserId] = useState(null);
 
   const saveTimeout = useRef(null);
 
+
   useEffect(() => {
+
+    const cached = localStorage.getItem("settings");
+
+    if (cached) {
+
+      try {
+
+        const parsed = JSON.parse(cached);
+
+        const merged = {
+          ...DEFAULT_SETTINGS,
+          ...parsed,
+          appearance:{
+            ...DEFAULT_SETTINGS.appearance,
+            ...(parsed.appearance || {}),
+          },
+        };
+
+        setSettings(merged);
+        applySettings(merged);
+
+      } catch(e) {
+
+        console.log("settings cache error");
+
+      }
+
+    }
 
     initialize();
 
   }, []);
 
-  async function initialize() {
+
+
+  async function initialize(){
 
     const {
       data,
     } = await supabase.auth.getUser();
 
-    if (!data?.user) {
+
+    if(!data?.user){
 
       setLoading(false);
-
       return;
 
     }
 
+
     setUserId(data.user.id);
+
 
     const profile = await supabase
       .from("profiles")
@@ -102,64 +143,92 @@ export function SettingsProvider({
       .eq("auth_id", data.user.id)
       .single();
 
-    if (!profile.data) {
+
+    if(!profile.data){
 
       setLoading(false);
-
       return;
 
     }
 
-    const profileId = profile.data.id;
-
-    setUserId(profileId);
 
     const response =
-      await SettingsService.getSettings(profileId);
+      await SettingsService.getSettings(profile.data.id);
 
-    if (response.data) {
 
-      setSettings({
+    if(response.data){
+
+      const loadedSettings = {
 
         ...DEFAULT_SETTINGS,
 
         ...response.data.settings,
 
-      });
+        appearance:{
+          ...DEFAULT_SETTINGS.appearance,
+          ...(response.data.settings?.appearance || {}),
+        },
+
+      };
+
+
+      setSettings(loadedSettings);
+
+      localStorage.setItem(
+        "settings",
+        JSON.stringify(loadedSettings)
+      );
+
+
+      applySettings(loadedSettings);
+
 
     } else {
 
+
       await SettingsService.createDefaultSettings(
-
-        profileId,
-
+        profile.data.id,
         DEFAULT_SETTINGS
-
       );
+
 
       setSettings(DEFAULT_SETTINGS);
 
+      applySettings(DEFAULT_SETTINGS);
+
     }
+
 
     setLoading(false);
 
   }
 
-  async function save(nextSettings) {
 
-    if (!userId) return;
+
+  async function save(nextSettings){
+
+    if(!userId) return;
+
 
     setSaving(true);
 
+
     setSettings(nextSettings);
 
-    await SettingsService.saveSettings(
+    applySettings(nextSettings);
 
-      userId,
 
-      nextSettings
-
+    localStorage.setItem(
+      "settings",
+      JSON.stringify(nextSettings)
     );
+
+
+    await SettingsService.saveSettings(
+      userId,
+      nextSettings
+    );
+
 
     setSaving(false);
 
@@ -167,37 +236,114 @@ export function SettingsProvider({
 
   }
 
-  function autoSave(nextSettings) {
+
+
+  function applySettings(next){
+
+    const root = document.documentElement;
+
+    const appearance = next.appearance || {};
+
+
+    if(appearance.fontSize){
+
+      root.dataset.fontSize =
+        appearance.fontSize;
+
+    }
+
+
+    if(appearance.density){
+
+      root.dataset.density =
+        appearance.density;
+
+    }
+
+
+    if(appearance.sidebar){
+
+      root.dataset.sidebar =
+        appearance.sidebar;
+
+    }
+
+
+    root.dataset.animations =
+      appearance.animations ? "on" : "off";
+
+
+    root.dataset.glass =
+      appearance.glass ? "on" : "off";
+
+
+    root.dataset.transparency =
+      appearance.transparency ? "on" : "off";
+
+
+    root.dataset.rounded =
+      appearance.rounded ? "on" : "off";
+
+
+
+    const colors = {
+
+      blue:"#1E88E5",
+      purple:"#9333EA",
+      green:"#16A34A",
+      orange:"#EA580C",
+      red:"#DC2626",
+      pink:"#DB2777",
+
+    };
+
+
+    root.style.setProperty(
+      "--q-primary",
+      colors[appearance.accent] || colors.green
+    );
+
+
+    root.style.setProperty(
+      "--q-accent",
+      colors[appearance.accent] || colors.green
+    );
+
+  }
+
+
+
+  function autoSave(nextSettings){
 
     setSettings(nextSettings);
 
-    if (saveTimeout.current) {
+    applySettings(nextSettings);
+
+
+    if(saveTimeout.current){
 
       clearTimeout(saveTimeout.current);
 
     }
 
-    saveTimeout.current = setTimeout(() => {
+
+    saveTimeout.current = setTimeout(()=>{
 
       save(nextSettings);
 
-    }, 500);
+    },500);
 
   }
 
-  function updateSection(
 
-    section,
 
-    values
-
-  ) {
+  function updateSection(section, values){
 
     const next = {
 
       ...settings,
 
-      [section]: {
+      [section]:{
 
         ...settings[section],
 
@@ -207,27 +353,39 @@ export function SettingsProvider({
 
     };
 
+
     autoSave(next);
 
   }
 
-  async function reset() {
+
+
+  async function reset(){
 
     setSettings(DEFAULT_SETTINGS);
 
-    if (userId) {
+    applySettings(DEFAULT_SETTINGS);
 
-      await SettingsService.resetSettings(
 
-        userId
+    localStorage.setItem(
+      "settings",
+      JSON.stringify(DEFAULT_SETTINGS)
+    );
 
-      );
+
+    if(userId){
+
+      await SettingsService.resetSettings(userId);
 
     }
+
 
     setLastSaved(new Date());
 
   }
+
+
+
   return (
 
     <SettingsContext.Provider
@@ -235,17 +393,11 @@ export function SettingsProvider({
       value={{
 
         settings,
-
         loading,
-
         saving,
-
         lastSaved,
-
         save,
-
         reset,
-
         updateSection,
 
       }}
@@ -260,19 +412,21 @@ export function SettingsProvider({
 
 }
 
-export function useSettings() {
+
+
+export function useSettings(){
 
   const context = useContext(SettingsContext);
 
-  if (!context) {
+
+  if(!context){
 
     throw new Error(
-
       "useSettings must be used inside SettingsProvider"
-
     );
 
   }
+
 
   return context;
 

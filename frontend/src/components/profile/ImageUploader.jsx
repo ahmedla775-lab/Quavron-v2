@@ -57,15 +57,15 @@ export default function ImageUploader({
       />
 
       <div
-
+        role="button"
+        tabIndex={0}
         onClick={open}
-
+        onKeyDown={(e) => {
+          if (e.key === "Enter") open();
+        }}
         className="cursor-pointer"
-
       >
-
         {children}
-
       </div>
 
     </>

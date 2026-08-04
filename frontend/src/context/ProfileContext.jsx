@@ -52,7 +52,24 @@ export function ProfileProvider({
 
       if (error) throw error;
 
-      setProfile(data);
+      const followers = await ProfileService.getFollowers(data.id);
+
+      const following = await ProfileService.getFollowing(data.id);
+
+      const posts = await ProfileService.getPostsCount(data.id);
+
+      const profileWithStats = {
+        ...data,
+
+        followers_count: followers.data?.length || 0,
+
+        following_count: following.data?.length || 0,
+
+        posts_count: posts.count || 0,
+
+      };
+
+      setProfile(profileWithStats);
 
       setProfileId(data.id);
 
@@ -100,7 +117,10 @@ export function ProfileProvider({
 
     if (error) throw error;
 
-    setProfile(data);
+    setProfile((current) => ({
+      ...current,
+      ...data,
+    }));
 
     return data;
 
@@ -136,6 +156,11 @@ export function ProfileProvider({
 
     });
 
+    setProfile((current) => ({
+      ...current,
+      avatar_url: url,
+    }));
+
     return url;
 
   }
@@ -157,6 +182,11 @@ export function ProfileProvider({
       cover_url: url,
 
     });
+
+    setProfile((current) => ({
+      ...current,
+      cover_url: url,
+    }));
 
     return url;
 

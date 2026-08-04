@@ -9,7 +9,7 @@ onRequest,
 }){
 
 let title="Not Verified";
-let color="text-slate-400";
+let color="text-[var(--q-muted)]";
 let button=true;
 
 if(profile.verified){
@@ -49,9 +49,9 @@ break;
 
 return(
 
-<div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+<div className="rounded-2xl border border-[var(--q-border)] bg-[var(--q-surface)] p-6">
 
-<h2 className="text-xl font-bold text-white">
+<h2 className="text-xl font-bold text-[var(--q-text)]">
 
 Verification
 
@@ -69,7 +69,7 @@ Verification
 
 onClick={onRequest}
 
-className="mt-5 rounded-xl bg-blue-600 px-5 py-3 text-white"
+className="mt-5 rounded-xl bg-blue-600 px-5 py-3 text-[var(--q-text)]"
 
 >
 

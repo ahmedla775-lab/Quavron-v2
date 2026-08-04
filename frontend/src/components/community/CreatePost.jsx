@@ -1,5 +1,6 @@
 import { Radio } from "lucide-react";
 import GoLiveModal from "./live/GoLiveModal";
+import ReelComposer from "./reels/ReelComposer";
 
 import { useState } from "react";
 import {
@@ -7,6 +8,7 @@ import {
   Video,
   Paperclip,
   Music,
+  Clapperboard,
 } from "lucide-react";
 
 import { useAuth } from "../auth/AuthProvider";
@@ -14,14 +16,21 @@ import { usePosts } from "../../context/PostContext";
 
 export default function CreatePost() {
   const { user } = useAuth();
-  const { createPost } = usePosts();
+  const { createPost, uploadProgress } = usePosts();
 
   const [content, setContent] = useState("");
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [postType, setPostType] = useState("post");
 const [openLive, setOpenLive] = useState(false);
+  const [openReel, setOpenReel] = useState(false);
   function handleFiles(e) {
     const selected = Array.from(e.target.files);
+
+    if (selected.some((file) => file.type.startsWith("video/"))) {
+      setPostType("video");
+    }
+
     setFiles((prev) => [...prev, ...selected]);
   }
 
@@ -41,13 +50,38 @@ const [openLive, setOpenLive] = useState(false);
         authorId: user.id,
         content,
         files,
+        type: postType,
       });
 
       setContent("");
       setFiles([]);
+      setPostType("post");
     } finally {
       setLoading(false);
     }
+  }
+
+
+  if (openReel) {
+    return (
+      <ReelComposer
+        onClose={() => setOpenReel(false)}
+        onPublish={async (reel) => {
+
+
+          await createPost({
+            authorId: user.id,
+            content,
+            type: "reel",
+            files: reel.file ? [reel.file] : [],
+            reel_config: reel,
+          });
+
+          setOpenReel(false);
+
+        }}
+      />
+    );
   }
 
   return (
@@ -118,6 +152,21 @@ dark:text-white
           gap-4
         "
       >
+        {uploadProgress > 0 && uploadProgress < 100 && (
+          <div className="mb-4 w-full">
+            <div className="h-2 overflow-hidden rounded-full bg-slate-700">
+              <div
+                className="h-full bg-blue-500 transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+
+            <p className="mt-2 text-center text-sm text-slate-400">
+              Uploading... {uploadProgress}%
+            </p>
+          </div>
+        )}
+
         <div className="flex flex-wrap gap-3">
           <label className="cursor-pointer rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-blue-500">
             <Image size={20} />
@@ -151,6 +200,13 @@ dark:text-white
             />
           </label>
 
+          <label
+            onClick={() => setOpenReel(true)}
+            className="cursor-pointer rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-pink-500"
+          >
+            <Clapperboard size={20} />
+          </label>
+
           <label className="cursor-pointer rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-pink-500">
             <Music size={20} />
             <input
@@ -166,7 +222,10 @@ dark:text-white
         <div className="flex flex-wrap gap-3">
 
   <button
-    onClick={() => setOpenLive(true)}
+    onClick={() => {
+      setPostType("live");
+      setOpenLive(true);
+    }}
     className="
       flex
       items-center

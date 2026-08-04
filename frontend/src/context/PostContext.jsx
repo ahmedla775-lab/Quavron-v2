@@ -15,6 +15,7 @@ export function PostProvider({ children }) {
 
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   async function loadPosts() {
 
@@ -38,6 +39,9 @@ export function PostProvider({ children }) {
       ...postValues
     } = values;
 
+    console.log("CREATE POST VALUES:", values);
+    console.log("FILES:", files);
+
     const post =
       PostManager.createPost(postValues);
 
@@ -54,23 +58,23 @@ export function PostProvider({ children }) {
 
     if (files.length > 0) {
 
-      alert("1");
-
       try {
 
-        alert("2");
+        setUploadProgress(10);
 
         await PostMediaService.uploadAll(
           post.id,
           files,
-          post.author_id
+          post.author_id,
+          (progress)=>setUploadProgress(progress)
         );
 
-        alert("3");
+        setUploadProgress(100);
 
       } catch (error) {
 
         console.error(error);
+      alert(JSON.stringify(error, null, 2));
         alert(error.message);
 
       }
@@ -78,6 +82,7 @@ export function PostProvider({ children }) {
     }
 
     await loadPosts();
+    setUploadProgress(0);
 
     return data;
 
@@ -136,6 +141,7 @@ export function PostProvider({ children }) {
     () => ({
       posts,
       loading,
+      uploadProgress,
       loadPosts,
       createPost,
       updatePost,

@@ -5,127 +5,313 @@
 @import "./styles/animations.css";
 @import "./styles/responsive.css";
 
+
 /* ========================= */
 /* Global */
 /* ========================= */
 
 *,
 *::before,
-*::after{
-  box-sizing:border-box;
+*::after {
+  box-sizing: border-box;
 }
 
-html{
-  scroll-behavior:smooth;
+
+html {
+  scroll-behavior: smooth;
 }
 
-body{
-  margin:0;
-  background:var(--bg);
-  color:var(--text);
-  transition:
-    background .25s,
-    color .25s;
-}
-
-a{
-  color:inherit;
-  text-decoration:none;
-}
-
-button{
-  font:inherit;
-  cursor:pointer;
-}
-
-input,
-textarea,
-select{
-  font:inherit;
-}
-
-/* Scrollbar */
-
-::-webkit-scrollbar{
-  width:10px;
-  height:10px;
-}
-
-::-webkit-scrollbar-track{
-  background:var(--surface);
-}
-
-::-webkit-scrollbar-thumb{
-  background:var(--border);
-  border-radius:999px;
-}
-
-::-webkit-scrollbar-thumb:hover{
-  background:var(--q-primary);
-}
-
-/* Selection */
-
-::selection{
-  background:var(--q-primary);
-  color:white;
-}
-
-/* Focus */
-
-:focus-visible{
-  outline:2px solid var(--q-primary);
-  outline-offset:2px;
-}
-
-/* Images */
-
-img{
-  max-width:100%;
-  height:auto;
-  display:block;
-}
-
-html,
-body,
-#root {
-  min-height: 100%;
-}
 
 body {
-  overflow-x: hidden;
-  overflow-y: auto;
-}
 
-html,
-body,
-#root {
+  margin: 0;
+
   background: var(--q-bg);
-  color: var(--q-text);
-}
 
-body {
+  color: var(--q-text);
+
   transition:
     background-color .25s ease,
     color .25s ease;
+
 }
+
+
+a {
+
+  color: inherit;
+
+  text-decoration: none;
+
+}
+
+
+button {
+
+  font: inherit;
+
+  cursor: pointer;
+
+}
+
+
+input,
+textarea,
+select {
+
+  font: inherit;
+
+}
+
+
+
+/* ========================= */
+/* Scrollbar */
+/* ========================= */
+
+
+::-webkit-scrollbar {
+
+  width: 10px;
+
+  height: 10px;
+
+}
+
+
+::-webkit-scrollbar-track {
+
+  background: var(--q-surface);
+
+}
+
+
+::-webkit-scrollbar-thumb {
+
+  background: var(--q-border);
+
+  border-radius: 999px;
+
+}
+
+
+::-webkit-scrollbar-thumb:hover {
+
+  background: var(--q-primary);
+
+}
+
+
+
+/* ========================= */
+/* Selection */
+/* ========================= */
+
+
+::selection {
+
+  background: var(--q-primary);
+
+  color: #ffffff;
+
+}
+
+
+
+/* ========================= */
+/* Focus */
+/* ========================= */
+
+
+:focus-visible {
+
+  outline: 2px solid var(--q-primary);
+
+  outline-offset: 2px;
+
+}
+
+
+
+/* ========================= */
+/* Images */
+/* ========================= */
+
+
+img {
+
+  max-width: 100%;
+
+  height: auto;
+
+  display: block;
+
+}
+
+
+
+/* ========================= */
+/* Root */
+/* ========================= */
+
+
+html,
+body,
+#root {
+
+  min-height: 100%;
+
+}
+
+
+html,
+body,
+#root {
+
+  background: var(--q-bg);
+
+  color: var(--q-text);
+
+}
+
+
+
+body {
+
+  overflow-x: hidden;
+
+  overflow-y: auto;
+
+}
+
+
+
+/* ========================= */
+/* Theme Helpers */
+/* ========================= */
+
 
 .text-theme {
+
   color: var(--q-text);
+
 }
+
+
+.text-muted {
+
+  color: var(--q-muted);
+
+}
+
 
 .bg-theme {
+
   background: var(--q-bg);
+
 }
+
 
 .surface-theme {
+
   background: var(--q-surface);
+
 }
+
 
 .card-theme {
+
   background: var(--q-card);
+
 }
 
+
 .border-theme {
+
   border-color: var(--q-border);
+
 }
+
+html[data-font-size="small"] {
+  font-size: 14px;
+}
+
+html[data-font-size="medium"] {
+  font-size: 16px;
+}
+
+html[data-font-size="large"] {
+  font-size: 18px;
+}
+
+
+html[data-density="compact"] * {
+  --q-spacing: .5rem;
+}
+
+
+html[data-glass="on"] .glass-enabled {
+  backdrop-filter: blur(16px);
+  background: rgba(255,255,255,.08);
+}
+
+
+html[data-transparency="on"] {
+  --q-card: transparent;
+}
+
+
+html[data-rounded="off"] * {
+  border-radius: 4px !important;
+}
+
+
+html[data-animations="off"] *,
+html[data-animations="off"] *::before,
+html[data-animations="off"] *::after {
+  animation:none !important;
+  transition:none !important;
+}
+
+
+html[data-font-size="small"] {
+  font-size: 14px;
+}
+
+html[data-font-size="medium"] {
+  font-size: 16px;
+}
+
+html[data-font-size="large"] {
+  font-size: 18px;
+}
+
+
+html[data-density="compact"] * {
+  --q-spacing: .5rem;
+}
+
+
+html[data-glass="on"] .glass-enabled {
+  backdrop-filter: blur(16px);
+  background: rgba(255,255,255,.08);
+}
+
+
+html[data-transparency="on"] {
+  --q-card: transparent;
+}
+
+
+html[data-rounded="off"] * {
+  border-radius: 4px !important;
+}
+
+
+html[data-animations="off"] *,
+html[data-animations="off"] *::before,
+html[data-animations="off"] *::after {
+  animation:none !important;
+  transition:none !important;
+}
+

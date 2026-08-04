@@ -107,21 +107,6 @@ if (cover) {
 
 }
 
-      if (avatar) {
-        avatarUrl =
-          await ProfileService.uploadAvatar(
-            profile.id,
-            avatar
-          );
-      }
-
-      if (cover) {
-        coverUrl =
-          await ProfileService.uploadCover(
-            profile.id,
-            cover
-          );
-      }
 
       await saveProfile({
         full_name: fullName,
@@ -151,13 +136,13 @@ if (cover) {
         maxWidth="max-w-2xl"
       >
         <div className="p-8">
-          <h2 className="mb-8 text-3xl font-bold text-white">
+          <h2 className="mb-8 text-3xl font-bold text-[var(--q-text)]">
             Edit Profile
           </h2>
 
           <div className="space-y-6">
             <div>
-              <label className="mb-2 block text-slate-300">
+              <label className="mb-2 block text-[var(--q-muted)]">
                 Full Name
               </label>
 
@@ -166,12 +151,12 @@ if (cover) {
                 onChange={(e) =>
                   setFullName(e.target.value)
                 }
-                className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
+                className="w-full rounded-xl bg-[var(--q-surface)] p-3 text-[var(--q-text)] outline-none"
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-slate-300">
+              <label className="mb-2 block text-[var(--q-muted)]">
                 Username
               </label>
 
@@ -180,7 +165,7 @@ if (cover) {
                 onChange={(e) =>
                   setUsername(e.target.value)
                 }
-                className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
+                className="w-full rounded-xl bg-[var(--q-surface)] p-3 text-[var(--q-text)] outline-none"
               />
 
               {usernameError && (
@@ -191,7 +176,7 @@ if (cover) {
             </div>
 
             <div>
-              <label className="mb-2 block text-slate-300">
+              <label className="mb-2 block text-[var(--q-muted)]">
                 Bio
               </label>
 
@@ -201,12 +186,12 @@ if (cover) {
                 onChange={(e) =>
                   setBio(e.target.value)
                 }
-                className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
+                className="w-full rounded-xl bg-[var(--q-surface)] p-3 text-[var(--q-text)] outline-none"
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-slate-300">
+              <label className="mb-2 block text-[var(--q-muted)]">
                 Website
               </label>
 
@@ -215,12 +200,12 @@ if (cover) {
                 onChange={(e) =>
                   setWebsite(e.target.value)
                 }
-                className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
+                className="w-full rounded-xl bg-[var(--q-surface)] p-3 text-[var(--q-text)] outline-none"
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-slate-300">
+              <label className="mb-2 block text-[var(--q-muted)]">
                 Location
               </label>
 
@@ -229,12 +214,12 @@ if (cover) {
                 onChange={(e) =>
                   setLocation(e.target.value)
                 }
-                className="w-full rounded-xl bg-slate-800 p-3 text-white outline-none"
+                className="w-full rounded-xl bg-[var(--q-surface)] p-3 text-[var(--q-text)] outline-none"
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-slate-300">
+              <label className="mb-2 block text-[var(--q-muted)]">
                 Avatar
               </label>
 
@@ -246,12 +231,12 @@ if (cover) {
                     e.target.files?.[0] || null
                   )
                 }
-                className="w-full rounded-xl bg-slate-800 p-3 text-white"
+                className="w-full rounded-xl bg-[var(--q-surface)] p-3 text-[var(--q-text)]"
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-slate-300">
+              <label className="mb-2 block text-[var(--q-muted)]">
                 Cover Image
               </label>
 
@@ -263,7 +248,7 @@ if (cover) {
                     e.target.files?.[0] || null
                   )
                 }
-                className="w-full rounded-xl bg-slate-800 p-3 text-white"
+                className="w-full rounded-xl bg-[var(--q-surface)] p-3 text-[var(--q-text)]"
               />
             </div>
           </div>
@@ -285,7 +270,7 @@ if (cover) {
           <div className="mt-10 flex justify-end gap-4">
             <button
               onClick={onClose}
-              className="rounded-xl bg-slate-700 px-6 py-3 text-white transition hover:bg-slate-600"
+              className="rounded-xl bg-[var(--q-card)] px-6 py-3 text-[var(--q-text)] transition hover:bg-[var(--q-surface)]"
             >
               Cancel
             </button>

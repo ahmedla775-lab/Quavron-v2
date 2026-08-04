@@ -1,8 +1,9 @@
+
 import { supabase } from "../lib/supabase";
 
 class SettingsService {
 
-  async get(userId) {
+  async getSettings(userId) {
 
     return await supabase
       .from("user_settings")
@@ -12,30 +13,14 @@ class SettingsService {
 
   }
 
-  async create(userId) {
+
+  async createDefaultSettings(userId, settings) {
 
     return await supabase
       .from("user_settings")
       .insert({
 
         user_id: userId,
-
-        settings: {},
-
-      })
-      .select()
-      .single();
-
-  }
-
-  async save(userId, settings) {
-
-    return await supabase
-      .from("user_settings")
-      .upsert({
-
-        user_id: userId,
-
         settings,
 
       })
@@ -44,7 +29,24 @@ class SettingsService {
 
   }
 
-  async reset(userId) {
+
+  async saveSettings(userId, settings) {
+
+    return await supabase
+      .from("user_settings")
+      .upsert({
+
+        user_id: userId,
+        settings,
+
+      })
+      .select()
+      .single();
+
+  }
+
+
+  async resetSettings(userId) {
 
     return await supabase
       .from("user_settings")

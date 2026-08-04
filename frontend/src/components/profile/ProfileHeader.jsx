@@ -35,9 +35,9 @@ export default function ProfileHeader({
 
   return (
 
-    <div className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900">
+    <div className="overflow-hidden rounded-3xl border border-[var(--q-border)] bg-[var(--q-surface)]">
 
-      <div className="relative h-56 w-full bg-slate-800">
+      <div className="relative h-56 w-full bg-[var(--q-card)]">
 
         <img
           src={
@@ -50,13 +50,13 @@ export default function ProfileHeader({
 
         <button
           onClick={() => navigate(-1)}
-          className="absolute left-4 top-4 rounded-xl bg-black/60 p-2 text-white backdrop-blur hover:bg-black/80"
+          className="absolute left-4 top-4 rounded-xl bg-black/60 p-2 text-[var(--q-text)] backdrop-blur hover:bg-black/80"
         >
           <ArrowLeft size={20}/>
         </button>
 
         <button
-          className="absolute right-4 top-4 rounded-xl bg-black/60 p-2 text-white backdrop-blur hover:bg-black/80"
+          className="absolute right-4 top-4 rounded-xl bg-black/60 p-2 text-[var(--q-text)] backdrop-blur hover:bg-black/80"
         >
           <Share2 size={20}/>
         </button>
@@ -65,7 +65,7 @@ export default function ProfileHeader({
 
           <button
             onClick={onEdit}
-            className="absolute right-16 top-4 rounded-xl bg-blue-600 p-2 text-white hover:bg-blue-700"
+            className="absolute right-16 top-4 rounded-xl bg-[var(--q-primary)] p-2 text-[var(--q-text)] hover:opacity-90"
           >
             <Edit size={20}/>
           </button>
@@ -79,7 +79,7 @@ export default function ProfileHeader({
           >
 
             <button
-              className="absolute bottom-4 right-4 rounded-xl bg-blue-600 p-2 text-white hover:bg-blue-700"
+              className="absolute bottom-4 right-4 rounded-xl bg-[var(--q-primary)] p-2 text-[var(--q-text)] hover:opacity-90"
             >
               <Camera size={18}/>
             </button>
@@ -102,7 +102,7 @@ export default function ProfileHeader({
                 "https://ui-avatars.com/api/?background=2563eb&color=fff&name=Q"
               }
               alt=""
-              className="h-24 w-24 rounded-full border-4 border-slate-900 object-cover md:h-32 md:w-32"
+              className="h-24 w-24 rounded-full border-4 border-[var(--q-surface)] object-cover md:h-32 md:w-32"
             />
 
             {editable && (
@@ -112,7 +112,7 @@ export default function ProfileHeader({
               >
 
                 <button
-                  className="absolute bottom-2 right-2 rounded-full bg-blue-600 p-2 text-white hover:bg-blue-700"
+                  className="absolute bottom-2 right-2 rounded-full bg-[var(--q-primary)] p-2 text-[var(--q-text)] hover:opacity-90"
                 >
                   <Camera size={16}/>
                 </button>
@@ -126,7 +126,7 @@ export default function ProfileHeader({
           <div className="flex-1 w-full">
             <div className="flex items-center justify-center gap-2 md:justify-start">
 
-              <h1 className="flex items-center justify-center gap-2 text-2xl font-bold text-white md:justify-start md:text-3xl">
+              <h1 className="flex items-center justify-center gap-2 text-2xl font-bold text-[var(--q-text)] md:justify-start md:text-3xl">
 
                 <span>
 
@@ -144,13 +144,13 @@ export default function ProfileHeader({
 
             </div>
 
-            <p className="mt-1 text-slate-400">
+            <p className="mt-1 text-[var(--q-muted)]">
 
               @{profile?.username}
 
             </p>
 
-            <p className="mt-4 max-w-3xl text-slate-300">
+            <p className="mt-4 max-w-3xl text-[var(--q-text)]">
 
               {profile?.bio}
 
@@ -162,7 +162,7 @@ export default function ProfileHeader({
 
                 <button
                   onClick={onEdit}
-                  className="rounded-xl bg-blue-600 px-5 py-2 text-white transition hover:bg-blue-700"
+                  className="rounded-xl bg-[var(--q-primary)] px-5 py-2 text-[var(--q-text)] transition hover:opacity-90"
                 >
 
                   Edit Profile
@@ -174,10 +174,10 @@ export default function ProfileHeader({
                 <button
                   disabled={loadingFollow}
                   onClick={onFollow}
-                  className={`rounded-xl px-5 py-2 text-white transition ${
+                  className={`rounded-xl px-5 py-2 text-[var(--q-text)] transition ${
                     following
-                      ? "bg-slate-700 hover:bg-slate-600"
-                      : "bg-blue-600 hover:bg-blue-700"
+                      ? "bg-[var(--q-card)] hover:opacity-90"
+                      : "bg-[var(--q-primary)] hover:opacity-90"
                   }`}
                 >
 
@@ -194,7 +194,7 @@ export default function ProfileHeader({
               {!editable && (
 
                 <button
-                  className="rounded-xl border border-slate-700 px-5 py-2 text-slate-300 transition hover:bg-slate-800"
+                  className="rounded-xl border border-[var(--q-border)] px-5 py-2 text-[var(--q-text)] transition hover:bg-[var(--q-card)]"
                 >
 
                   Message
@@ -204,7 +204,7 @@ export default function ProfileHeader({
               )}
 
               <button
-                className="rounded-xl border border-slate-700 px-5 py-2 text-slate-300 transition hover:bg-slate-800"
+                className="rounded-xl border border-[var(--q-border)] px-5 py-2 text-[var(--q-text)] transition hover:bg-[var(--q-card)]"
               >
 
                 Share Profile

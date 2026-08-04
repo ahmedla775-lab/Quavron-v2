@@ -7,6 +7,11 @@ const platforms = [
   "LinkedIn",
   "X",
   "Snapchat",
+  "Reels",
+  "Videos",
+  "Live",
+  "RLC",
+  "GitHub",
 ];
 
 export default function PlatformTabs({

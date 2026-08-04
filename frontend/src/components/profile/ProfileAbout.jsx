@@ -78,17 +78,17 @@ export default function ProfileAbout({ profile }) {
   ];
 
   return (
-    <div className="mt-8 rounded-3xl border border-slate-800 bg-slate-900 p-6 md:p-8">
-      <h2 className="mb-8 text-2xl font-bold text-white">
+    <div className="mt-8 rounded-3xl border border-[var(--q-border)] bg-[var(--q-surface)] p-6 md:p-8">
+      <h2 className="mb-8 text-2xl font-bold text-[var(--q-text)]">
         About
       </h2>
 
-      <div className="rounded-2xl border border-slate-800 bg-slate-950 p-5">
-        <h3 className="mb-3 text-lg font-semibold text-white">
+      <div className="rounded-2xl border border-[var(--q-border)] bg-[var(--q-card)] p-5">
+        <h3 className="mb-3 text-lg font-semibold text-[var(--q-text)]">
           Biography
         </h3>
 
-        <p className="leading-7 text-slate-300">
+        <p className="leading-7 text-[var(--q-muted)]">
           {profile?.bio || "No biography yet."}
         </p>
       </div>
@@ -102,7 +102,7 @@ export default function ProfileAbout({ profile }) {
           return (
             <div
               key={item.label}
-              className="rounded-2xl border border-slate-800 bg-slate-950 p-5 transition hover:border-blue-500"
+              className="rounded-2xl border border-[var(--q-border)] bg-[var(--q-card)] p-5 transition hover:border-blue-500"
             >
               <div className="mb-3 flex items-center gap-3">
                 <Icon
@@ -110,7 +110,7 @@ export default function ProfileAbout({ profile }) {
                   className="text-blue-400"
                 />
 
-                <span className="font-semibold text-white">
+                <span className="font-semibold text-[var(--q-text)]">
                   {item.label}
                 </span>
               </div>
@@ -125,7 +125,7 @@ export default function ProfileAbout({ profile }) {
                   {item.value}
                 </a>
               ) : (
-                <p className="break-words text-slate-300">
+                <p className="break-words text-[var(--q-muted)]">
                   {item.value}
                 </p>
               )}

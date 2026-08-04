@@ -67,13 +67,13 @@ export default function VerificationDialog({
 
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
 
-      <div className="w-full max-w-lg rounded-3xl border border-slate-700 bg-slate-900 p-8 shadow-2xl">
+      <div className="w-full max-w-lg rounded-3xl border border-[var(--q-border)] bg-[var(--q-surface)] p-8 shadow-2xl">
 
-        <h2 className="mb-2 text-3xl font-bold text-white">
+        <h2 className="mb-2 text-3xl font-bold text-[var(--q-text)]">
           Account Verification
         </h2>
 
-        <p className="mb-8 text-slate-400">
+        <p className="mb-8 text-[var(--q-muted)]">
           Verify your identity to receive the official Quavron verification badge.
         </p>
 
@@ -85,7 +85,7 @@ export default function VerificationDialog({
               ✅ Your account is verified.
             </p>
 
-            <p className="mt-2 text-sm text-slate-300">
+            <p className="mt-2 text-sm text-[var(--q-text)]">
               Your profile already has the official Quavron verification badge.
             </p>
 
@@ -95,9 +95,9 @@ export default function VerificationDialog({
 
           <div className="space-y-4">
 
-            <div className="rounded-2xl border border-slate-700 bg-slate-800 p-5">
+            <div className="rounded-2xl border border-[var(--q-border)] bg-[var(--q-card)] p-5">
 
-              <h3 className="mb-3 font-semibold text-white">
+              <h3 className="mb-3 font-semibold text-[var(--q-text)]">
                 Verification Status
               </h3>
 
@@ -109,7 +109,7 @@ export default function VerificationDialog({
                     🟡 Pending Review
                   </p>
 
-                  <p className="mt-2 text-sm text-slate-400">
+                  <p className="mt-2 text-sm text-[var(--q-muted)]">
                     Your request has been received and is waiting for review by the Quavron team.
                   </p>
 
@@ -125,7 +125,7 @@ export default function VerificationDialog({
                     🔵 Approved
                   </p>
 
-                  <p className="mt-2 text-sm text-slate-400">
+                  <p className="mt-2 text-sm text-[var(--q-muted)]">
                     Congratulations! Your account has been verified.
                   </p>
 
@@ -141,15 +141,15 @@ export default function VerificationDialog({
                     🔴 Rejected
                   </p>
 
-                  <p className="mt-2 text-sm text-slate-400">
+                  <p className="mt-2 text-sm text-[var(--q-muted)]">
                     Your request was rejected. You may submit a new request after updating your information.
                   </p>
 
                   {request.rejection_reason && (
 
-                    <div className="mt-4 rounded-xl bg-slate-900 p-3">
+                    <div className="mt-4 rounded-xl bg-[var(--q-surface)] p-3">
 
-                      <p className="text-sm text-slate-300">
+                      <p className="text-sm text-[var(--q-text)]">
                         Reason:
                       </p>
 
@@ -175,7 +175,7 @@ export default function VerificationDialog({
 
             <div className="mb-6 rounded-2xl border border-blue-500/20 bg-blue-500/10 p-5">
 
-              <p className="text-slate-300">
+              <p className="text-[var(--q-text)]">
                 Request verification to receive the official blue badge and prove the authenticity of your account.
               </p>
 
@@ -184,7 +184,7 @@ export default function VerificationDialog({
             <button
               disabled={loading}
               onClick={submitRequest}
-              className="w-full rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-xl bg-blue-600 px-6 py-3 font-semibold text-[var(--q-text)] transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading
                 ? "Submitting..."
@@ -199,7 +199,7 @@ export default function VerificationDialog({
 
           <button
             onClick={onClose}
-            className="rounded-xl bg-slate-700 px-6 py-3 text-white transition hover:bg-slate-600"
+            className="rounded-xl bg-[var(--q-card)] px-6 py-3 text-[var(--q-text)] transition hover:bg-[var(--q-surface)]"
           >
             Close
           </button>

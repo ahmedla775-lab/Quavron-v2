@@ -19,6 +19,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../auth/AuthProvider";
+import { useSettings } from "../../context/SettingsContext";
 import useResponsive from "../../hooks/useResponsive";
 
 
@@ -82,7 +83,13 @@ export default function Sidebar() {
 
   const { profile } = useAuth();
 
+  const { settings } = useSettings();
+
   const { isDesktop } = useResponsive();
+
+  const collapsed =
+    isDesktop &&
+    settings?.appearance?.sidebar === "collapsed";
 
   const [open, setOpen] = useState(false);
 
@@ -186,9 +193,9 @@ top-0
 z-[60]
 flex
 h-screen
-w-72
+${collapsed ? "w-20" : "w-72"}
 flex-col
-transition-transform
+transition-all
 duration-300
 
 ${
@@ -237,7 +244,7 @@ borderBottom:`1px solid ${colors.border}`
 >
 
 
-<div className="flex items-center gap-3">
+<div className={`flex items-center gap-3 ${collapsed ? "justify-center w-full" : ""}`}>
 
 
 <img
@@ -290,6 +297,7 @@ Next Generation Platform
 
 
 </div>
+)}
 
 
 </div>
@@ -399,11 +407,13 @@ colors.text
 <Icon size={20}/>
 
 
+{!collapsed && (
 <span className="font-medium">
 
 {t(`sidebar.${item.key}`)}
 
 </span>
+)}
 
 
 </NavLink>
@@ -539,7 +549,7 @@ color:colors.muted
 
 {isDesktop && (
 
-<div className="w-72 shrink-0"/>
+<div className={`${collapsed ? "w-20" : "w-72"} shrink-0`}/>
 
 )}
 

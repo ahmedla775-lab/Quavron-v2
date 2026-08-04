@@ -60,7 +60,7 @@ class PostMediaService {
 
   }
 
-  async uploadAll(postId, files, userId) {
+  async uploadAll(postId, files, userId, onProgress) {
 
     const uploadedMedia = [];
 
@@ -75,6 +75,12 @@ class PostMediaService {
       console.log("ATTACHED:", record);
 
       uploadedMedia.push(record);
+
+      if(onProgress){
+        onProgress(
+          Math.round((uploadedMedia.length/files.length)*100)
+        );
+      }
 
     }
 

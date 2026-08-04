@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 
 import DashboardLayout from "../components/dashboard/DashboardLayout";
 
@@ -10,7 +12,6 @@ import ProfileTabs from "../components/profile/ProfileTabs";
 import ProfileContent from "../components/profile/ProfileContent";
 import EditProfileDialog from "../components/profile/EditProfileDialog";
 
-import PostService from "../services/PostService";
 
 export default function Profile() {
 
@@ -24,32 +25,11 @@ export default function Profile() {
 
 } = useProfile();
 
+  const navigate = useNavigate();
+
   const [tab, setTab] = useState("Posts");
 
-  const [postsCount, setPostsCount] = useState(0);
-
   const [openEdit, setOpenEdit] = useState(false);
-
-  useEffect(() => {
-
-    async function loadCount() {
-
-      if (!profile?.id) return;
-
-      const { data } =
-        await PostService.getUserPosts(
-          profile.id
-        );
-
-      setPostsCount(
-        data?.length || 0
-      );
-
-    }
-
-    loadCount();
-
-  }, [profile]);
 
   return (
 
@@ -65,10 +45,7 @@ export default function Profile() {
 />
 
         <ProfileStats
-          profile={{
-            ...profile,
-            posts_count: postsCount,
-          }}
+          profile={profile}
         />
 
         <ProfileTabs

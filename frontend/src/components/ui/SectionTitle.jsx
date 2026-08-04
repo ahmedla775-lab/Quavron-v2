@@ -4,32 +4,87 @@ export default function SectionTitle({
   subtitle,
   align = "center",
 }) {
+
   const alignment = {
     left: "text-left",
     center: "text-center",
     right: "text-right",
   };
 
+
   return (
+
     <div className={`mb-16 ${alignment[align]}`}>
 
+
       {badge && (
-        <span className="inline-block rounded-full border border-blue-500/30 bg-blue-600/20 px-4 py-1 text-sm font-semibold text-blue-400">
+
+        <span
+          className="
+            inline-flex
+            items-center
+            rounded-full
+            border
+            border-blue-500/30
+            bg-blue-500/10
+            px-4
+            py-1
+            text-sm
+            font-semibold
+            text-blue-600
+            dark:text-blue-400
+          "
+        >
+
           {badge}
+
         </span>
+
       )}
 
-      <h2 className="mt-4 text-4xl font-bold text-white md:text-5xl">
+
+
+      <h2
+
+        className="
+          mt-4
+          text-4xl
+          font-bold
+          text-[var(--q-text)]
+          md:text-5xl
+        "
+
+      >
+
         {title}
+
       </h2>
 
+
+
       {subtitle && (
-        <p className="mx-auto mt-5 max-w-3xl text-lg text-slate-400">
+
+        <p
+
+          className="
+            mx-auto
+            mt-5
+            max-w-3xl
+            text-lg
+            text-[var(--q-muted)]
+          "
+
+        >
+
           {subtitle}
+
         </p>
+
       )}
 
-    </div>
-  );
-}
 
+    </div>
+
+  );
+
+}

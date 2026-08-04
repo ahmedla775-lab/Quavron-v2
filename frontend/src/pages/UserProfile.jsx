@@ -44,9 +44,15 @@ export default function UserProfile() {
       const followingResult =
         await ProfileService.getFollowing(id);
 
+      const postsResult =
+        await ProfileService.getPostsCount(id);
+
       setProfile({
 
         ...data,
+
+        posts_count:
+          postsResult.count || 0,
 
         followers_count:
           followers.data?.length || 0,
@@ -79,6 +85,8 @@ export default function UserProfile() {
   async function toggleFollow() {
 
     if (!user || !profile) return;
+
+    if (user.id === profile.id) return;
 
     setLoadingFollow(true);
 

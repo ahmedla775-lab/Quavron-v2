@@ -1,47 +1,115 @@
-import { createContext, useContext, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 
-const LiveContext = createContext();
+const LiveContext = createContext(null);
 
 export function LiveProvider({ children }) {
-
   const [room, setRoom] = useState(null);
-
   const [stream, setStream] = useState(null);
 
   const [participants, setParticipants] = useState([]);
 
-  return (
+  const [viewers, setViewers] = useState(0);
 
-    <LiveContext.Provider
+  const [status, setStatus] = useState("idle");
 
-      value={{
+  const [timer, setTimer] = useState(0);
 
-        room,
+  const [bandwidth, setBandwidth] = useState(0);
 
-        setRoom,
+  const [quality, setQuality] = useState("480p");
 
-        stream,
+  const [recording, setRecording] = useState(false);
 
-        setStream,
+  const [isHost, setIsHost] = useState(false);
 
-        participants,
+  const [isViewer, setIsViewer] = useState(false);
 
-        setParticipants,
+  const resetLive = () => {
+    setRoom(null);
+    setStream(null);
+    setParticipants([]);
+    setViewers(0);
+    setStatus("idle");
+    setTimer(0);
+    setBandwidth(0);
+    setQuality("480p");
+    setRecording(false);
+    setIsHost(false);
+    setIsViewer(false);
+  };
 
-      }}
+  const value = useMemo(
+    () => ({
+      room,
+      setRoom,
 
-    >
+      stream,
+      setStream,
 
-      {children}
+      participants,
+      setParticipants,
 
-    </LiveContext.Provider>
+      viewers,
+      setViewers,
 
+      status,
+      setStatus,
+
+      timer,
+      setTimer,
+
+      bandwidth,
+      setBandwidth,
+
+      quality,
+      setQuality,
+
+      recording,
+      setRecording,
+
+      isHost,
+      setIsHost,
+
+      isViewer,
+      setIsViewer,
+
+      resetLive,
+    }),
+    [
+      room,
+      stream,
+      participants,
+      viewers,
+      status,
+      timer,
+      bandwidth,
+      quality,
+      recording,
+      isHost,
+      isViewer,
+    ]
   );
 
+  return (
+    <LiveContext.Provider value={value}>
+      {children}
+    </LiveContext.Provider>
+  );
 }
 
-export function useLive(){
+export function useLiveContext() {
+  const context = useContext(LiveContext);
 
-  return useContext(LiveContext);
+  if (!context) {
+    throw new Error(
+      "useLiveContext must be used inside LiveProvider"
+    );
+  }
 
+  return context;
 }

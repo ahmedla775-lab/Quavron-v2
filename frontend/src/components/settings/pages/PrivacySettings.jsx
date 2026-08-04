@@ -60,13 +60,13 @@ export default function PrivacySettings() {
 
     <div className="mx-auto max-w-5xl p-8">
 
-      <h1 className="text-3xl font-bold text-white">
+      <h1 className="text-3xl font-bold text-[var(--q-text)]">
 
         Privacy
 
       </h1>
 
-      <p className="mt-2 text-slate-400">
+      <p className="mt-2 text-[var(--q-muted)]">
 
         Control who can see your information and interact with you.
 
@@ -156,9 +156,9 @@ export default function PrivacySettings() {
 
       </div>
 
-      <div className="mt-10 flex justify-between">
+      <div className="mt-10 flex justify-start md:justify-between">
 
-        <button className="rounded-xl bg-slate-700 px-6 py-3 text-white">
+        <button className="rounded-xl bg-slate-700 px-3 md:px-6 py-3 text-[var(--q-text)]">
 
           Download My Data
 
@@ -166,7 +166,7 @@ export default function PrivacySettings() {
 
         <button
           onClick={save}
-          className="rounded-xl bg-blue-600 px-8 py-3 font-semibold text-white"
+          className="rounded-xl bg-blue-600 px-8 py-3 font-semibold text-[var(--q-text)]"
         >
 
           Save Changes
@@ -175,7 +175,7 @@ export default function PrivacySettings() {
 
       </div>
 
-      <div className="mt-14 rounded-2xl border border-red-600 bg-red-950/30 p-6">
+      <div className="mt-14 rounded-2xl border border-red-600 bg-red-950/30 p-3 md:p-6">
 
         <h2 className="text-xl font-bold text-red-400">
 
@@ -183,13 +183,13 @@ export default function PrivacySettings() {
 
         </h2>
 
-        <p className="mt-2 text-slate-300">
+        <p className="mt-2 text-[var(--q-text)]">
 
           Permanently delete your account and all associated data.
 
         </p>
 
-        <button className="mt-5 rounded-xl bg-red-600 px-6 py-3 font-semibold text-white">
+        <button className="mt-5 rounded-xl bg-red-600 px-3 md:px-6 py-3 font-semibold text-[var(--q-text)]">
 
           Delete Account
 
@@ -215,9 +215,9 @@ function SwitchCard({
 
   return(
 
-    <div className="flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900 p-5">
+    <div className="flex items-center justify-start md:justify-between rounded-2xl border border-[var(--q-border)] bg-[var(--q-surface)] p-3 md:p-5">
 
-      <span className="font-medium text-white">
+      <span className="font-medium text-[var(--q-text)]">
 
         {title}
 
@@ -227,8 +227,8 @@ function SwitchCard({
         onClick={onClick}
         className={`rounded-full px-5 py-2 font-semibold ${
           value
-            ? "bg-green-600 text-white"
-            : "bg-slate-700 text-white"
+            ? "bg-green-600 text-[var(--q-text)]"
+            : "bg-slate-700 text-[var(--q-text)]"
         }`}
       >
 
@@ -256,9 +256,9 @@ function SelectCard({
 
   return(
 
-    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+    <div className="rounded-2xl border border-[var(--q-border)] bg-[var(--q-surface)] p-3 md:p-5">
 
-      <label className="mb-3 block font-medium text-white">
+      <label className="mb-3 block font-medium text-[var(--q-text)]">
 
         {title}
 
@@ -267,7 +267,7 @@ function SelectCard({
       <select
         value={value}
         onChange={(e)=>onChange(e.target.value)}
-        className="w-full rounded-xl border border-slate-700 bg-slate-800 p-3 text-white"
+        className="w-full rounded-xl border border-[var(--q-border)] bg-[var(--q-card)] p-3 text-[var(--q-text)]"
       >
 
         {options.map((item)=>(

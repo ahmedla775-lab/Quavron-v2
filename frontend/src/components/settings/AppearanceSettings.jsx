@@ -3,7 +3,7 @@ import { useState } from "react";
 export default function AppearanceSettings() {
 
   const [theme, setTheme] = useState("dark");
-  const [accent, setAccent] = useState("blue");
+  const [accent, setAccent] = useState("green");
   const [fontSize, setFontSize] = useState("medium");
   const [density, setDensity] = useState("comfortable");
   const [animations, setAnimations] = useState(true);

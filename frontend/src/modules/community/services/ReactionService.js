@@ -51,7 +51,7 @@ class ReactionService {
         id,
         username,
         full_name,
-        avatar_url
+        avatar_url,
 verified,
         verification_type
       )
@@ -61,7 +61,10 @@ verified,
 }
   async countByReaction(postId) {
     const { data, error } =
-      await this.getPostReactions(postId);
+      await supabase
+        .from("post_reactions")
+        .select("reaction_type")
+        .eq("post_id", postId);
 
     const counts = {
   LIKE: 0,

@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+
 import useMedia from "../hooks/useMedia";
+import useLive from "../hooks/useLive";
 
 export default function LiveStudio() {
   const navigate = useNavigate();
@@ -14,45 +16,52 @@ export default function LiveStudio() {
     toggleCamera,
     micEnabled,
     cameraEnabled,
+    stopStream,
   } = useMedia();
 
+  const {
+    room,
+    viewers,
+    timer,
+    status,
+    startLive,
+    goLive,
+    endLive,
+  } = useLive();
+
   useEffect(() => {
-    let mediaStream = null;
+    let media = null;
 
     async function init() {
-      try {
-        console.log("Secure:", window.isSecureContext);
-        console.log("MediaDevices:", navigator.mediaDevices);
+      media = await startCamera();
 
-        mediaStream = await startCamera();
-
-        if (videoRef.current && mediaStream) {
-          videoRef.current.srcObject = mediaStream;
-          await videoRef.current.play().catch(() => {});
-        }
-      } catch (err) {
-        console.error(err);
-
-        alert(
-          "Unable to access camera or microphone.\n\n" +
-          err.message
-        );
+      if (videoRef.current && media) {
+        videoRef.current.srcObject = media;
+        await videoRef.current.play().catch(() => {});
       }
+
+      const created = await startLive({
+        title: "Live",
+        category: "public",
+        plan: "FREE",
+      });
+
+      await goLive(created?.id);
     }
 
     init();
 
     return () => {
-      if (mediaStream) {
-        mediaStream.getTracks().forEach((track) => track.stop());
+      if (media) {
+        media.getTracks().forEach((t) => t.stop());
       }
     };
   }, []);
 
-  function endLive() {
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-    }
+  async function handleEndLive() {
+    await endLive();
+
+    stopStream();
 
     navigate("/community");
   }
@@ -65,120 +74,72 @@ export default function LiveStudio() {
         autoPlay
         muted
         playsInline
-        controls={false}
-        className="
-          absolute
-          inset-0
-          h-full
-          w-full
-          object-cover
-        "
+        className="absolute inset-0 h-full w-full object-cover"
       />
 
-      <div
-        className="
-          absolute
-          left-0
-          right-0
-          top-0
-          flex
-          items-center
-          justify-between
-          bg-gradient-to-b
-          from-black/80
-          to-transparent
-          p-4
-        "
-      >
+      <div className="absolute left-0 right-0 top-0 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent p-4">
+
         <div>
           <h2 className="text-2xl font-bold text-white">
             LIVE
           </h2>
 
           <p className="text-slate-300">
-            0 Viewers
+            {viewers} Viewers
           </p>
+
+          <p className="text-slate-400 text-sm">
+            {status}
+          </p>
+
+          <p className="text-slate-400 text-sm">
+            {timer}s
+          </p>
+
+          {room && (
+            <p className="text-xs text-slate-500">
+              {room.id}
+            </p>
+          )}
         </div>
 
         <button
-          onClick={endLive}
-          className="
-            rounded-full
-            bg-red-600
-            px-6
-            py-3
-            font-semibold
-            text-white
-            hover:bg-red-700
-          "
+          onClick={handleEndLive}
+          className="rounded-full bg-red-600 px-6 py-3 font-semibold text-white hover:bg-red-700"
         >
           End Live
         </button>
+
       </div>
 
-      <div
-        className="
-          absolute
-          bottom-0
-          left-0
-          right-0
-          flex
-          items-center
-          justify-center
-          gap-4
-          bg-gradient-to-t
-          from-black/80
-          to-transparent
-          p-6
-        "
-      >
+      <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-4 bg-gradient-to-t from-black/80 to-transparent p-6">
+
         <button
           onClick={toggleMic}
-          className="
-            rounded-full
-            bg-slate-800
-            p-4
-            text-2xl
-          "
+          className="rounded-full bg-slate-800 p-4 text-2xl"
         >
           {micEnabled ? "🎤" : "🔇"}
         </button>
 
         <button
           onClick={toggleCamera}
-          className="
-            rounded-full
-            bg-slate-800
-            p-4
-            text-2xl
-          "
+          className="rounded-full bg-slate-800 p-4 text-2xl"
         >
           {cameraEnabled ? "📷" : "🚫📷"}
         </button>
 
         <button
-          className="
-            rounded-full
-            bg-slate-800
-            p-4
-            text-2xl
-          "
+          className="rounded-full bg-slate-800 p-4 text-2xl"
         >
           🖥️
         </button>
 
         <button
-          className="
-            rounded-full
-            bg-blue-600
-            px-6
-            py-3
-            font-semibold
-            text-white
-          "
+          className="rounded-full bg-blue-600 px-6 py-3 font-semibold text-white"
         >
           Invite
         </button>
+
       </div>
 
     </div>

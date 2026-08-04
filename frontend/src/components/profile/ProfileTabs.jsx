@@ -21,7 +21,7 @@ export default function ProfileTabs({
 
     <div className="mt-8 overflow-x-auto">
 
-      <div className="flex min-w-max gap-3 border-b border-slate-800 pb-3">
+      <div className="flex min-w-max gap-3 border-b border-[var(--q-border)] pb-3">
 
         {tabs.map((tab) => (
 
@@ -31,7 +31,7 @@ export default function ProfileTabs({
             className={`rounded-xl px-5 py-2 text-sm font-medium transition ${
               activeTab === tab
                 ? "bg-blue-600 text-white"
-                : "bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-white"
+                : "bg-[var(--q-surface)] text-[var(--q-muted)] hover:bg-[var(--q-card)] hover:text-[var(--q-text)]"
             }`}
           >
 

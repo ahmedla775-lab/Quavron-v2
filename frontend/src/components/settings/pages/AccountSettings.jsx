@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useProfile } from "../../../context/ProfileContext";
+import ImageUploader from "../../profile/ImageUploader";
 
 export default function AccountSettings() {
-  const { profile, saveProfile } = useProfile();
+  const { profile, saveProfile, updateAvatar, updateCover } = useProfile();
 
   const [form, setForm] = useState({
     fullName: "",
@@ -15,6 +16,7 @@ export default function AccountSettings() {
   });
 
   const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     if (!profile) return;
@@ -50,10 +52,28 @@ export default function AccountSettings() {
         bio: form.bio,
       });
 
-      alert("Profile updated successfully.");
+      
+localStorage.setItem(
+  "profile",
+  JSON.stringify({
+    ...profile,
+    ...form,
+  })
+);
+
+setMessage("Profile updated successfully.");
+
+      setTimeout(() => {
+        setMessage("");
+      }, 3000);
+
     } catch (error) {
       console.error(error);
-      alert(error.message);
+      setMessage(error.message);
+
+      setTimeout(() => {
+        setMessage("");
+      }, 4000);
     } finally {
       setSaving(false);
     }
@@ -61,21 +81,106 @@ export default function AccountSettings() {
 
   return (
     <div className="mx-auto max-w-4xl p-8">
-      <h1 className="text-3xl font-bold text-white">
+      <h1 className="text-xl md:text-3xl font-bold text-[var(--q-text)]">
         Personal Details
       </h1>
 
-      <p className="mt-2 text-slate-400">
+      <p className="mt-2 text-[var(--q-muted)]">
         Manage your account information.
       </p>
 
+      <section className="mt-10 rounded-2xl border border-[var(--q-border)] bg-[var(--q-surface)] p-5">
+
+        <h2 className="mb-5 text-lg font-semibold text-[var(--q-text)]">
+          Profile Images
+        </h2>
+
+        <div className="flex flex-col gap-6 md:flex-row">
+
+          <div className="relative">
+            <img
+              src={
+                profile?.avatar_url ||
+                "https://ui-avatars.com/api/?name=Q"
+              }
+              className="h-28 w-28 rounded-full object-cover"
+              alt=""
+            />
+
+            <ImageUploader onSelect={updateAvatar}>
+              <button
+                className="
+                mt-3
+                rounded-xl
+                bg-blue-600
+                px-4
+                py-2
+                text-white
+                "
+              >
+                Change Avatar
+              </button>
+            </ImageUploader>
+          </div>
+
+
+          <div className="flex-1">
+
+            <img
+              src={
+                profile?.cover_url ||
+                "/quavron-logo.png"
+              }
+              className="h-32 w-full rounded-xl object-cover"
+              alt=""
+            />
+
+            <ImageUploader onSelect={updateCover}>
+              <button
+                className="
+                mt-3
+                rounded-xl
+                bg-blue-600
+                px-4
+                py-2
+                text-white
+                "
+              >
+                Change Cover
+              </button>
+            </ImageUploader>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {message && (
+        <div
+          className="
+          mt-5
+          rounded-xl
+          border
+          border-[var(--q-border)]
+          bg-[var(--q-card)]
+          p-3
+          text-[var(--q-text)]
+          "
+        >
+          {message}
+        </div>
+      )}
+
+
       <div className="mt-10 space-y-8">
         <section>
-          <h2 className="mb-4 text-lg font-semibold text-white">
+          <h2 className="mb-4 text-sm md:text-base md:text-lg font-semibold text-[var(--q-text)]">
             Basic Information
           </h2>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2">
             <Field
               label="Full Name"
               value={form.fullName}
@@ -104,7 +209,7 @@ export default function AccountSettings() {
         </section>
 
         <section>
-          <h2 className="mb-4 text-lg font-semibold text-white">
+          <h2 className="mb-4 text-sm md:text-base md:text-lg font-semibold text-[var(--q-text)]">
             Public Information
           </h2>
 
@@ -122,7 +227,7 @@ export default function AccountSettings() {
             />
 
             <div>
-              <label className="mb-2 block text-sm text-slate-400">
+              <label className="mb-2 block text-xs md:text-sm text-[var(--q-muted)]">
                 Bio
               </label>
 
@@ -136,10 +241,10 @@ export default function AccountSettings() {
                   w-full
                   rounded-xl
                   border
-                  border-slate-700
-                  bg-slate-900
+                  border-[var(--q-border)]
+                  bg-[var(--q-surface)]
                   p-3
-                  text-white
+                  text-[var(--q-text)]
                   outline-none
                   focus:border-blue-500
                 "
@@ -156,10 +261,10 @@ export default function AccountSettings() {
           className="
             rounded-xl
             bg-blue-600
-            px-6
+            px-4 md:px-6
             py-3
             font-semibold
-            text-white
+            text-[var(--q-text)]
             transition
             hover:bg-blue-700
             disabled:opacity-60
@@ -180,7 +285,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-sm text-slate-400">
+      <label className="mb-2 block text-xs md:text-sm text-[var(--q-muted)]">
         {label}
       </label>
 
@@ -192,10 +297,10 @@ function Field({
           w-full
           rounded-xl
           border
-          border-slate-700
-          bg-slate-900
+          border-[var(--q-border)]
+          bg-[var(--q-surface)]
           p-3
-          text-white
+          text-[var(--q-text)]
           outline-none
           focus:border-blue-500
           disabled:opacity-60

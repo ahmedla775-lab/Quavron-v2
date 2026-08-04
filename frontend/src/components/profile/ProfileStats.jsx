@@ -1,33 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 import FollowersModal from "./follow/FollowersModal";
 import FollowingModal from "./follow/FollowingModal";
 
-import ProfileService from "../../services/ProfileService";
+
 
 export default function ProfileStats({ profile }) {
   const [followersOpen, setFollowersOpen] = useState(false);
   const [followingOpen, setFollowingOpen] = useState(false);
 
-  const [followers, setFollowers] = useState([]);
-  const [following, setFollowing] = useState([]);
-
-  useEffect(() => {
-    if (!profile?.id) return;
-
-    async function load() {
-      const followersResult =
-        await ProfileService.getFollowers(profile.id);
-
-      const followingResult =
-        await ProfileService.getFollowing(profile.id);
-
-      setFollowers(followersResult.data || []);
-      setFollowing(followingResult.data || []);
-    }
-
-    load();
-  }, [profile?.id]);
+  const followers = profile?.followers || [];
+  const following = profile?.following || [];
 
   const stats = [
     {
@@ -36,12 +19,12 @@ export default function ProfileStats({ profile }) {
     },
     {
       title: "Followers",
-      value: followers.length,
+      value: profile?.followers_count || 0,
       action: () => setFollowersOpen(true),
     },
     {
       title: "Following",
-      value: following.length,
+      value: profile?.following_count || 0,
       action: () => setFollowingOpen(true),
     },
     {
@@ -60,7 +43,7 @@ export default function ProfileStats({ profile }) {
 
   return (
     <>
-      <div className="mt-5 border-y border-slate-800">
+      <div className="mt-5 border-y border-[var(--q-border)]">
         <div className="grid grid-cols-3">
           {stats.map((item) => (
             <button
@@ -74,15 +57,15 @@ export default function ProfileStats({ profile }) {
                 justify-center
                 py-4
                 transition
-                hover:bg-slate-900/40
+                hover:bg-[var(--q-card)]
                 disabled:cursor-default
               "
             >
-              <span className="text-2xl font-bold text-white">
+              <span className="text-2xl font-bold text-[var(--q-text)]">
                 {item.value}
               </span>
 
-              <span className="mt-1 text-xs text-slate-400">
+              <span className="mt-1 text-xs text-[var(--q-muted)]">
                 {item.title}
               </span>
             </button>

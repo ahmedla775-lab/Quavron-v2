@@ -85,6 +85,16 @@ class ProfileService {
 
   }
 
+
+  async getPostsCount(userId) {
+
+    return await supabase
+      .from("posts")
+      .select("id", { count: "exact", head: true })
+      .eq("author_id", userId);
+
+  }
+
   async getFollowers(userId) {
 
     return await supabase

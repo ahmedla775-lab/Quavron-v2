@@ -10,6 +10,7 @@ import {
   MessageCircle,
   Bookmark,
   Users,
+  Radio,
 } from "lucide-react";
 
 const items = [
@@ -17,10 +18,12 @@ const items = [
   { icon: Compass, label: "Explore" },
   { icon: Clapperboard, label: "Reels" },
   { icon: PlaySquare, label: "Videos" },
+  { icon: Radio, label: "Live" },
   { icon: Code2, label: "Developers" },
   { icon: FolderGit2, label: "Projects" },
   { icon: Briefcase, label: "Jobs" },
-  { icon: Users, label: "Social Hub" },
+  { icon: Users,
+  Radio, label: "Social Hub" },
   { icon: MessageCircle, label: "Messages" },
   { icon: Bell, label: "Notifications" },
   { icon: Bookmark, label: "Saved" },

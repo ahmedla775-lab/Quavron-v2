@@ -13,88 +13,178 @@ import Card from "../ui/Card";
 import Container from "../ui/Container";
 import SectionTitle from "../ui/SectionTitle";
 
+
 const services = [
+
   {
     icon: Code2,
-    title: "Cloud IDE",
-    description: "Develop directly from your browser with a powerful cloud workspace.",
+    title: "Digital Platform",
+    description:
+      "A modern technology platform combining development tools, cloud workspace and digital solutions.",
   },
+
   {
     icon: Bot,
-    title: "AI Assistant",
-    description: "Generate, explain and improve your code using AI.",
+    title: "Artificial Intelligence",
+    description:
+      "AI-powered systems for automation, development assistance and intelligent innovation.",
   },
+
   {
     icon: BookOpen,
-    title: "Courses",
-    description: "Interactive programming courses from beginner to advanced.",
+    title: "Learning & Research",
+    description:
+      "Technology education, knowledge sharing and continuous skill development.",
   },
+
   {
     icon: Users,
     title: "Community",
-    description: "Collaborate, share projects and learn with other developers.",
+    description:
+      "A global environment for collaboration, innovation and professional networking.",
   },
+
   {
     icon: ShoppingBag,
     title: "Marketplace",
-    description: "Download templates, plugins and developer resources.",
+    description:
+      "A digital economy connecting creators, developers and businesses.",
   },
+
   {
     icon: Cloud,
-    title: "Hosting",
-    description: "Deploy your applications with one click.",
+    title: "Cloud Infrastructure",
+    description:
+      "Scalable hosting and modern infrastructure for digital projects.",
   },
+
   {
     icon: Briefcase,
-    title: "Freelance",
-    description: "Find freelance jobs and build your professional profile.",
+    title: "Professional Services",
+    description:
+      "Freelance opportunities and technology services for organizations.",
   },
+
   {
     icon: BarChart3,
     title: "Analytics",
-    description: "Track projects, users and performance with modern dashboards.",
+    description:
+      "Data-driven insights for products, projects and digital ecosystems.",
   },
+
 ];
 
+
+
 export default function PlatformCards() {
+
   return (
+
     <section className="py-24">
+
+
       <Container>
 
+
         <SectionTitle
-          title="Everything Developers Need"
-          subtitle="One ecosystem. One account. Unlimited possibilities."
+
+          title="Quavron Digital Ecosystem"
+
+          subtitle="
+          One company. Multiple technology solutions.
+          Building the future through intelligence and innovation.
+          "
+
         />
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+
+
+        <div
+
+          className="
+            grid
+            gap-6
+            md:grid-cols-2
+            lg:grid-cols-4
+          "
+
+        >
+
 
           {services.map((service) => {
+
+
             const Icon = service.icon;
 
+
+
             return (
+
               <Card key={service.title}>
 
+
                 <Icon
+
                   size={42}
-                  className="text-blue-500"
+
+                  className="text-[var(--q-primary)]"
+
                 />
 
-                <h3 className="mt-6 text-xl font-bold text-white">
+
+
+                <h3
+
+                  className="
+                    mt-6
+                    text-xl
+                    font-bold
+                    text-[var(--q-text)]
+                  "
+
+                >
+
                   {service.title}
+
+
                 </h3>
 
-                <p className="mt-4 text-slate-400">
+
+
+                <p
+
+                  className="
+                    mt-4
+                    text-[var(--q-muted)]
+                  "
+
+                >
+
                   {service.description}
+
+
                 </p>
 
+
+
               </Card>
+
             );
+
+
           })}
+
+
 
         </div>
 
-      </Container>
-    </section>
-  );
-}
 
+
+      </Container>
+
+
+    </section>
+
+  );
+
+}

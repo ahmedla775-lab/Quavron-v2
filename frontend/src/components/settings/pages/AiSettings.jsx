@@ -58,13 +58,13 @@ export default function AISettings() {
 
     <div className="mx-auto max-w-5xl p-8">
 
-      <h1 className="text-3xl font-bold text-white">
+      <h1 className="text-3xl font-bold text-[var(--q-text)]">
 
         AI Assistant
 
       </h1>
 
-      <p className="mt-2 text-slate-400">
+      <p className="mt-2 text-[var(--q-muted)]">
 
         Configure Quavron AI according to your workflow.
 
@@ -181,7 +181,7 @@ export default function AISettings() {
             px-8
             py-3
             font-semibold
-            text-white
+            text-[var(--q-text)]
             hover:bg-blue-700
           "
         >
@@ -202,9 +202,9 @@ function Card({ title, children }) {
 
   return (
 
-    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+    <div className="rounded-2xl border border-[var(--q-border)] bg-[var(--q-surface)] p-3 md:p-5">
 
-      <h2 className="mb-4 text-lg font-semibold text-white">
+      <h2 className="mb-4 text-sm md:text-base md:text-lg font-semibold text-[var(--q-text)]">
 
         {title}
 
@@ -229,10 +229,10 @@ function Select({ value, onChange, options }) {
         w-full
         rounded-xl
         border
-        border-slate-700
-        bg-slate-800
+        border-[var(--q-border)]
+        bg-[var(--q-card)]
         p-3
-        text-white
+        text-[var(--q-text)]
       "
     >
 
@@ -259,9 +259,9 @@ function Switch({ title, value, onClick }) {
 
   return (
 
-    <div className="flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900 p-5">
+    <div className="flex items-center justify-start md:justify-between rounded-2xl border border-[var(--q-border)] bg-[var(--q-surface)] p-3 md:p-5">
 
-      <span className="text-white font-medium">
+      <span className="text-[var(--q-text)] font-medium">
 
         {title}
 
@@ -271,8 +271,8 @@ function Switch({ title, value, onClick }) {
         onClick={onClick}
         className={`rounded-full px-5 py-2 font-semibold ${
           value
-            ? "bg-green-600 text-white"
-            : "bg-slate-700 text-white"
+            ? "bg-green-600 text-[var(--q-text)]"
+            : "bg-slate-700 text-[var(--q-text)]"
         }`}
       >
 

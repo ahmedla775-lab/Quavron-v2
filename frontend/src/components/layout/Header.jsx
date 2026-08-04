@@ -38,7 +38,6 @@ export default function Header() {
           flex
           h-16
           items-center
-          justify-between
           px-4
           lg:px-6
         "
@@ -46,16 +45,19 @@ export default function Header() {
 
         {/* Mobile Menu */}
 
+        <div className="flex w-12 justify-start lg:hidden">
+
         <button
           className="
             flex
-            lg:hidden
             text-slate-300
           "
           onClick={() => setOpen(!open)}
         >
           <Menu size={24}/>
         </button>
+
+      </div>
 
 
 
@@ -64,10 +66,13 @@ export default function Header() {
         <NavLink
           to="/"
           className="
+            flex-1
+            text-center
             text-2xl
             font-extrabold
             tracking-tight
-            text-blue-500
+            text-[var(--q-primary)]
+            lg:flex-none
           "
         >
           Quavron
@@ -96,7 +101,7 @@ export default function Header() {
                 transition
                 ${
                   isActive
-                  ? "text-blue-500"
+                  ? "text-[var(--q-primary)]"
                   : "text-slate-300 hover:text-white"
                 }
                 `

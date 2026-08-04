@@ -11,7 +11,7 @@ export default function UserListItem({
 
   return (
 
-    <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900 p-3">
+    <div className="flex items-center justify-between rounded-xl border border-[var(--q-border)] bg-[var(--q-surface)] p-3">
 
       <Link
         to={`/profile/${profile.id}`}
@@ -29,7 +29,7 @@ export default function UserListItem({
 
         <div>
 
-          <h3 className="flex items-center gap-2 font-semibold text-white">
+          <h3 className="flex items-center gap-2 font-semibold text-[var(--q-text)]">
 
             <span>
               {profile.full_name || "Quavron User"}
@@ -43,7 +43,7 @@ export default function UserListItem({
 
           </h3>
 
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-[var(--q-muted)]">
 
             @{profile.username}
 

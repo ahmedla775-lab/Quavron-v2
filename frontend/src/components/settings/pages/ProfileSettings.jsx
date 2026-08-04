@@ -31,13 +31,13 @@ export default function ProfileSettings() {
 
     <div className="mx-auto max-w-5xl p-8">
 
-      <h1 className="text-3xl font-bold text-white">
+      <h1 className="text-3xl font-bold text-[var(--q-text)]">
 
         Profile
 
       </h1>
 
-      <p className="mt-2 text-slate-400">
+      <p className="mt-2 text-[var(--q-muted)]">
 
         Customize how people see your Quavron profile.
 
@@ -47,25 +47,25 @@ export default function ProfileSettings() {
 
         <section>
 
-          <h2 className="mb-5 text-xl font-semibold text-white">
+          <h2 className="mb-5 text-xl font-semibold text-[var(--q-text)]">
 
             Profile Photo
 
           </h2>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3">
 
-            <div className="h-28 w-28 rounded-full bg-slate-800" />
+            <div className="h-28 w-28 rounded-full bg-[var(--q-card)]" />
 
             <div className="space-y-3">
 
-              <button className="rounded-xl bg-blue-600 px-5 py-2 text-white">
+              <button className="rounded-xl bg-blue-600 px-5 py-2 text-[var(--q-text)]">
 
                 Upload Photo
 
               </button>
 
-              <button className="rounded-xl bg-slate-800 px-5 py-2 text-white">
+              <button className="rounded-xl bg-[var(--q-card)] px-5 py-2 text-[var(--q-text)]">
 
                 Remove
 
@@ -79,15 +79,15 @@ export default function ProfileSettings() {
 
         <section>
 
-          <h2 className="mb-5 text-xl font-semibold text-white">
+          <h2 className="mb-5 text-xl font-semibold text-[var(--q-text)]">
 
             Cover Photo
 
           </h2>
 
-          <div className="h-52 rounded-2xl border border-dashed border-slate-700 bg-slate-900 flex items-center justify-center">
+          <div className="h-52 rounded-2xl border border-dashed border-[var(--q-border)] bg-[var(--q-surface)] flex items-center justify-center">
 
-            <button className="rounded-xl bg-blue-600 px-6 py-3 text-white">
+            <button className="rounded-xl bg-blue-600 px-3 md:px-6 py-3 text-[var(--q-text)]">
 
               Upload Cover
 
@@ -99,13 +99,13 @@ export default function ProfileSettings() {
 
         <section>
 
-          <h2 className="mb-5 text-xl font-semibold text-white">
+          <h2 className="mb-5 text-xl font-semibold text-[var(--q-text)]">
 
             Public Information
 
           </h2>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2">
 
             <Input
               label="Display Name"
@@ -148,7 +148,7 @@ export default function ProfileSettings() {
 
           <div className="mt-6">
 
-            <label className="mb-2 block text-slate-400">
+            <label className="mb-2 block text-[var(--q-muted)]">
 
               Bio
 
@@ -158,7 +158,7 @@ export default function ProfileSettings() {
               rows={6}
               value={profile.bio}
               onChange={(e)=>update("bio",e.target.value)}
-              className="w-full rounded-xl border border-slate-700 bg-slate-900 p-3 text-white"
+              className="w-full rounded-xl border border-[var(--q-border)] bg-[var(--q-surface)] p-3 text-[var(--q-text)]"
             />
 
           </div>
@@ -169,7 +169,7 @@ export default function ProfileSettings() {
 
           <button
             onClick={saveProfile}
-            className="rounded-xl bg-blue-600 px-8 py-3 font-semibold text-white"
+            className="rounded-xl bg-blue-600 px-8 py-3 font-semibold text-[var(--q-text)]"
           >
 
             Save Profile
@@ -199,7 +199,7 @@ function Input({
 
     <div>
 
-      <label className="mb-2 block text-slate-400">
+      <label className="mb-2 block text-[var(--q-muted)]">
 
         {label}
 
@@ -209,7 +209,7 @@ function Input({
         type={type}
         value={value}
         onChange={(e)=>onChange(e.target.value)}
-        className="w-full rounded-xl border border-slate-700 bg-slate-900 p-3 text-white"
+        className="w-full rounded-xl border border-[var(--q-border)] bg-[var(--q-surface)] p-3 text-[var(--q-text)]"
       />
 
     </div>

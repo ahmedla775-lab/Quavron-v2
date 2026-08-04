@@ -42,25 +42,25 @@ export default function SecuritySettings() {
 
   return (
 
-    <div className="mx-auto max-w-5xl p-8">
+    <div className="mx-auto w-full max-w-5xl p-3 md:p-8 overflow-hidden">
 
-      <h1 className="text-3xl font-bold text-white">
+      <h1 className="text-xl md:text-3xl font-bold text-[var(--q-text)]">
 
         Password & Security
 
       </h1>
 
-      <p className="mt-2 text-slate-400">
+      <p className="mt-2 text-[var(--q-muted)]">
 
         Protect your Quavron account.
 
       </p>
 
-      <div className="mt-10 space-y-10">
+      <div className="mt-5 md:mt-10 space-y-5 md:space-y-10">
 
         <section>
 
-          <h2 className="mb-5 text-xl font-semibold text-white">
+          <h2 className="mb-5 text-base md:text-xl font-semibold text-[var(--q-text)]">
 
             Change Password
 
@@ -91,7 +91,7 @@ export default function SecuritySettings() {
 
             <button
               onClick={changePassword}
-              className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white"
+              className="rounded-xl bg-blue-600 px-3 md:px-6 py-3 font-semibold text-[var(--q-text)]"
             >
               Update Password
             </button>
@@ -102,23 +102,23 @@ export default function SecuritySettings() {
 
         <section>
 
-          <h2 className="mb-5 text-xl font-semibold text-white">
+          <h2 className="mb-5 text-base md:text-xl font-semibold text-[var(--q-text)]">
 
             Two-Factor Authentication
 
           </h2>
 
-          <div className="flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--q-border)] bg-[var(--q-surface)] p-3 md:p-5">
 
             <div>
 
-              <p className="font-semibold text-white">
+              <p className="font-semibold text-[var(--q-text)]">
 
                 Enable Two-Factor Authentication
 
               </p>
 
-              <p className="mt-1 text-sm text-slate-400">
+              <p className="mt-1 text-xs md:text-sm text-[var(--q-muted)]">
 
                 Add an extra security layer.
 
@@ -128,10 +128,10 @@ export default function SecuritySettings() {
 
             <button
               onClick={()=>setTwoFA(!twoFA)}
-              className={`rounded-full px-5 py-2 font-semibold ${
+              className={`rounded-full px-3 md:px-5 py-2 text-xs md:text-sm font-semibold ${
                 twoFA
-                  ? "bg-green-600 text-white"
-                  : "bg-slate-700 text-white"
+                  ? "bg-green-600 text-[var(--q-text)]"
+                  : "bg-slate-700 text-[var(--q-text)]"
               }`}
             >
 
@@ -145,7 +145,7 @@ export default function SecuritySettings() {
 
         <section>
 
-          <h2 className="mb-5 text-xl font-semibold text-white">
+          <h2 className="mb-5 text-base md:text-xl font-semibold text-[var(--q-text)]">
 
             Active Sessions
 
@@ -157,18 +157,18 @@ export default function SecuritySettings() {
 
               <div
                 key={session.id}
-                className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900 p-5"
+                className="flex items-center justify-between gap-3 rounded-xl border border-[var(--q-border)] bg-[var(--q-surface)] p-3 md:p-5"
               >
 
                 <div>
 
-                  <h3 className="font-semibold text-white">
+                  <h3 className="font-semibold text-[var(--q-text)]">
 
                     {session.device}
 
                   </h3>
 
-                  <p className="text-sm text-slate-400">
+                  <p className="text-xs md:text-sm text-[var(--q-muted)]">
 
                     {session.location}
 
@@ -180,7 +180,7 @@ export default function SecuritySettings() {
 
                   {session.current && (
 
-                    <span className="rounded-full bg-green-600 px-3 py-1 text-xs text-white">
+                    <span className="rounded-full bg-green-600 px-3 py-1 text-xs text-[var(--q-text)]">
 
                       Current
 
@@ -190,7 +190,7 @@ export default function SecuritySettings() {
 
                   {!session.current && (
 
-                    <button className="rounded-xl bg-red-600 px-4 py-2 text-white">
+                    <button className="rounded-xl bg-red-600 px-4 py-2 text-[var(--q-text)]">
 
                       Logout
 
@@ -206,7 +206,7 @@ export default function SecuritySettings() {
 
           </div>
 
-          <button className="mt-6 rounded-xl bg-red-700 px-6 py-3 font-semibold text-white">
+          <button className="mt-6 rounded-xl bg-red-700 px-3 md:px-6 py-3 font-semibold text-[var(--q-text)]">
 
             Logout From All Devices
 
@@ -235,7 +235,7 @@ function Input({
 
     <div>
 
-      <label className="mb-2 block text-slate-400">
+      <label className="mb-2 block text-[var(--q-muted)]">
 
         {label}
 
@@ -245,7 +245,7 @@ function Input({
         type={type}
         value={value}
         onChange={(e)=>onChange(e.target.value)}
-        className="w-full rounded-xl border border-slate-700 bg-slate-900 p-3 text-white"
+        className="w-full rounded-xl border border-[var(--q-border)] bg-[var(--q-surface)] p-3 text-[var(--q-text)]"
       />
 
     </div>

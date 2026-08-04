@@ -1,4 +1,7 @@
+import CommentService from "../../../modules/community/services/CommentService";
+import ShareService from "../../../modules/community/services/ShareService";
 import useResponsive from "../../../hooks/useResponsive";
+
 import {
   ThumbsUp,
   MessageCircle,
@@ -26,27 +29,37 @@ import { useAuth } from "../../auth/AuthProvider";
 
 import ReactionService from "../../../modules/community/services/ReactionService";
 
+
 export default function PostActions({ post }) {
+
   const { user } = useAuth();
-const { isDesktop } = useResponsive();
+
+  const { isDesktop } = useResponsive();
+
+
   const {
     reaction,
     toggleReaction,
   } = useReaction(post.id);
 
+
   const {
     toggleBookmark,
   } = useBookmark();
 
+
   const {
     share,
   } = useShare();
+
 
   const {
     comments,
     loadComments,
     createComment,
   } = useCommentsContext();
+
+
 
   const [openComments, setOpenComments] = useState(false);
 
@@ -62,77 +75,149 @@ const { isDesktop } = useResponsive();
 
   const [reactionCounts, setReactionCounts] = useState({});
 
+
   const [shares, setShares] = useState(
     post.shares_count ?? 0
   );
 
+
+  const [commentsCount, setCommentsCount] = useState(
+    post.comments_count ?? 0
+  );
+
+  const [sharesCount, setSharesCount] = useState(
+    post.shares_count ?? 0
+  );
+
+  const [bookmarkCount, setBookmarkCount] = useState(
+    post.bookmarks_count ?? 0
+  );
+
+
   const [bookmarked, setBookmarked] = useState(false);
+
 
   const currentReaction =
     REACTIONS.find(
       (item) => item.type === reaction
     );
 
-  useEffect(() => {
-    loadReactionSummary();
-    loadBookmarkState();
-  }, []);
+
+  const likesCount = reactionCounts?.LIKE ?? 0;
+
+  const reactionsTotal =
+    Object.values(reactionCounts ?? {}).reduce(
+      (sum, value) => sum + value,
+      0
+    );
+
+
 
   useEffect(() => {
+
+    loadReactionSummary();
+
+    loadBookmarkState();
+
+    loadCommentsCount();
+
+    loadSharesCount();
+
+    loadBookmarkCount();
+
+    loadReactionSummary();
+
+  }, []);
+
+
+
+  useEffect(() => {
+
     function handleClick(e) {
+
       if (
         pickerRef.current &&
         !pickerRef.current.contains(e.target)
       ) {
+
         setShowReactions(false);
+
       }
+
     }
+
 
     document.addEventListener(
       "mousedown",
       handleClick
     );
 
+
     document.addEventListener(
       "touchstart",
       handleClick
     );
 
+
     return () => {
+
       document.removeEventListener(
         "mousedown",
         handleClick
       );
 
+
       document.removeEventListener(
         "touchstart",
         handleClick
       );
+
     };
+
+
   }, []);
 
+
+
+
   async function loadReactionSummary() {
+
     const counts =
       await ReactionService.countByReaction(
         post.id
       );
 
-    setReactionCounts(counts);
+
+    console.log("REACTION COUNTS", counts);
+    console.log("REACTION COUNTS", counts);
+    setReactionCounts(counts ?? {});
+
   }
 
+
+
+
   async function loadReactionUsers() {
+
     const { data } =
       await ReactionService.getPostReactions(
         post.id
       );
 
+
     setReactionUsers(data ?? []);
 
     setShowUsersModal(true);
+
   }
 
+
+
+
   async function loadBookmarkState() {
+
     if (!user) return;
+
 
     const { data } =
       await BookmarkService.isBookmarked(
@@ -140,65 +225,168 @@ const { isDesktop } = useResponsive();
         user.id
       );
 
+
     setBookmarked(!!data);
+
   }
 
+
+
+
+  async function loadCommentsCount() {
+
+    const { count } =
+      await CommentService.countComments(
+        post.id
+      );
+
+
+    setCommentsCount(count ?? 0);
+
+  }
+
+
+
+
+  async function loadSharesCount() {
+
+    const { count } =
+      await ShareService.countShares(
+        post.id
+      );
+
+
+    setSharesCount(count ?? 0);
+
+  }
+
+
+
+
+
+  async function loadBookmarkCount() {
+
+    const { count } =
+      await BookmarkService.countBookmarks(
+        post.id
+      );
+
+    setBookmarkCount(count ?? 0);
+
+  }
+
+
   async function handleReaction(type) {
+
     await toggleReaction(post, type);
+
 
     setAnimateReaction(true);
 
+
     setTimeout(() => {
+
       setAnimateReaction(false);
+
     }, 350);
+
 
     setShowReactions(false);
 
+
     await loadReactionSummary();
+
   }
 
+
+
+
+
   async function handleBookmark() {
+
     const result =
       await toggleBookmark(post);
 
+
     setBookmarked(result);
+
   }
 
+
+
+
   async function handleShare() {
+
     const result =
       await share(post);
 
+
     if (result) {
-      setShares((prev) => prev + 1);
+
+      await loadSharesCount();
+
     }
+
   }
+
+
+
+
 
   async function handleComments() {
+
     setOpenComments(true);
 
+
     await loadComments(post.id);
+
   }
+
+
+
 
   async function handleCreateComment(content) {
+
     if (!user) return;
 
+
     await createComment({
+
       post_id: post.id,
+
       author_id: user.id,
+
       content,
+
       parent_id: null,
+
     });
+
+
+    await loadCommentsCount();
+
   }
 
+
+
+
   async function handleReply(comment, content) {
+
     if (!user) return;
 
+
     await createComment({
+
       post_id: post.id,
+
       author_id: user.id,
+
       content,
+
       parent_id: comment.id,
+
     });
+
   }
   return (
     <>
@@ -215,6 +403,7 @@ const { isDesktop } = useResponsive();
       >
 
         {/* Reactions */}
+
         <div
           ref={pickerRef}
           className="relative"
@@ -224,6 +413,7 @@ const { isDesktop } = useResponsive();
             visible={showReactions}
             onSelect={handleReaction}
           />
+
 
           <button
             onClick={() => setShowReactions((v) => !v)}
@@ -245,22 +435,34 @@ const { isDesktop } = useResponsive();
                 ${animateReaction ? "scale-150" : "scale-100"}
               `}
             >
+
               {currentReaction
                 ? currentReaction.emoji
-                : <ThumbsUp size={20} />}
+                : <ThumbsUp size={20} />
+              }
+
             </span>
 
+
             <span>
+
               {currentReaction
                 ? currentReaction.label
-                : "React"}
+                : "React"
+              }
+
             </span>
+
+            <span>{reactionsTotal}</span>
 
           </button>
 
         </div>
 
+
+
         {/* Comments */}
+
         <button
           onClick={handleComments}
           className="
@@ -272,11 +474,20 @@ const { isDesktop } = useResponsive();
             hover:text-[var(--q-primary)]
           "
         >
+
           <MessageCircle size={20} />
-          <span>{post.comments_count ?? 0}</span>
+
+          <span>
+            {commentsCount}
+          </span>
+
         </button>
 
+
+
+
         {/* Share */}
+
         <button
           onClick={handleShare}
           className="
@@ -288,11 +499,20 @@ const { isDesktop } = useResponsive();
             hover:text-green-500
           "
         >
+
           <Share2 size={20} />
-          <span>{shares}</span>
+
+          <span>
+            {sharesCount}
+          </span>
+
         </button>
 
+
+
+
         {/* Bookmark */}
+
         <button
           onClick={handleBookmark}
           className={
@@ -301,22 +521,43 @@ const { isDesktop } = useResponsive();
               : "text-[var(--q-muted)] transition hover:text-yellow-500"
           }
         >
+
           <Bookmark
             size={20}
-            fill={bookmarked ? "currentColor" : "none"}
+            fill={
+              bookmarked
+                ? "currentColor"
+                : "none"
+            }
           />
+
+          <span>
+            {bookmarkCount}
+          </span>
+
         </button>
 
+
       </div>
+
+
+
+
 
       <div
         onClick={loadReactionUsers}
         className="cursor-pointer"
       >
+
         <ReactionSummary
           counts={reactionCounts}
         />
+
       </div>
+
+
+
+
 
       <ReactionUsersModal
         open={showUsersModal}
@@ -326,30 +567,65 @@ const { isDesktop } = useResponsive();
         }
       />
 
-           {/* Desktop Comments */}
+
+
+
+
+
+      {/* Desktop Comments */}
 
       {isDesktop && (
+
         <CommentsDrawer
+
           open={openComments}
+
           comments={comments}
-          onClose={() => setOpenComments(false)}
+
+          onClose={() =>
+            setOpenComments(false)
+          }
+
           onSubmit={handleCreateComment}
+
           onReply={handleReply}
+
         />
+
       )}
+
+
+
+
+
 
       {/* Mobile Comments */}
 
       {!isDesktop && openComments && (
+
         <CommentsDrawer
+
           inline
+
           open
+
           comments={comments}
-          onClose={() => setOpenComments(false)}
+
+          onClose={() =>
+            setOpenComments(false)
+          }
+
           onSubmit={handleCreateComment}
+
           onReply={handleReply}
+
         />
+
       )}
+
+
+
     </>
   );
+
 }

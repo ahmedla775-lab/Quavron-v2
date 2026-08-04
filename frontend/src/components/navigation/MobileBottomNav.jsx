@@ -22,7 +22,7 @@ export default function MobileBottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-[9999] flex h-16 items-center justify-around backdrop-blur-xl md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-[9999] flex h-14 items-center justify-around backdrop-blur-xl md:hidden pb-[env(safe-area-inset-bottom)]"
       style={{
         background: isDark
           ? "rgba(2,6,23,.96)"
@@ -41,7 +41,7 @@ export default function MobileBottomNav() {
             key={item.path}
             to={item.path}
             className={({ isActive }) =>
-              `flex flex-col items-center justify-center gap-1 text-xs transition ${
+              `flex flex-col items-center justify-center gap-0.5 text-[10px] transition ${
                 isActive
                   ? "text-cyan-500"
                   : isDark
@@ -50,7 +50,7 @@ export default function MobileBottomNav() {
               }`
             }
           >
-            <Icon size={22} />
+            <Icon size={19} />
             <span>{item.name}</span>
           </NavLink>
         );

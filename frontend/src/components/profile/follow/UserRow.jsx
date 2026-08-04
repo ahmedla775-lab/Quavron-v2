@@ -9,7 +9,7 @@ export default function UserRow({ user }) {
   return (
     <Link
       to={`/profile/${profile.id}`}
-      className="flex items-center gap-3 rounded-xl p-3 transition hover:bg-slate-800"
+      className="flex items-center gap-3 rounded-xl p-3 transition hover:bg-[var(--q-surface)]"
     >
       <img
         src={
@@ -24,7 +24,7 @@ export default function UserRow({ user }) {
       <div className="flex-1">
         <div className="flex items-center gap-2">
 
-  <h3 className="font-semibold text-white">
+  <h3 className="font-semibold text-[var(--q-text)]">
     {profile.full_name || "Quavron User"}
   </h3>
 
@@ -35,7 +35,7 @@ export default function UserRow({ user }) {
 
 </div>
 
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-[var(--q-muted)]">
           @{profile.username}
         </p>
       </div>

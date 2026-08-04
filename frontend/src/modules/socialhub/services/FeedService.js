@@ -7,19 +7,21 @@ class FeedService {
     SocialAggregator.register("youtube", YouTubeService);
   }
 
+  async getFeed(userId = null, options = {}) {
 
-  async getFeed(options = {}) {
+    const base =
+      import.meta.env.VITE_QCE_URL || "http://localhost:5000";
 
-    const response = await fetch(
-      "http://192.168.254.31:5000/api/qce/feed"
-    );
+    const endpoint = userId
+      ? `${base}/api/qce/feed/${userId}`
+      : `${base}/api/qce/feed`;
+
+    const response = await fetch(endpoint);
 
     const result = await response.json();
 
-    return result.data || [];
-
+    return result.data || result || [];
   }
-
 }
 
 export default new FeedService();

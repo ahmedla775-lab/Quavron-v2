@@ -31,7 +31,7 @@ if(type==="gray"){
 return(
 <ShieldCheck
 size={size}
-className="inline text-slate-400 fill-slate-400"
+className="inline text-[var(--q-muted)] fill-[var(--q-muted)]"
 />
 );
 

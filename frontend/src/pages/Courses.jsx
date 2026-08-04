@@ -1,17 +1,7 @@
-import DashboardLayout from "../components/dashboard/DashboardLayout";
+import Learning from "../modules/learning/pages/Learning";
 
 export default function Courses() {
-  return (
-    <DashboardLayout>
-      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8">
-        <h1 className="text-3xl font-bold text-white">
-          Courses
-        </h1>
 
-        <p className="mt-2 text-slate-400">
-          This page is under development.
-        </p>
-      </div>
-    </DashboardLayout>
-  );
+  return <Learning />;
+
 }

@@ -11,7 +11,7 @@ export default function Settings() {
   const [selected, setSelected] = useState("account");
 
   const [search, setSearch] = useState("");
-
+  
   return (
 
     <DashboardLayout>
@@ -19,27 +19,24 @@ export default function Settings() {
       <div
         className="
           flex
-          h-[calc(100vh-40px)]
-          overflow-hidden
+          min-h-[calc(100vh-40px)]
+          overflow-visible md:overflow-hidden
           rounded-2xl
           border
-          border-slate-800
-          bg-slate-950
+          border-[var(--q-border)]
+          bg-[var(--q-bg)]
         "
       >
 
+        <div className="block">
         <SettingsSidebar
           selected={selected}
           onSelect={setSelected}
         />
+      </div>
 
         <div
-          className="
-            flex
-            min-w-0
-            flex-1
-            flex-col
-          "
+          className="flex min-w-0 flex-1 flex-col"
         >
 
           <SettingsSearch

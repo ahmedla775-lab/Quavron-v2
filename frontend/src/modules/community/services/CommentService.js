@@ -55,6 +55,15 @@ profiles!comments_author_id_fkey (
 
   }
 
+async countComments(postId) {
+  return await supabase
+    .from("comments")
+    .select("*", {
+      count: "exact",
+      head: true,
+    })
+    .eq("post_id", postId);
+}
 
 }
 

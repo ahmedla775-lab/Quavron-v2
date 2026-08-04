@@ -34,6 +34,18 @@ class BookmarkService {
 
   }
 
+  async countBookmarks(postId) {
+    const { count } = await supabase
+      .from("post_bookmarks")
+      .select("id", { count: "exact", head: true })
+      .eq("post_id", postId);
+
+    return {
+      count: count ?? 0,
+    };
+  }
+
+
   async getBookmarks(userId) {
   return await supabase
     .from("post_bookmarks")

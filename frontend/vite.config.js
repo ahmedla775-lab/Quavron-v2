@@ -9,6 +9,10 @@ export default defineConfig({
     tailwindcss(),
 
     VitePWA({
+
+      devOptions: {
+        enabled: false,
+      },
       strategies: "injectManifest",
       srcDir: "src",
       filename: "sw.js",

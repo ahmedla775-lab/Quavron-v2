@@ -48,13 +48,13 @@ export default function APISettings() {
 
     <div className="mx-auto max-w-5xl p-8">
 
-      <h1 className="text-3xl font-bold text-white">
+      <h1 className="text-3xl font-bold text-[var(--q-text)]">
 
         API Settings
 
       </h1>
 
-      <p className="mt-2 text-slate-400">
+      <p className="mt-2 text-[var(--q-muted)]">
 
         Manage your API keys, OAuth applications and Webhooks.
 
@@ -95,9 +95,9 @@ export default function APISettings() {
 
           <div className="space-y-4">
 
-            <div className="rounded-xl border border-slate-700 bg-slate-800 p-4">
+            <div className="rounded-xl border border-[var(--q-border)] bg-[var(--q-card)] p-4">
 
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-[var(--q-muted)]">
 
                 Primary API Key
 
@@ -113,13 +113,13 @@ export default function APISettings() {
             <div className="flex gap-3">
 
               <button
-                className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700"
+                className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-[var(--q-text)] hover:bg-blue-700"
               >
                 Generate New Key
               </button>
 
               <button
-                className="rounded-xl bg-slate-700 px-5 py-3 text-white hover:bg-slate-600"
+                className="rounded-xl bg-slate-700 px-5 py-3 text-[var(--q-text)] hover:bg-slate-600"
               >
                 Revoke Key
               </button>
@@ -133,7 +133,7 @@ export default function APISettings() {
         <Card title="OAuth Applications">
 
           <button
-            className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700"
+            className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-[var(--q-text)] hover:bg-blue-700"
           >
             Create OAuth Application
           </button>
@@ -143,7 +143,7 @@ export default function APISettings() {
         <Card title="Webhooks">
 
           <button
-            className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700"
+            className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-[var(--q-text)] hover:bg-blue-700"
           >
             Add Webhook
           </button>
@@ -153,7 +153,7 @@ export default function APISettings() {
         <Card title="API Documentation">
 
           <button
-            className="rounded-xl bg-slate-700 px-5 py-3 text-white hover:bg-slate-600"
+            className="rounded-xl bg-slate-700 px-5 py-3 text-[var(--q-text)] hover:bg-slate-600"
           >
             Open Documentation
           </button>
@@ -171,7 +171,7 @@ export default function APISettings() {
             px-8
             py-3
             font-semibold
-            text-white
+            text-[var(--q-text)]
             hover:bg-blue-700
           "
         >
@@ -190,9 +190,9 @@ function Card({title,children}){
 
   return(
 
-    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+    <div className="rounded-2xl border border-[var(--q-border)] bg-[var(--q-surface)] p-3 md:p-5">
 
-      <h2 className="mb-5 text-lg font-semibold text-white">
+      <h2 className="mb-5 text-sm md:text-base md:text-lg font-semibold text-[var(--q-text)]">
 
         {title}
 
@@ -217,10 +217,10 @@ function Select({value,onChange,options}){
         w-full
         rounded-xl
         border
-        border-slate-700
-        bg-slate-800
+        border-[var(--q-border)]
+        bg-[var(--q-card)]
         p-3
-        text-white
+        text-[var(--q-text)]
       "
     >
 
@@ -245,11 +245,11 @@ function Section({title,items,settings,toggle}){
 
   return(
 
-    <div className="rounded-2xl border border-slate-800 bg-slate-900">
+    <div className="rounded-2xl border border-[var(--q-border)] bg-[var(--q-surface)]">
 
-      <div className="border-b border-slate-800 p-5">
+      <div className="border-b border-[var(--q-border)] p-3 md:p-5">
 
-        <h2 className="text-xl font-semibold text-white">
+        <h2 className="text-xl font-semibold text-[var(--q-text)]">
 
           {title}
 
@@ -264,15 +264,15 @@ function Section({title,items,settings,toggle}){
           className="
             flex
             items-center
-            justify-between
+            justify-start md:justify-between
             border-b
-            border-slate-800
-            p-5
+            border-[var(--q-border)]
+            p-3 md:p-5
             last:border-0
           "
         >
 
-          <span className="text-white">
+          <span className="text-[var(--q-text)]">
 
             {label}
 
@@ -282,8 +282,8 @@ function Section({title,items,settings,toggle}){
             onClick={()=>toggle(key)}
             className={`rounded-full px-5 py-2 font-semibold ${
               settings[key]
-                ? "bg-green-600 text-white"
-                : "bg-slate-700 text-white"
+                ? "bg-green-600 text-[var(--q-text)]"
+                : "bg-slate-700 text-[var(--q-text)]"
             }`}
           >
 
