@@ -248,7 +248,7 @@ borderBottom:`1px solid ${colors.border}`
 
 
 <img
-  src="/branding/quavron-logo.png"
+  src="/branding/logo-symbol.png"
   alt="Quavron"
   className="h-10 w-auto object-contain"
 />
@@ -297,6 +297,7 @@ Next Generation Platform
 
 
 </div>
+)}
 
 
 </div>

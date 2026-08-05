@@ -42,7 +42,7 @@ export default function ProfileHeader({
         <img
           src={
             profile?.cover_url ||
-            "/quavron-logo.png"
+            "/branding/logo-symbol.png"
           }
           alt=""
           className="h-full w-full object-cover"

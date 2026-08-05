@@ -31,8 +31,8 @@ export default function Topbar() {
   const [openMenu, setOpenMenu] = useState(false);
 
   const logo = isDark
-    ? "/branding/logo-horizontal-dark.png"
-    : "/branding/logo-horizontal-light.png";
+    ? "/branding/logo-symbol.png"
+    : "/branding/logo-symbol.png";
 
   async function handleLogout() {
     await logout();
