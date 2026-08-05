@@ -4,76 +4,104 @@ from pathlib import Path
 
 class KnowledgeSearch:
 
+
     def __init__(self):
 
         self.knowledge = {}
+
         self.load()
+
 
 
     def load(self):
 
-        path = Path("knowledge/store/quavron_knowledge.json")
+        path = Path(
+            "knowledge/store/quavron_knowledge.json"
+        )
 
         if path.exists():
 
-            with open(path, "r", encoding="utf-8") as file:
-                self.knowledge = json.load(file)
+            with open(path,"r",encoding="utf-8") as f:
+
+                self.knowledge = json.load(f)
+
 
 
     def search(self, keyword):
 
-        keyword = keyword.lower()
+        words = keyword.lower().split()
 
-        results = []
+        results=[]
 
 
         def scan(data):
 
-            if isinstance(data, dict):
+            if isinstance(data,dict):
 
-                for key, value in data.items():
+                for key,value in data.items():
 
                     score = 0
 
-                    if keyword == key.lower():
-                        score += 10
+                    key_text = str(key).lower()
 
-                    elif keyword in key.lower():
-                        score += 5
+                    value_text = str(value).lower()
 
 
-                    if keyword in str(value).lower():
-                        score += 3
+                    for word in words:
+
+
+                        if word == key_text:
+
+                            score += 20
+
+
+                        elif word in key_text:
+
+                            score += 10
+
+
+                        elif word in value_text:
+
+                            score += 2
+
 
 
                     if score:
 
                         results.append({
-                            "key": key,
-                            "value": value,
-                            "score": score
+
+                            "key":key,
+
+                            "value":value,
+
+                            "score":score
+
                         })
 
 
                     scan(value)
 
 
-            elif isinstance(data, list):
+
+            elif isinstance(data,list):
 
                 for item in data:
+
                     scan(item)
+
 
 
         scan(self.knowledge)
 
 
         results.sort(
-            key=lambda x: x["score"],
+            key=lambda x:x["score"],
             reverse=True
         )
 
 
         return results[:5]
+
 
 
 search_engine = KnowledgeSearch()

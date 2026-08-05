@@ -1,4 +1,4 @@
-class QAIRouter:
+class Router:
 
 
     def route(self, message):
@@ -6,20 +6,44 @@ class QAIRouter:
         text = message.lower()
 
 
-        if "code" in text or "build" in text:
+        if any(word in text for word in [
+            "code",
+            "create",
+            "build",
+            "react",
+            "python",
+            "javascript",
+            "component"
+        ]):
+
             return "coding"
 
 
-        if "security" in text:
+
+        if any(word in text for word in [
+            "security",
+            "attack",
+            "scan",
+            "vulnerability"
+        ]):
+
             return "security"
 
 
-        if "content" in text:
+
+        if any(word in text for word in [
+            "write",
+            "article",
+            "content",
+            "post"
+        ]):
+
             return "content"
+
 
 
         return "knowledge"
 
 
 
-router = QAIRouter()
+router = Router()
