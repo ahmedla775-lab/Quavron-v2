@@ -43,8 +43,13 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Clean Gradle cache
+        run: rm -rf ~/.gradle/caches ~/.gradle/daemon ~/.gradle/native ~/.gradle/wrapper
+
       - name: Build Debug APK
         working-directory: frontend/android
+        env:
+          GRADLE_OPTS: "-Dandroid.aapt2FromMavenOverride="
         run: ./gradlew assembleDebug
 
       - name: Upload APK
