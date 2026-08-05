@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTheme } from "../../theme/ThemeProvider";
 
 import ActivityBar from "./ActivityBar";
 import ExplorerPanel from "./ExplorerPanel";
@@ -14,12 +15,13 @@ export default function WorkspaceLayout({
 }) {
 
   const mobile = useMobile();
+  const { isDark } = useTheme();
 
   const [sidebarOpen, setSidebarOpen] =
     useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-950 text-white">
+    <div className={isDark ? "flex h-screen overflow-hidden bg-slate-950 text-white" : "flex h-screen overflow-hidden bg-white text-slate-900"}>
 
       {!mobile && <ActivityBar />}
 
@@ -67,7 +69,7 @@ export default function WorkspaceLayout({
       )}
 
       {!mobile && (
-        <div className="w-80 border-r border-slate-800">
+        <div className={isDark ? "w-80 border-r border-slate-800" : "w-80 border-r border-slate-200"}>
           <ExplorerPanel />
         </div>
       )}

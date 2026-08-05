@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTheme } from "../../../theme/ThemeProvider";
 
 export default function IDELayout({
   sidebar,
@@ -11,9 +12,10 @@ export default function IDELayout({
 }) {
   const [showExplorer, setShowExplorer] = useState(false);
   const mobile = window.innerWidth < 768;
+  const { isDark } = useTheme();
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-950 text-white">
+    <div className={isDark ? "flex h-screen overflow-hidden bg-slate-950 text-white" : "flex h-screen overflow-hidden bg-white text-slate-900"}>
 
       {!mobile && sidebar}
 
@@ -22,14 +24,14 @@ export default function IDELayout({
         {mobile ? (
           <>
             {showExplorer && (
-              <div className="absolute right-0 top-0 z-50 h-full w-72 border-l border-slate-800 bg-[#1e1e1e] shadow-2xl">
+              <div className="absolute right-0 top-0 z-50 h-full w-72 border-l border-slate-200 dark:border-slate-800 bg-[#1e1e1e] shadow-2xl">
                 {explorer}
               </div>
             )}
 
             <button
               onClick={() => setShowExplorer(!showExplorer)}
-              className="absolute right-3 top-3 z-50 rounded bg-slate-800 px-3 py-2 text-sm"
+              className="absolute right-3 top-3 z-50 rounded bg-slate-200 dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white"
             >
               ☰
             </button>

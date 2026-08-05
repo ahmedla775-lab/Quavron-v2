@@ -8,6 +8,7 @@ import {
   Settings,
 } from "lucide-react";
 
+import { useTheme } from "../../theme/ThemeProvider";
 import ActivityButton from "./ActivityButton";
 
 const items = [
@@ -50,10 +51,11 @@ export default function ActivityBar({
   onChange,
 
 }) {
+  const { isDark } = useTheme();
 
   return (
 
-    <aside className="flex h-full w-14 flex-col justify-between border-r border-slate-800 bg-slate-950">
+    <aside className={isDark ? "flex h-full w-14 flex-col justify-between border-r border-slate-800 bg-slate-950 text-white" : "flex h-full w-14 flex-col justify-between border-r border-slate-200 bg-white text-slate-900"}>
 
       <div>
 

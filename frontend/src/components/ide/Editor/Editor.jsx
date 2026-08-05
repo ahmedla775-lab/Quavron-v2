@@ -1,5 +1,6 @@
 import MonacoEditor from "@monaco-editor/react";
 import { useEffect, useState } from "react";
+import { useTheme } from "../../../theme/ThemeProvider";
 import FileService from "../../../services/FileService";
 import { useFiles } from "../../../context/FileContext";
 
@@ -8,6 +9,7 @@ import EditorToolbar from "./EditorToolbar";
 import EditorTabs from "./EditorTabs";
 
 export default function Editor() {
+  const { isDark } = useTheme();
   const {
     currentFile,
     updateFile,
@@ -57,7 +59,7 @@ export default function Editor() {
       <div className="flex-1">
         <MonacoEditor
           height="100%"
-          theme="vs-dark"
+          theme={isDark ? "vs-dark" : "vs"}
           language={currentFile.type}
           value={content}
           onChange={(value) => setContent(value ?? "")}

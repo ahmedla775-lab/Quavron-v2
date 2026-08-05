@@ -297,7 +297,6 @@ Next Generation Platform
 
 
 </div>
-)}
 
 
 </div>

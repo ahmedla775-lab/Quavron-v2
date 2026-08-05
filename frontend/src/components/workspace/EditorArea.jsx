@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import CodeMirror from "@uiw/react-codemirror";
 import { oneDark } from "@codemirror/theme-one-dark";
+import { githubLight } from "@uiw/codemirror-theme-github";
+import { useTheme } from "../../theme/ThemeProvider";
 
 import { javascript } from "@codemirror/lang-javascript";
 import { json } from "@codemirror/lang-json";
@@ -24,6 +26,8 @@ export default function EditorArea() {
     activeTab,
     actions,
   } = useWorkspace();
+
+  const { isDark } = useTheme();
 
   const file = activeTab
     ? actions.openFile(activeTab)
@@ -130,13 +134,13 @@ export default function EditorArea() {
   }
 
   return (
-    <div className="flex h-full w-full flex-col bg-[#1e1e1e]">
-      <div className="flex h-10 items-center justify-between border-b border-slate-800 bg-slate-900 px-4">
-        <span className="text-sm font-medium text-white">
+    <div className="flex h-full w-full flex-col bg-white dark:bg-[#1e1e1e]">
+      <div className="flex h-10 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4">
+        <span className="text-sm font-medium text-slate-900 dark:text-white">
           {file.name}
         </span>
 
-        <span className="text-xs text-slate-400">
+        <span className="text-xs text-slate-600 dark:text-slate-400">
           {file.language || "plaintext"}
         </span>
       </div>
@@ -145,7 +149,7 @@ export default function EditorArea() {
         <CodeMirror
           value={content}
           height="100%"
-          theme={oneDark}
+          theme={isDark ? oneDark : githubLight}
           extensions={extensions}
           onCreateEditor={(view) => {
             editorRef.current = view;
