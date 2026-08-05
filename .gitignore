@@ -20,7 +20,6 @@ frontend/frontend_files.txt
 Thumbs.db
 
 # Generated tree images and scripts
-*.png
 tree.txt
 quavron-tree.txt
 quavron-clean-tree.txt
