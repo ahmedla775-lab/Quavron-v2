@@ -9,12 +9,17 @@ class EventEngine:
 
         self.path = Path("events/storage/events.json")
 
+        self.path.parent.mkdir(
+            parents=True,
+            exist_ok=True
+        )
+
         if not self.path.exists():
+
             self.path.write_text(
                 "[]",
                 encoding="utf-8"
             )
-
 
     def _load(self):
 
@@ -23,7 +28,6 @@ class EventEngine:
                 encoding="utf-8"
             )
         )
-
 
     def _save(self, data):
 
@@ -36,31 +40,20 @@ class EventEngine:
             encoding="utf-8"
         )
 
-
     def log(
-
         self,
-
         event,
-
         source,
-
         metadata=None
-
     ):
 
         data = self._load()
 
         item = {
-
             "time": datetime.utcnow().isoformat(),
-
             "event": event,
-
             "source": source,
-
             "metadata": metadata or {}
-
         }
 
         data.append(item)
@@ -68,7 +61,6 @@ class EventEngine:
         self._save(data)
 
         return item
-
 
     def history(self):
 
