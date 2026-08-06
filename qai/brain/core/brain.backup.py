@@ -13,7 +13,6 @@ from rag.engine import engine as rag
 from memory.memory import memory
 
 from users.context.builder import context_builder
-from intent.router import router as intent_router
 
 
 class QuavronBrain:
@@ -28,12 +27,6 @@ class QuavronBrain:
 
         state = pipeline.process(message)
 
-        intent_result = intent_router.detect(
-            state["normalized"]
-        )
-
-        intent = intent_result.get("intent")
-        state["intent"] = intent_result
 
         provider = router.select(
 
@@ -75,7 +68,7 @@ class QuavronBrain:
 
         agents = orchestrator.execute(
 
-            state
+            state["normalized"]
 
         )
 
@@ -90,7 +83,6 @@ class QuavronBrain:
                 metadata={
 
                     "provider":provider,
-            "intent":intent,
 
                     "pipeline":state.get("intent")
 
@@ -112,7 +104,6 @@ class QuavronBrain:
             "user_context":user_context,
 
             "provider":provider,
-            "intent":intent,
 
             "llm":llm,
 

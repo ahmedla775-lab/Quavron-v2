@@ -75,58 +75,116 @@ class KnowledgeSearch:
     def search(self, keyword):
 
         keywords = self.extract_keywords(keyword)
-
         results = []
 
+        ignore_keys = [
+            "ar",
+            "en",
+            "fr",
+            "content",
+            "title",
+            "keywords"
+        ]
 
-        def scan(data):
+        def scan(data, parent=None):
 
             if isinstance(data, dict):
 
-                for key,value in data.items():
+                # لا نبحث داخل الحقول الوصفية
+                if any(k in data for k in ["content", "keywords", "title"]):
+                    score = 0
+
+                    text_blob = self.normalize(str(data))
+
+                    for word in keywords:
+                        if word in text_blob:
+                            score += 10
+
+                    if score:
+                        results.append({
+                            "key": parent,
+                            "value": data,
+                            "score": score
+                        })
+
+                    return
+
+                for key, value in data.items():
+
+                    if key in ignore_keys:
+                        continue
+
+                    key_text = self.normalize(key)
+                    value_text = self.normalize(str(value))
 
                     score = 0
 
-                    key_text = self.normalize(key)
-                    value_text = self.normalize(value)
-
                     for word in keywords:
-
                         if word in key_text:
-                            score += 10
+                            score += 20
 
                         if word in value_text:
                             score += 5
 
-
                     if score:
 
-                        results.append({
-                            "key": key,
-                            "value": value,
-                            "score": score
-                        })
+                        # boost structured knowledge entries
+                        if isinstance(value, dict) and "content" in value:
+                            score += 50
+
+                        # ignore generic terminology block
+                        if key == "terminology":
+                            score = 0
+
+                        if score:
+                            results.append({
+                                "key": key,
+                                "value": value,
+                                "score": score
+                            })
+
+                    scan(value, key)
 
 
-                    scan(value)
-
-
-            elif isinstance(data,list):
-
+            elif isinstance(data, list):
                 for item in data:
-                    scan(item)
+                    scan(item, parent)
 
 
         scan(self.knowledge)
 
-
         results.sort(
-            key=lambda x:x["score"],
+            key=lambda x: x["score"],
             reverse=True
         )
 
+        # remove duplicate nested results
+        cleaned = []
+        seen = set()
 
-        return results[:5]
+        for item in results:
+            key = str(item["key"])
+            value = str(item["value"])
+
+            fingerprint = value[:100]
+
+            if fingerprint not in seen:
+                seen.add(fingerprint)
+                cleaned.append(item)
+
+        # keep only answer-bearing knowledge entries when available
+        answer_results = []
+
+        for item in cleaned:
+            value = item["value"]
+
+            if isinstance(value, dict) and "content" in value:
+                answer_results.append(item)
+
+        if answer_results:
+            cleaned = answer_results
+
+        return cleaned[:3]
 
 
 search_engine = KnowledgeSearch()

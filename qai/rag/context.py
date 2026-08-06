@@ -1,5 +1,4 @@
 from knowledge.search.search import search_engine
-from vector_memory.search import search
 
 
 class ContextBuilder:
@@ -9,34 +8,60 @@ class ContextBuilder:
         parts = []
 
         if documents:
-
-            parts.append("=== Vector Memory ===")
+            parts.append("=== Retrieved Context ===")
 
             for item in documents[:5]:
 
-                parts.append(item["text"])
+                score = item.get("score", 0)
+                text = item.get("text", "")
+
+                if text and score >= 5:
+                    parts.append(text)
 
 
         knowledge = search_engine.search(question)
 
         if knowledge:
 
-            parts.append("")
-
-            parts.append("=== Knowledge Base ===")
+            selected = []
 
             for item in knowledge:
 
-                value = item["value"]
+                score = item.get("score", 0)
+
+                value = item.get("value")
+
+                text = ""
 
                 if isinstance(value, dict):
 
-                    value = value.get(
-                        "description",
-                        str(value)
-                    )
+                    content = value.get("content")
 
-                parts.append(str(value))
+                    if isinstance(content, dict):
+                        text = content.get("ar", "")
+
+                    elif content:
+                        text = str(content)
+
+                if text and score >= 5:
+                    selected.append(text)
+
+
+            if selected:
+
+                existing = set(parts)
+
+                unique = [
+                    t for t in selected[:3]
+                    if t not in existing
+                ]
+
+                if unique:
+                    parts.append("")
+                    parts.append("=== Knowledge Base ===")
+
+                    for text in unique:
+                        parts.append(text)
 
 
         return "\n".join(parts)
