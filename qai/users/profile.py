@@ -12,6 +12,11 @@ class UserProfile:
             "users/storage/users.json"
         )
 
+        self.path.parent.mkdir(
+            parents=True,
+            exist_ok=True
+        )
+
         if not self.path.exists():
 
             self.path.write_text(

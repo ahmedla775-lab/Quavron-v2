@@ -11,13 +11,17 @@ class Memory:
             "memory/storage/memory.json"
         )
 
+        self.path.parent.mkdir(
+            parents=True,
+            exist_ok=True
+        )
+
         if not self.path.exists():
 
             self.path.write_text(
                 "[]",
                 encoding="utf-8"
             )
-
 
     def load(self):
 
@@ -28,7 +32,6 @@ class Memory:
             )
 
         )
-
 
     def save(self, data):
 
@@ -41,24 +44,15 @@ class Memory:
             ),
 
             encoding="utf-8"
-
         )
 
-
     def remember(
-
         self,
-
         user_input,
-
         response,
-
         user="anonymous",
-
         session="default",
-
         metadata=None
-
     ):
 
         data = self.load()
@@ -66,15 +60,10 @@ class Memory:
         item = {
 
             "user": user,
-
             "session": session,
-
             "input": user_input,
-
             "response": response,
-
             "metadata": metadata or {},
-
             "time": datetime.utcnow().isoformat()
 
         }
@@ -85,15 +74,10 @@ class Memory:
 
         return item
 
-
     def history(
-
         self,
-
         user=None,
-
         session=None
-
     ):
 
         data = self.load()
@@ -101,21 +85,15 @@ class Memory:
         if user:
 
             data = [
-
                 x for x in data
-
                 if x.get("user", "anonymous") == user
-
             ]
 
         if session:
 
             data = [
-
                 x for x in data
-
                 if x.get("session", "default") == session
-
             ]
 
         return data
