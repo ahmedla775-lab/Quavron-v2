@@ -32,7 +32,7 @@ class OpenAIDriver(BaseDriver):
         super().__init__("openai")
 
         self.client = OpenAI(
-            api_key=os.environ["OPENAI_API_KEY"]
+            api_key=os.environ.get("OPENAI_API_KEY", "")
         )
 
 

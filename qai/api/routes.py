@@ -16,6 +16,9 @@ def status():
 
 
 @router.get("/think/{message}")
-def think(message: str):
+def think(message: str, user_id: str = "guest"):
 
-    return brain.think(message)
+    return brain.think(
+        message,
+        user_id=user_id
+    )

@@ -1,9 +1,11 @@
 class AIIntegration {
 
-  async chat(prompt) {
+  async chat(prompt, userId = "ahmed") {
+
+    const baseURL = import.meta.env.VITE_AI_API_URL;
 
     const response = await fetch(
-      `http://100.115.48.157:8000/api/think/${encodeURIComponent(prompt)}`
+      `${baseURL}/api/think/${encodeURIComponent(prompt)}?user_id=${userId}`
     );
 
     return await response.json();
