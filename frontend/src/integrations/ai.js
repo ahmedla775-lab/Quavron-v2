@@ -1,17 +1,17 @@
 class AIIntegration {
+  async chat(prompt, userId = "guest") {
+    const baseURL = import.meta.env.VITE_AI_API;
 
-  async chat(prompt, userId = "ahmed") {
-
-    const baseURL = import.meta.env.VITE_AI_API_URL;
-
-    const response = await fetch(
-      `${baseURL}/api/think/${encodeURIComponent(prompt)}?user_id=${userId}`
+    const res = await fetch(
+      `${baseURL}/api/think/${encodeURIComponent(prompt)}?user_id=${encodeURIComponent(userId)}`
     );
 
-    return await response.json();
+    if (!res.ok) {
+      throw new Error("AI request failed");
+    }
 
+    return await res.json();
   }
-
 }
 
 export default new AIIntegration();
