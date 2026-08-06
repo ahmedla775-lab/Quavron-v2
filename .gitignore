@@ -39,3 +39,4 @@ package-lock.json
 
 # Unused config
 eslint.config.mjs
+.firebase/
