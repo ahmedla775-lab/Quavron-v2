@@ -2,3 +2,15 @@ __pycache__/
 *.pyc
 .venv/
 .env
+
+# Runtime data
+events/storage/*.json
+memory/storage/*.json
+users/storage/*.json
+vector_memory/*.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+

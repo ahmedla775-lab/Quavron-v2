@@ -1,4 +1,6 @@
 from events.engine import engine
+
+import agents.bootstrap.load
 from agents.orchestrator.orchestrator import orchestrator
 
 
