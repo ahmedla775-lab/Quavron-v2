@@ -27,20 +27,16 @@ const themes = {
   light: {
     "--q-bg": "#F8FCFF",
     "--q-surface": "#FFFFFF",
-    "--q-card": "#F1F8FF",
+    "--q-card": "#F4FAFF",
     "--q-comment": "#EAF6FF",
-    "--q-border": "#C7E7FF",
-
-    "--q-text": "#071426",
-    "--q-muted": "#52657A",
-
-    "--q-primary": "#0284C7",
-    "--q-primary-rgb": "2,132,199",
-
-    "--q-glow": "0 0 25px rgba(14,165,233,.35)",
-
-    "--q-accent": "#0369A1",
-    "--q-silver": "#64748B",
+    "--q-border": "#CFE8FF",
+    "--q-text": "#07111F",
+    "--q-muted": "#64748B",
+    "--q-primary": "#2563EB",
+    "--q-primary-rgb": "37,99,235",
+    "--q-glow": "0 0 25px rgba(37,99,235,.25)",
+    "--q-accent": "#0EA5E9",
+    "--q-silver": "#94A3B8",
   },
 };
 

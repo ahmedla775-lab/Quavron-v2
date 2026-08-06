@@ -74,7 +74,7 @@ export default function AIChat() {
       overflow-hidden
       border
       border-[var(--q-border)]
-      bg-gradient-to-br from-[var(--q-bg)] via-sky-50 to-blue-100
+      bg-gradient-to-br from-white via-cyan-50 to-blue-100
       dark:bg-slate-950/80
       backdrop-blur-xl
       "
@@ -147,7 +147,7 @@ export default function AIChat() {
             border
             border-slate-200
             dark:border-slate-700
-            bg-[var(--q-surface)]/90
+            bg-white/90
             dark:bg-slate-900/80
             space-y-1
             "
@@ -232,7 +232,7 @@ export default function AIChat() {
             py-3
             max-h-32
             outline-none
-            bg-[var(--q-surface)]/95
+            bg-white/95
             dark:bg-slate-950
             text-slate-900
             dark:text-white
