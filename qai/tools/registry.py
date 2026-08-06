@@ -1,25 +1,18 @@
 class ToolRegistry:
 
     def __init__(self):
+
         self.tools = {}
 
 
-    def register(self, name, function):
+    def register(self, tool):
 
-        self.tools[name] = function
-
-
-    def execute(self, name, *args):
-
-        if name not in self.tools:
-            return "Tool not found"
-
-        return self.tools[name](*args)
+        self.tools[tool["name"]] = tool
 
 
-    def list(self):
+    def all(self):
 
-        return list(self.tools.keys())
+        return list(self.tools.values())
 
 
-tools = ToolRegistry()
+registry = ToolRegistry()

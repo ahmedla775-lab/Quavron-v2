@@ -3,6 +3,7 @@ import DashboardLayout from "../components/dashboard/DashboardLayout";
 import CompanyFeed from "../components/dashboard/CompanyFeed";
 import QuickActions from "../components/dashboard/QuickActions";
 import ActivityTimeline from "../components/dashboard/ActivityTimeline";
+import QuavronAI from "../components/ai/QuavronAI";
 
 export default function Dashboard() {
 
@@ -93,6 +94,13 @@ export default function Dashboard() {
         </div>
 
         
+        <div className="animate-[slideUp_.55s_ease]">
+
+          <QuavronAI />
+
+        </div>
+
+
         <div className="animate-[slideUp_.65s_ease]">
 
           <QuickActions />

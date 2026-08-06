@@ -1,0 +1,296 @@
+[
+  {
+    "text": "company",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "name",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "Quavron SARL",
+    "metadata": {
+      "type": "text"
+    }
+  },
+  {
+    "text": "description",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "Technology company building an integrated digital ecosystem.",
+    "metadata": {
+      "type": "text"
+    }
+  },
+  {
+    "text": "vision",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "Build a next generation platform combining artificial intelligence, software development, community and digital services.",
+    "metadata": {
+      "type": "text"
+    }
+  },
+  {
+    "text": "qai",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "name",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "Quavron AI",
+    "metadata": {
+      "type": "text"
+    }
+  },
+  {
+    "text": "description",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "Artificial intelligence core responsible for reasoning, knowledge management, automation and intelligent assistance inside Quavron.",
+    "metadata": {
+      "type": "text"
+    }
+  },
+  {
+    "text": "modules",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "dashboard",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "description",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "Central control center for users to manage their activities, projects and analytics.",
+    "metadata": {
+      "type": "text"
+    }
+  },
+  {
+    "text": "community",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "description",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "Professional and social community where users share knowledge, content and collaboration.",
+    "metadata": {
+      "type": "text"
+    }
+  },
+  {
+    "text": "marketplace",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "description",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "Organized digital marketplace connecting users, products, services and businesses.",
+    "metadata": {
+      "type": "text"
+    }
+  },
+  {
+    "text": "learning",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "description",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "Educational platform providing courses, training and technical knowledge.",
+    "metadata": {
+      "type": "text"
+    }
+  },
+  {
+    "text": "hosting",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "description",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "Cloud hosting services for websites, applications and digital projects.",
+    "metadata": {
+      "type": "text"
+    }
+  },
+  {
+    "text": "analytics",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "description",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "Analytics system providing reports, insights and performance monitoring.",
+    "metadata": {
+      "type": "text"
+    }
+  },
+  {
+    "text": "profile",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "description",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "User identity and profile management system.",
+    "metadata": {
+      "type": "text"
+    }
+  },
+  {
+    "text": "ide",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "description",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "Cloud development environment allowing developers to write, test and manage code online.",
+    "metadata": {
+      "type": "text"
+    }
+  },
+  {
+    "text": "freelance",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "description",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "Platform connecting clients with developers and digital professionals.",
+    "metadata": {
+      "type": "text"
+    }
+  },
+  {
+    "text": "technology",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "qce",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "name",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "Quavron Content Engine",
+    "metadata": {
+      "type": "text"
+    }
+  },
+  {
+    "text": "description",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "Content intelligence system for collecting, organizing and ranking digital content.",
+    "metadata": {
+      "type": "text"
+    }
+  },
+  {
+    "text": "cloud",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "description",
+    "metadata": {
+      "type": "key"
+    }
+  },
+  {
+    "text": "Cloud infrastructure supporting Quavron services.",
+    "metadata": {
+      "type": "text"
+    }
+  }
+]

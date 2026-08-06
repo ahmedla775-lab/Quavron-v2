@@ -1,8 +1,18 @@
-from reasoning.reasoning import reasoning
+from pipeline.engine import pipeline
+
+from llm.router import router
+
+from llm.gateway import gateway
+
+from orchestrator.engine import engine as orchestrator
+
+from adapters.engine import engine as adapters
+
+from rag.engine import engine as rag
+
 from memory.memory import memory
-from router.router import router
-from agents.manager import agents
-from knowledge.search.search import search_engine
+
+from users.context.builder import context_builder
 
 
 class QuavronBrain:
@@ -10,61 +20,75 @@ class QuavronBrain:
 
     def __init__(self):
 
-        self.version = "0.6"
+        self.version = "1.0"
 
 
+    def think(self, message, user_id=None):
 
-    def think(self, message):
-
-
-        analysis = reasoning.analyze(message)
+        state = pipeline.process(message)
 
 
-        knowledge = search_engine.search(message)
+        provider = router.select(
 
+            state["normalized"]
 
-
-        if knowledge and knowledge[0].get("score",0) >= 5:
-
-            agent = "knowledge"
-
-            best = knowledge[0]
-
-            value = best.get("value")
-
-
-            if isinstance(value, dict):
-
-                answer = value.get(
-                    "description",
-                    str(value)
-                )
-
-            else:
-
-                answer = str(value)
-
-
-
-        else:
-
-            agent = router.route(message)
-
-
-            answer = "No knowledge found."
-
-
-
-        agent_result = agents.run(
-            agent,
-            message
         )
 
 
-        memory.remember(
-            message,
-            answer
+        rag_data = rag.prepare(
+
+            state["normalized"]
+
         )
+
+
+        user_context = {}
+
+
+        if user_id:
+
+            user_context = context_builder.build(
+
+                user_id,
+
+                state["normalized"]
+
+            )
+
+        llm = gateway.ask(
+
+            provider,
+
+            state["normalized"],
+
+            rag_data["context"]
+
+        )
+
+
+        agents = orchestrator.execute(
+
+            state["normalized"]
+
+        )
+
+        if llm.get("status") == "completed":
+
+            memory.remember(
+
+                state["normalized"],
+
+                llm["answer"],
+
+                metadata={
+
+                    "provider":provider,
+
+                    "pipeline":state.get("intent")
+
+                }
+
+            )
 
 
         return {
@@ -73,16 +97,19 @@ class QuavronBrain:
 
             "version":self.version,
 
-            "agent":agent,
+            "pipeline":state,
 
-            "analysis":analysis,
+            "rag":rag_data,
 
-            "answer":answer,
+            "user_context":user_context,
 
-            "agent_result":agent_result
+            "provider":provider,
+
+            "llm":llm,
+
+            "agents":agents
 
         }
-
 
 
 brain = QuavronBrain()

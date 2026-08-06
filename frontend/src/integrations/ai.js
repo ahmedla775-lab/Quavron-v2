@@ -2,14 +2,14 @@ class AIIntegration {
 
   async chat(prompt) {
 
-    return {
-      role: "assistant",
-      message: "AI integration is ready.",
-    };
+    const response = await fetch(
+      `http://100.115.48.157:8000/api/think/${encodeURIComponent(prompt)}`
+    );
+
+    return await response.json();
 
   }
 
 }
 
 export default new AIIntegration();
-

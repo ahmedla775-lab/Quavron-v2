@@ -1,5 +1,5 @@
 import json
-import os
+from pathlib import Path
 from datetime import datetime
 
 
@@ -7,47 +7,118 @@ class Memory:
 
     def __init__(self):
 
-        self.file = "memory/storage/memory.json"
+        self.path = Path(
+            "memory/storage/memory.json"
+        )
 
-        if not os.path.exists(self.file):
-            with open(self.file, "w") as f:
-                json.dump([], f)
+        if not self.path.exists():
+
+            self.path.write_text(
+                "[]",
+                encoding="utf-8"
+            )
 
 
-    def remember(self, user_input, response):
+    def load(self):
 
-        with open(self.file, "r") as f:
-            data = json.load(f)
+        return json.loads(
 
+            self.path.read_text(
+                encoding="utf-8"
+            )
+
+        )
+
+
+    def save(self, data):
+
+        self.path.write_text(
+
+            json.dumps(
+                data,
+                ensure_ascii=False,
+                indent=2
+            ),
+
+            encoding="utf-8"
+
+        )
+
+
+    def remember(
+
+        self,
+
+        user_input,
+
+        response,
+
+        user="anonymous",
+
+        session="default",
+
+        metadata=None
+
+    ):
+
+        data = self.load()
 
         item = {
+
+            "user": user,
+
+            "session": session,
 
             "input": user_input,
 
             "response": response,
 
-            "time": str(datetime.now())
+            "metadata": metadata or {},
+
+            "time": datetime.utcnow().isoformat()
 
         }
 
-
         data.append(item)
 
-
-        with open(self.file, "w") as f:
-            json.dump(data, f, indent=2)
-
-
+        self.save(data)
 
         return item
 
 
+    def history(
 
-    def history(self):
+        self,
 
-        with open(self.file, "r") as f:
-            return json.load(f)
+        user=None,
 
+        session=None
+
+    ):
+
+        data = self.load()
+
+        if user:
+
+            data = [
+
+                x for x in data
+
+                if x.get("user", "anonymous") == user
+
+            ]
+
+        if session:
+
+            data = [
+
+                x for x in data
+
+                if x.get("session", "default") == session
+
+            ]
+
+        return data
 
 
 memory = Memory()
