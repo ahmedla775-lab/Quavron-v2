@@ -1,24 +1,29 @@
 import { supabase } from "../lib/supabase";
 
+
 class VerificationRequestService {
 
-  async getMyRequest(userId) {
+
+  async getMyRequest(userId){
 
     return await supabase
       .from("verification_requests")
       .select("*")
-      .eq("user_id", userId)
-      .order("created_at", {
-        ascending: false,
+      .eq("user_id",userId)
+      .order("created_at",{
+        ascending:false
       })
       .limit(1)
       .maybeSingle();
 
   }
 
-  async getAll(status = null) {
 
-    let query = supabase
+
+  async getAll(status=null){
+
+    let query =
+      supabase
       .from("verification_requests")
       .select(`
         *,
@@ -31,93 +36,139 @@ class VerificationRequestService {
           verification_type
         )
       `)
-      .order("created_at", {
-        ascending: false,
+      .order("created_at",{
+        ascending:false
       });
 
-    if (status) {
 
-      query = query.eq("status", status);
-
+    if(status){
+      query=query.eq(
+        "status",
+        status
+      );
     }
+
 
     return await query;
 
   }
 
-  async create(values) {
 
+
+
+  async create(values){
     return await supabase
       .from("verification_requests")
-      .insert(values)
+      .insert({
+        user_id:
+          values.user_id,
+
+        status:
+          values.status || "pending",
+
+        account_type:
+          values.account_type || "individual",
+
+        verification_kind:
+          values.verification_kind ||
+          values.verification_type ||
+          "blue"
+      })
       .select()
       .single();
-
   }
 
-  async update(id, values) {
+
+  async update(id,values){
 
     return await supabase
       .from("verification_requests")
       .update(values)
-      .eq("id", id)
+      .eq("id",id)
       .select()
       .single();
 
   }
 
-  async delete(id) {
 
-    return await supabase
-      .from("verification_requests")
-      .delete()
-      .eq("id", id);
 
-  }
 
-  async approve(requestId, userId, type = "blue") {
+
+  async approve(
+    requestId,
+    userId,
+    type="blue"
+  ){
+
 
     await supabase
       .from("verification_requests")
       .update({
-        status: "approved",
+
+        status:"approved"
+
       })
-      .eq("id", requestId);
+      .eq("id",requestId);
+
+
 
     return await supabase
       .from("profiles")
       .update({
-        verified: true,
-        verification_type: type,
+
+        verified:true,
+
+        verification_type:type
+
       })
-      .eq("id", userId);
+      .eq("id",userId);
+
 
   }
 
-  async reject(requestId, reason = "") {
+
+
+
+
+  async reject(
+    requestId,
+    reason=""
+  ){
 
     return await supabase
       .from("verification_requests")
       .update({
-        status: "rejected",
-        rejection_reason: reason,
+
+        status:"rejected",
+
+        rejection_reason:reason
+
       })
-      .eq("id", requestId);
+      .eq("id",requestId);
+
 
   }
 
-  async removeVerification(userId) {
+
+
+
+  async removeVerification(userId){
 
     return await supabase
       .from("profiles")
       .update({
-        verified: false,
-        verification_type: null,
+
+        verified:false,
+
+        verification_type:null
+
       })
-      .eq("id", userId);
+      .eq("id",userId);
 
   }
 
+
 }
+
 
 export default new VerificationRequestService();

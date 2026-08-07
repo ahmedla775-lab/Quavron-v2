@@ -84,8 +84,7 @@ export default function Topbar() {
             <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
           </button>
 
-          {!isMobile && (
-            <div className="relative">
+          <div className="relative">
               <button
                 onClick={() => setOpenMenu(!openMenu)}
                 className="flex items-center gap-3 rounded-xl p-1 transition hover:bg-[var(--q-surface)]"
@@ -153,7 +152,6 @@ export default function Topbar() {
                 </div>
               )}
             </div>
-          )}
         </div>
       </div>
     </header>

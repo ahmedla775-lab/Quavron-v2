@@ -39,40 +39,24 @@ class AdminVerificationService {
       .single();
   }
 
-  async approve(requestId, userId, type) {
-
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        verified: true,
-        verification_type: type,
-      })
-      .eq("id", userId);
-
-    if (error) return { error };
-
-    return await supabase
-      .from("verification_requests")
-      .update({
-        status: "approved",
-        reviewed_at: new Date().toISOString(),
-      })
-      .eq("id", requestId);
-
+  async approve(requestId, userId, type = "blue") {
+    return await supabase.rpc(
+      "approve_verification_request",
+      {
+        p_request_id: requestId,
+        p_type: type,
+      }
+    );
   }
-
-  async reject(requestId) {
-
-    return await supabase
-      .from("verification_requests")
-      .update({
-        status: "rejected",
-        reviewed_at: new Date().toISOString(),
-      })
-      .eq("id", requestId);
-
+  async reject(requestId, reason = "") {
+    return await supabase.rpc(
+      "reject_verification_request",
+      {
+        p_request_id: requestId,
+        p_reason: reason,
+      }
+    );
   }
-
 }
 
 export default new AdminVerificationService();

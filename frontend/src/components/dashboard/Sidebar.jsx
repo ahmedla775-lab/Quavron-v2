@@ -11,7 +11,7 @@ import {
   User,
   Menu,
   X,
-  ShieldCheck,
+  ShieldCheck, Building2,
 } from "lucide-react";
 
 import { NavLink } from "react-router-dom";
@@ -19,8 +19,10 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../auth/AuthProvider";
+import { ROLE_PERMISSIONS } from "../../constants/rolePermissions";
 import { useSettings } from "../../context/SettingsContext";
 import useResponsive from "../../hooks/useResponsive";
+import { can } from "../../security/AccessControl";
 
 
 const menu = [
@@ -48,6 +50,26 @@ const menu = [
     key: "marketplace",
     icon: ShoppingCart,
     path: "/marketplace",
+  },
+  {
+    key: "sellerCenter",
+    icon: ShoppingCart,
+    path: "/seller",
+  },
+  {
+    key: "developer",
+    icon: Code2,
+    path: "/developer",
+  },
+  {
+    key: "company",
+    icon: Building2,
+    path: "/company",
+  },
+  {
+    key: "investor",
+    icon: BarChart3,
+    path: "/investor",
   },
   {
     key: "hosting",
@@ -94,12 +116,37 @@ export default function Sidebar() {
   const [open, setOpen] = useState(false);
 
 
-  const navigation = [...menu];
+    const navigation = menu.filter((item)=>{
+
+      if (item.key === "marketplace") {
+        return can(profile,"marketplace");
+      }
+
+      if (item.key === "sellerCenter") {
+        return can(profile,"sellerCenter");
+      }
+
+      if (item.key === "developer") {
+        return can(profile,"developer");
+      }
+
+      if (item.key === "company") {
+        return can(profile,"company");
+      }
+
+      if (item.key === "investor") {
+        return can(profile,"investor");
+      }
+
+      return true;
+
+    });
 
 
   if (
     profile?.role === "owner" ||
-    profile?.role === "admin"
+    profile?.role === "admin" ||
+    profile?.role === "quavron_official"
   ) {
 
     navigation.push({
@@ -109,7 +156,6 @@ export default function Sidebar() {
     });
 
   }
-
 
   const colors = {
 
@@ -297,7 +343,6 @@ Next Generation Platform
 
 
 </div>
-)}
 
 
 </div>

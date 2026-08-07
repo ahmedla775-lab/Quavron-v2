@@ -1,42 +1,66 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useAuth } from "../../auth/AuthProvider";
 
-export default function MarketplaceSettings() {
 
-  const [settings, setSettings] = useState({
+export default function MarketplaceSettings(){
 
-    sellerMode: true,
+  const { user } = useAuth();
 
-    buyerMode: true,
 
-    publicStore: true,
+  const accountType =
+    user?.user_metadata?.account_type ||
+    "individual";
 
-    allowMessages: true,
 
-    showEmail: false,
+  const businessAccounts = [
+    "seller",
+    "company_owner",
+    "startup",
+    "organization",
+    "quavron_official"
+  ];
 
-    showPhone: false,
 
-    autoAcceptOrders: false,
+  const isBusiness =
+    businessAccounts.includes(accountType);
 
-    allowOffers: true,
 
-    allowReviews: true,
 
-    showRatings: true,
+  const [settings,setSettings] = useState({
 
-    digitalProducts: true,
+    sellerMode:isBusiness,
 
-    physicalProducts: true,
+    buyerMode:true,
 
-    notifications: true,
+    publicStore:false,
 
-    analytics: true,
+    allowMessages:true,
 
-    vacationMode: false,
+    showEmail:false,
 
-    featuredSeller: false,
+    showPhone:false,
+
+    autoAcceptOrders:false,
+
+    allowOffers:true,
+
+    allowReviews:true,
+
+    showRatings:true,
+
+    digitalProducts:true,
+
+    physicalProducts:true,
+
+    notifications:true,
+
+    analytics:true,
+
+    vacationMode:false
 
   });
+
+
 
   function toggle(key){
 
@@ -44,171 +68,152 @@ export default function MarketplaceSettings() {
 
       ...prev,
 
-      [key]:!prev[key],
+      [key]:!prev[key]
 
     }));
 
   }
 
-  return(
 
-    <div className="mx-auto max-w-5xl p-8">
 
-      <h1 className="text-3xl font-bold text-[var(--q-text)]">
+  return (
 
-        Marketplace
+<div className="mx-auto max-w-5xl p-8">
 
-      </h1>
 
-      <p className="mt-2 text-[var(--q-muted)]">
+<h1 className="text-3xl font-bold text-[var(--q-text)]">
+Marketplace
+</h1>
 
-        Configure your Marketplace profile and selling preferences.
 
-      </p>
+<p className="mt-2 text-[var(--q-muted)]">
+Manage your marketplace identity and selling access.
+</p>
 
-      <div className="mt-10 space-y-8">
 
-        <Section
-          title="Account"
-          items={[
-            ["Enable Seller Account","sellerMode"],
-            ["Enable Buyer Account","buyerMode"],
-            ["Public Store","publicStore"],
-            ["Marketplace Notifications","notifications"],
-          ]}
-          settings={settings}
-          toggle={toggle}
-        />
 
-        <Section
-          title="Store"
-          items={[
-            ["Auto Accept Orders","autoAcceptOrders"],
-            ["Allow Offers","allowOffers"],
-            ["Allow Reviews","allowReviews"],
-            ["Display Ratings","showRatings"],
-            ["Vacation Mode","vacationMode"],
-            ["Featured Seller","featuredSeller"],
-          ]}
-          settings={settings}
-          toggle={toggle}
-        />
+<div className="mt-8 rounded-2xl border p-6 bg-[var(--q-surface)]">
 
-        <Section
-          title="Products"
-          items={[
-            ["Digital Products","digitalProducts"],
-            ["Physical Products","physicalProducts"],
-          ]}
-          settings={settings}
-          toggle={toggle}
-        />
 
-        <Section
-          title="Privacy"
-          items={[
-            ["Allow Buyer Messages","allowMessages"],
-            ["Show Email","showEmail"],
-            ["Show Phone","showPhone"],
-            ["Store Analytics","analytics"],
-          ]}
-          settings={settings}
-          toggle={toggle}
-        />
+<h2 className="text-xl font-bold text-[var(--q-text)]">
+Account Type
+</h2>
 
-      </div>
 
-      <div className="mt-10 flex justify-end">
+<p className="mt-2 text-[var(--q-muted)]">
+{accountType}
+</p>
 
-        <button
-          className="
-            rounded-xl
-            bg-blue-600
-            px-8
-            py-3
-            font-semibold
-            text-[var(--q-text)]
-            hover:bg-blue-700
-          "
-        >
 
-          Save Changes
 
-        </button>
+</div>
 
-      </div>
 
-    </div>
 
-  );
+{isBusiness ? (
+
+<div className="mt-8 rounded-2xl border p-6">
+
+
+<h2 className="text-xl font-bold">
+Business Marketplace
+</h2>
+
+
+<p className="mt-2 text-[var(--q-muted)]">
+
+Your account can create stores,
+manage products and request business verification.
+
+</p>
+
+
+</div>
+
+)
+
+:
+
+<div className="mt-8 rounded-2xl border p-6">
+
+<h2 className="text-xl font-bold">
+
+Personal Marketplace
+
+</h2>
+
+
+<p className="mt-2 text-[var(--q-muted)]">
+
+You can buy products and upgrade your identity later.
+
+</p>
+
+
+</div>
 
 }
 
-function Section({
 
-  title,
 
-  items,
 
-  settings,
+<div className="mt-8 rounded-2xl border bg-[var(--q-surface)]">
 
-  toggle,
 
-}){
+{Object.entries(settings).map(([key,value])=>(
 
-  return(
+<div
+key={key}
+className="flex justify-between border-b p-5"
+>
 
-    <div className="rounded-2xl border border-[var(--q-border)] bg-[var(--q-surface)]">
 
-      <div className="border-b border-[var(--q-border)] p-3 md:p-5">
+<span className="text-[var(--q-text)]">
+{key}
+</span>
 
-        <h2 className="text-xl font-semibold text-[var(--q-text)]">
 
-          {title}
+<button
 
-        </h2>
+onClick={()=>toggle(key)}
 
-      </div>
+className={
+value
+?
+"rounded-full bg-green-600 px-5 py-2 text-white"
+:
+"rounded-full bg-slate-700 px-5 py-2 text-white"
+}
 
-      {items.map(([label,key])=>(
+>
 
-        <div
-          key={key}
-          className="
-            flex
-            items-center
-            justify-start md:justify-between
-            border-b
-            border-[var(--q-border)]
-            p-3 md:p-5
-            last:border-0
-          "
-        >
+{value ? "ON":"OFF"}
 
-          <span className="text-[var(--q-text)]">
+</button>
 
-            {label}
 
-          </span>
+</div>
 
-          <button
-            onClick={()=>toggle(key)}
-            className={`rounded-full px-5 py-2 font-semibold ${
-              settings[key]
-                ? "bg-green-600 text-[var(--q-text)]"
-                : "bg-slate-700 text-[var(--q-text)]"
-            }`}
-          >
 
-            {settings[key] ? "ON" : "OFF"}
+))}
 
-          </button>
 
-        </div>
+</div>
 
-      ))}
 
-    </div>
+
+<button
+
+className="mt-8 rounded-xl bg-blue-600 px-8 py-3 font-bold text-white"
+
+>
+
+Save Changes
+
+</button>
+
+
+</div>
 
   );
 

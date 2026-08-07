@@ -32,6 +32,7 @@ const settingsMenu = [
     group: "Profile",
     items: [
       { id: "profile", title: "Profile", icon: Users },
+             { id: "identity", title: "Identity Profile", icon: User },
       { id: "verification", title: "Verification", icon: BadgeCheck },
       { id: "appearance", title: "Appearance", icon: Palette },
       { id: "language", title: "Language", icon: Globe },

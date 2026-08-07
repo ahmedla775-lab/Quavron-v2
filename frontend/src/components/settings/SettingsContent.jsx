@@ -13,6 +13,7 @@ import HostingSettings from "./pages/HostingSettings";
 import MarketplaceSettings from "./pages/MarketplaceSettings";
 import DeveloperSettings from "./pages/DeveloperSettings";
 import BillingSettings from "./pages/BillingSettings";
+import IdentitySettings from "./pages/IdentitySettings";
 import APISettings from "./pages/APISettings";
 import { SETTINGS_SEARCH } from "../../constants/settingsSearch";
 export default function SettingsContent({
@@ -27,6 +28,9 @@ export default function SettingsContent({
 
     case "profile":
       return <ProfileSettings />;
+
+    case "identity":
+      return <IdentitySettings />;
 
     case "security":
       return <SecuritySettings />;

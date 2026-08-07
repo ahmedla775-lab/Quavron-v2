@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../../components/auth/AuthProvider";
+import { can } from "../../security/AccessControl";
 
-import VerificationRequestService from "../../services/VerificationRequestService";
+import AdminVerificationService from "../../services/admin/AdminVerificationService";
 
 import VerificationRequestCard from "../../components/admin/verification/VerificationRequestCard";
 import VerificationApproveDialog from "../../components/admin/verification/VerificationApproveDialog";
 
 export default function VerificationManagement() {
+  const { profile } = useAuth();
 
   const [requests, setRequests] = useState([]);
 
@@ -17,12 +21,13 @@ export default function VerificationManagement() {
   const [approveDialogOpen, setApproveDialogOpen] =
     useState(false);
 
+
   async function loadRequests() {
 
     setLoading(true);
 
     const { data } =
-      await VerificationRequestService.getAll();
+      await AdminVerificationService.getRequests();
 
     setRequests(data || []);
 
@@ -36,6 +41,10 @@ export default function VerificationManagement() {
 
   }, []);
 
+    if (!can(profile, "verificationReview")) {
+      return <Navigate to="/admin" replace />;
+    }
+
   function handleApprove(request) {
 
     setSelectedRequest(request);
@@ -46,15 +55,15 @@ export default function VerificationManagement() {
 
   async function confirmApprove(type) {
 
-    await VerificationRequestService.approve(
+    const { error } = await AdminVerificationService.approve(
+        selectedRequest.id,
+        type
+      );
 
-      selectedRequest.id,
-
-      selectedRequest.user_id,
-
-      type
-
-    );
+      if (error) {
+        alert(error.message);
+        return;
+      }
 
     setApproveDialogOpen(false);
 
@@ -71,13 +80,15 @@ export default function VerificationManagement() {
 
     if (reason === null) return;
 
-    await VerificationRequestService.reject(
+    const { error } = await AdminVerificationService.reject(
+        request.id,
+        reason
+      );
 
-      request.id,
-
-      reason
-
-    );
+      if (error) {
+        alert(error.message);
+        return;
+      }
 
     await loadRequests();
 

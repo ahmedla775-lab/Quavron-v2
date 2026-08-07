@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-
 import VerificationRequestService from "../../../services/VerificationRequestService";
 
 export default function VerificationDialog({
@@ -8,207 +7,204 @@ export default function VerificationDialog({
   onClose,
 }) {
 
-  const [request, setRequest] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [request,setRequest] = useState(null);
+  const [loading,setLoading] = useState(false);
 
-  async function loadRequest() {
+  const [verificationType,setVerificationType] = useState("blue");
 
-    if (!profile) return;
 
-    const { data } =
+  async function loadRequest(){
+
+    if(!profile) return;
+
+    const {data} =
       await VerificationRequestService.getMyRequest(
         profile.id
       );
 
     setRequest(data);
-
   }
 
-  useEffect(() => {
 
-    if (open && profile) {
+  useEffect(()=>{
 
+    if(open && profile){
       loadRequest();
-
     }
 
-  }, [open, profile]);
+  },[open,profile]);
 
-  async function submitRequest() {
+
+  async function submitRequest(){
 
     setLoading(true);
 
-    const { error } =
+
+    const businessTypes = [
+      "seller",
+      "company_owner",
+      "startup",
+      "organization"
+    ];
+
+
+    const isBusiness =
+      businessTypes.includes(
+        profile.account_type
+      );
+
+
+    const {error} =
       await VerificationRequestService.create({
 
         user_id: profile.id,
 
-        status: "pending",
+        status:"pending",
+
+        account_type:
+          profile.account_type || "individual",
+
+        verification_kind:
+          verificationType,
 
       });
 
+
     setLoading(false);
 
-    if (error) {
 
+    if(error){
       alert(error.message);
-
       return;
-
     }
+
 
     await loadRequest();
 
   }
 
-  if (!open) return null;
+
+  if(!open) return null;
+
 
   return (
 
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
 
-      <div className="w-full max-w-lg rounded-3xl border border-[var(--q-border)] bg-[var(--q-surface)] p-8 shadow-2xl">
+<div className="w-full max-w-lg rounded-3xl border bg-[var(--q-surface)] p-8">
 
-        <h2 className="mb-2 text-3xl font-bold text-[var(--q-text)]">
-          Account Verification
-        </h2>
 
-        <p className="mb-8 text-[var(--q-muted)]">
-          Verify your identity to receive the official Quavron verification badge.
-        </p>
+<h2 className="text-3xl font-bold text-[var(--q-text)]">
+Account Verification
+</h2>
 
-        {profile?.verified ? (
 
-          <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5">
+<p className="mt-2 text-[var(--q-muted)]">
+Request official Quavron verification.
+</p>
 
-            <p className="text-lg font-semibold text-emerald-400">
-              ✅ Your account is verified.
-            </p>
 
-            <p className="mt-2 text-sm text-[var(--q-text)]">
-              Your profile already has the official Quavron verification badge.
-            </p>
+{!request && !profile?.verified && (
 
-          </div>
+<div className="mt-8 space-y-5">
 
-        ) : request ? (
 
-          <div className="space-y-4">
+<label className="block text-[var(--q-text)]">
+Verification Type
+</label>
 
-            <div className="rounded-2xl border border-[var(--q-border)] bg-[var(--q-card)] p-5">
 
-              <h3 className="mb-3 font-semibold text-[var(--q-text)]">
-                Verification Status
-              </h3>
+<select
 
-              {request.status === "pending" && (
+value={verificationType}
 
-                <div>
+onChange={(e)=>
+setVerificationType(e.target.value)
+}
 
-                  <p className="text-lg font-semibold text-yellow-400">
-                    🟡 Pending Review
-                  </p>
+className="w-full rounded-xl border p-3 bg-[var(--q-surface)]"
 
-                  <p className="mt-2 text-sm text-[var(--q-muted)]">
-                    Your request has been received and is waiting for review by the Quavron team.
-                  </p>
+>
 
-                </div>
 
-              )}
+<option value="blue">
+Blue Badge - Individual
+</option>
 
-              {request.status === "approved" && (
 
-                <div>
+<option value="black">
+Black Badge - Company
+</option>
 
-                  <p className="text-lg font-semibold text-sky-400">
-                    🔵 Approved
-                  </p>
 
-                  <p className="mt-2 text-sm text-[var(--q-muted)]">
-                    Congratulations! Your account has been verified.
-                  </p>
+<option value="white">
+White Badge - Government
+</option>
 
-                </div>
 
-              )}
+<option value="gray">
+Gray Badge - Contributor
+</option>
 
-              {request.status === "rejected" && (
 
-                <div>
+</select>
 
-                  <p className="text-lg font-semibold text-red-400">
-                    🔴 Rejected
-                  </p>
 
-                  <p className="mt-2 text-sm text-[var(--q-muted)]">
-                    Your request was rejected. You may submit a new request after updating your information.
-                  </p>
 
-                  {request.rejection_reason && (
+<button
 
-                    <div className="mt-4 rounded-xl bg-[var(--q-surface)] p-3">
+disabled={loading}
 
-                      <p className="text-sm text-[var(--q-text)]">
-                        Reason:
-                      </p>
+onClick={submitRequest}
 
-                      <p className="mt-1 text-sm text-red-300">
-                        {request.rejection_reason}
-                      </p>
+className="w-full rounded-xl bg-blue-600 px-6 py-3 font-bold text-white"
 
-                    </div>
+>
 
-                  )}
+{loading
+?
+"Submitting..."
+:
+"Request Verification"}
 
-                </div>
+</button>
 
-              )}
 
-            </div>
+</div>
 
-          </div>
+)}
 
-        ) : (
 
-          <div>
+{request && (
 
-            <div className="mb-6 rounded-2xl border border-blue-500/20 bg-blue-500/10 p-5">
+<div className="mt-8 rounded-xl border p-5">
 
-              <p className="text-[var(--q-text)]">
-                Request verification to receive the official blue badge and prove the authenticity of your account.
-              </p>
+<p className="font-bold text-yellow-400">
+Status: {request.status}
+</p>
 
-            </div>
+</div>
 
-            <button
-              disabled={loading}
-              onClick={submitRequest}
-              className="w-full rounded-xl bg-blue-600 px-6 py-3 font-semibold text-[var(--q-text)] transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {loading
-                ? "Submitting..."
-                : "Request Verification"}
-            </button>
+)}
 
-          </div>
 
-        )}
 
-        <div className="mt-8 flex justify-end">
+<button
 
-          <button
-            onClick={onClose}
-            className="rounded-xl bg-[var(--q-card)] px-6 py-3 text-[var(--q-text)] transition hover:bg-[var(--q-surface)]"
-          >
-            Close
-          </button>
+onClick={onClose}
 
-        </div>
+className="mt-8 rounded-xl bg-[var(--q-card)] px-6 py-3"
 
-      </div>
+>
 
-    </div>
+Close
+
+</button>
+
+
+</div>
+
+</div>
 
   );
 

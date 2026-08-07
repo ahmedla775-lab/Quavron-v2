@@ -40,8 +40,13 @@ import ReportsManagement from "./pages/admin/ReportsManagement";
 import AdsManagement from "./pages/admin/AdsManagement";
 import SystemSettings from "./pages/admin/SystemSettings";
 
+import Developer from "./pages/roles/Developer";
+import Investor from "./pages/roles/Investor";
+import SellerCenter from "./modules/marketplace/components/seller/SellerCenter";
+import BusinessProfiles from "./modules/marketplace/components/business/BusinessProfiles";
 import Layout from "./components/layout/Layout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import RoleRoute from "./components/auth/RoleRoute";
 import AdminRoute from "./components/admin/AdminRoute";
 
 const QCCDashboard = lazy(() => import("./modules/qcc/pages/QCCDashboard"));
@@ -210,6 +215,50 @@ function App() {
           element={<PostDetails />}
         />
 
+            <Route
+              path="/seller"
+              element={
+                <ProtectedRoute>
+                  <RoleRoute permission="sellerCenter">
+                    <SellerCenter />
+                  </RoleRoute>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/company"
+              element={
+                <ProtectedRoute>
+                  <RoleRoute permission="company">
+                    <BusinessProfiles />
+                  </RoleRoute>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+            path="/developer"
+            element={
+              <ProtectedRoute>
+                  <RoleRoute permission="developer">
+                <Developer />
+                    </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/investor"
+            element={
+              <ProtectedRoute>
+                    <RoleRoute permission="investor">
+                <Investor />
+                    </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+
         <Route
           path="/admin"
           element={
@@ -231,7 +280,7 @@ function App() {
         <Route
           path="/admin/verifications"
           element={
-            <AdminRoute>
+            <AdminRoute permission="verificationReview">
               <VerificationManagement />
             </AdminRoute>
           }
