@@ -1,31 +1,315 @@
 from vector_memory.search import search
 from knowledge.search.search import search_engine
+from learning.datasets.retriever import learning_retriever
+
+
+SOURCE_PRIORITY = {
+    "qai_learning": 300,
+    "knowledge": 200,
+    "vector": 100,
+}
 
 
 class Retriever:
 
-    def retrieve(self, query, limit=5):
+    # =========================================================
+    # NORMALIZATION
+    # =========================================================
+
+    def normalize(self, text):
+        text = str(text or "").lower()
+
+        replacements = {
+            "أ": "ا",
+            "إ": "ا",
+            "آ": "ا",
+            "ى": "ي",
+            "ة": "ه",
+        }
+
+        for a, b in replacements.items():
+            text = text.replace(a, b)
+
+        return " ".join(text.split())
+
+    # =========================================================
+    # TOKENIZATION
+    # =========================================================
+
+    def meaningful_words(self, text):
+        text = self.normalize(text)
+
+        stop_words = {
+            "ما", "هو", "هي", "هل", "من",
+            "كيف", "ماذا", "لماذا", "متى",
+            "اين", "أين", "في", "من",
+            "على", "الى", "إلى", "عن",
+            "مع", "و", "او", "أو",
+            "لي", "ني", "انا", "أنا",
+            "يمكن", "يستطيع",
+
+            "the", "what", "is", "how",
+            "why", "who", "when", "where",
+            "can", "does", "do", "a", "an",
+
+            "فيه", "به", "هذه", "هذا",
+            "ذلك", "تلك", "بين",
+        }
+
+        return [
+            word
+            for word in text.split()
+            if word not in stop_words
+            and len(word) >= 2
+        ]
+
+    # =========================================================
+    # RELEVANCE
+    # =========================================================
+
+    def relevance(self, query, text):
+
+        q = self.normalize(query)
+        t = self.normalize(text)
+
+        if not q or not t:
+            return 0
+
+        q_words = self.meaningful_words(q)
+        t_words = self.meaningful_words(t)
+
+        if not q_words or not t_words:
+            return 0
+
+        qset = set(q_words)
+        tset = set(t_words)
+
+        # -----------------------------------------------------
+        # Exact full text
+        # -----------------------------------------------------
+
+        if q == t:
+            return 100
+
+        score = 0
+        matched = 0
+
+        # -----------------------------------------------------
+        # Exact meaningful word matching
+        # -----------------------------------------------------
+
+        for word in qset:
+
+            if word in tset:
+
+                matched += 1
+
+                if len(word) >= 5:
+                    score += 30
+                else:
+                    score += 15
+
+        # -----------------------------------------------------
+        # Partial matching
+        # -----------------------------------------------------
+
+        for qword in qset:
+
+            if len(qword) < 5:
+                continue
+
+            for tword in tset:
+
+                if len(tword) < 5:
+                    continue
+
+                if qword == tword:
+                    continue
+
+                if qword in tword or tword in qword:
+                    score += 5
+
+        # -----------------------------------------------------
+        # Coverage
+        # -----------------------------------------------------
+
+        coverage = matched / max(len(qset), 1)
+
+        if len(qset) >= 3 and coverage < 0.5:
+            score = min(score, 20)
+
+        elif len(qset) >= 2 and coverage < 0.5:
+            score = min(score, 25)
+
+        return min(score, 100)
+
+    # =========================================================
+    # COMPOUND QUERY DETECTION
+    # =========================================================
+
+    def is_compound_query(self, query):
+
+        text = self.normalize(query)
+
+        compound_words = [
+            "قارن",
+            "مقارنة",
+            "الفرق",
+            "ما الفرق",
+            "ما هو الفرق",
+            "أيهما",
+            "افضل من",
+            "مقابل",
+
+            "compare",
+            "comparison",
+            "difference",
+            "differences",
+            "versus",
+            "vs",
+        ]
+
+        return any(
+            word in text
+            for word in compound_words
+        )
+
+    # =========================================================
+    # EXTRACT IMPORTANT CONCEPTS
+    # =========================================================
+
+    def extract_concepts(self, query):
+
+        text = self.normalize(query)
+
+        concepts = []
+
+        # -----------------------------------------------------
+        # Known Quavron concepts
+        #
+        # These are deliberately explicit. Later this can
+        # become a dynamic concept/entity extractor.
+        # -----------------------------------------------------
+
+        known_concepts = [
+            "qai",
+            "quavron",
+            "cloud ide",
+            "marketplace",
+            "cloud",
+            "ide",
+            "community",
+            "dashboard",
+            "hosting",
+            "courses",
+            "freelance",
+            "analytics",
+            "social hub",
+            "cloud ide",
+            "api",
+        ]
+
+        for concept in known_concepts:
+
+            if concept in text:
+                concepts.append(concept)
+
+        # -----------------------------------------------------
+        # Remove duplicates while preserving order
+        # -----------------------------------------------------
+
+        cleaned = []
+        seen = set()
+
+        for concept in concepts:
+
+            key = self.normalize(concept)
+
+            if key in seen:
+                continue
+
+            seen.add(key)
+            cleaned.append(concept)
+
+        return cleaned
+
+    # =========================================================
+    # SINGLE SOURCE SEARCH
+    # =========================================================
+
+    def _search_one(self, query, limit=8):
 
         results = []
 
-        # Vector Memory
-        try:
-            vector_results = search.search(query)
+        # =====================================================
+        # 1. LEARNED KNOWLEDGE
+        # =====================================================
 
-            for item in vector_results:
+        try:
+
+            learned_results = learning_retriever.search(
+                query,
+                limit=limit
+            )
+
+            for item in learned_results:
+
+                text = item.get("answer", "")
+
+                if not text:
+                    continue
+
+                rel = self.relevance(
+                    query,
+                    text
+                )
+
+                question = item.get("question")
+
+                if isinstance(question, dict):
+
+                    for value in question.values():
+
+                        rel = max(
+                            rel,
+                            self.relevance(
+                                query,
+                                value
+                            )
+                        )
+
                 results.append({
-                    "text": item.get("text", ""),
-                    "score": item.get("score", 0),
-                    "source": "vector"
+                    "text": text,
+                    "score": (
+                        SOURCE_PRIORITY["qai_learning"]
+                        + item.get("score", 0)
+                    ),
+                    "relevance": rel,
+                    "source": "qai_learning",
+                    "teacher": item.get("teacher"),
+                    "confidence": item.get(
+                        "confidence",
+                        0
+                    ),
+                    "question": question,
                 })
 
-        except Exception:
-            pass
+        except Exception as e:
 
+            print(
+                "learning retrieval error:",
+                e
+            )
 
-        # Knowledge Base
+        # =====================================================
+        # 2. OFFICIAL KNOWLEDGE
+        # =====================================================
+
         try:
-            knowledge_results = search_engine.search(query)
+
+            knowledge_results = search_engine.search(
+                query
+            )
 
             for item in knowledge_results:
 
@@ -38,54 +322,346 @@ class Retriever:
                     content = value.get("content")
 
                     if isinstance(content, dict):
-                        text = content.get("ar", "")
+
+                        text = (
+                            content.get("ar")
+                            or content.get("en")
+                            or content.get("fr")
+                            or ""
+                        )
 
                     elif content:
+
                         text = str(content)
 
                     else:
+
                         title = value.get("title")
 
                         if isinstance(title, dict):
-                            text = title.get("ar", "")
 
-                else:
+                            text = (
+                                title.get("ar")
+                                or title.get("en")
+                                or title.get("fr")
+                                or ""
+                            )
+
+                        elif title:
+
+                            text = str(title)
+
+                elif value:
+
                     text = str(value)
 
+                if not text:
+                    continue
 
-                if text:
-                    results.append({
-                        "text": text,
-                        "score": item.get("score", 0) + 50,
-                        "source": "knowledge"
-                    })
+                rel = self.relevance(
+                    query,
+                    text
+                )
+
+                item_question = item.get(
+                    "question"
+                )
+
+                if isinstance(item_question, dict):
+
+                    for value in item_question.values():
+
+                        rel = max(
+                            rel,
+                            self.relevance(
+                                query,
+                                value
+                            )
+                        )
+
+                results.append({
+                    "text": text,
+                    "score": (
+                        SOURCE_PRIORITY["knowledge"]
+                        + item.get("score", 0)
+                    ),
+                    "relevance": rel,
+                    "source": "knowledge",
+                    "confidence": item.get(
+                        "confidence",
+                        0
+                    ),
+                })
 
         except Exception as e:
-            print("knowledge error:", e)
 
+            print(
+                "knowledge error:",
+                e
+            )
 
-        results.sort(
-            key=lambda x: x["score"],
-            reverse=True
-        )
+        # =====================================================
+        # 3. VECTOR MEMORY
+        # =====================================================
 
+        try:
 
-        # إزالة التكرار + فلترة النتائج الضعيفة
-        cleaned = []
-        seen = set()
+            vector_results = search.search(
+                query
+            )
+
+            for item in vector_results:
+
+                text = item.get(
+                    "text",
+                    ""
+                )
+
+                if not text:
+                    continue
+
+                rel = self.relevance(
+                    query,
+                    text
+                )
+
+                results.append({
+                    "text": text,
+                    "score": (
+                        SOURCE_PRIORITY["vector"]
+                        + item.get("score", 0)
+                    ),
+                    "relevance": rel,
+                    "source": "vector",
+                })
+
+        except Exception as e:
+
+            print(
+                "vector retrieval error:",
+                e
+            )
+
+        return results
+
+    # =========================================================
+    # FILTER + RANK
+    # =========================================================
+
+    def _rank_and_clean(self, results):
+
+        filtered = []
 
         for item in results:
 
-            if item["text"] in seen:
+            relevance = float(
+                item.get(
+                    "relevance",
+                    0
+                ) or 0
+            )
+
+            # Strong result
+            if relevance >= 40:
+
+                filtered.append(item)
                 continue
 
-            seen.add(item["text"])
+            # Medium result allowed for trusted knowledge
+            if (
+                relevance >= 25
+                and item.get("source") in {
+                    "qai_learning",
+                    "knowledge",
+                }
+            ):
 
-            # تجاهل النتائج الضعيفة جداً
-            if item["score"] < 5:
+                filtered.append(item)
+
+        # -----------------------------------------------------
+        # Calculate final score
+        # -----------------------------------------------------
+
+        for item in filtered:
+
+            relevance = float(
+                item.get(
+                    "relevance",
+                    0
+                ) or 0
+            )
+
+            item["final_score"] = (
+                relevance * 20
+                + item.get("score", 0)
+            )
+
+        # -----------------------------------------------------
+        # Ranking
+        # -----------------------------------------------------
+
+        filtered.sort(
+            key=lambda x: (
+                x.get("relevance", 0),
+                x.get("final_score", 0)
+            ),
+            reverse=True
+        )
+
+        # -----------------------------------------------------
+        # Deduplication
+        # -----------------------------------------------------
+
+        cleaned = []
+        seen = set()
+
+        for item in filtered:
+
+            text = item.get(
+                "text",
+                ""
+            ).strip()
+
+            if not text:
                 continue
+
+            fingerprint = self.normalize(
+                text
+            )
+
+            if fingerprint in seen:
+                continue
+
+            seen.add(fingerprint)
 
             cleaned.append(item)
+
+        return cleaned
+
+    # =========================================================
+    # MAIN RETRIEVAL
+    # =========================================================
+
+    def retrieve(self, query, limit=8):
+
+        query = str(query or "").strip()
+
+        if not query:
+            return []
+
+        # =====================================================
+        # 1. NORMAL DIRECT SEARCH
+        # =====================================================
+
+        direct_results = self._search_one(
+            query,
+            limit=limit
+        )
+
+        # =====================================================
+        # 2. COMPOUND QUERY SEARCH
+        #
+        # Example:
+        #
+        # "قارن بين Cloud IDE و Marketplace"
+        #
+        # Search independently for:
+        #
+        # Cloud IDE
+        # Marketplace
+        # Quavron
+        # =====================================================
+
+        if self.is_compound_query(query):
+
+            concepts = self.extract_concepts(
+                query
+            )
+
+            for concept in concepts:
+
+                concept_results = self._search_one(
+                    concept,
+                    limit=limit
+                )
+
+                for item in concept_results:
+
+                    # Mark that this came from
+                    # concept-level retrieval.
+                    item["retrieval_query"] = concept
+
+                    direct_results.append(item)
+
+        # =====================================================
+        # 3. RANK
+        # =====================================================
+
+        cleaned = self._rank_and_clean(
+            direct_results
+        )
+
+        # =====================================================
+        # 4. COMPOUND QUERY BALANCING
+        #
+        # Do not allow one concept to completely dominate
+        # the context.
+        # =====================================================
+
+        if self.is_compound_query(query):
+
+            concepts = self.extract_concepts(
+                query
+            )
+
+            balanced = []
+
+            # First collect the best result for each
+            # detected concept.
+            for concept in concepts:
+
+                concept_norm = self.normalize(
+                    concept
+                )
+
+                candidates = [
+                    item
+                    for item in cleaned
+                    if concept_norm in self.normalize(
+                        item.get("text", "")
+                    )
+                    or item.get(
+                        "retrieval_query"
+                    ) == concept
+                ]
+
+                if candidates:
+
+                    balanced.append(
+                        candidates[0]
+                    )
+
+            # Then add remaining best results.
+            used = {
+                self.normalize(
+                    item.get("text", "")
+                )
+                for item in balanced
+            }
+
+            for item in cleaned:
+
+                fingerprint = self.normalize(
+                    item.get("text", "")
+                )
+
+                if fingerprint in used:
+                    continue
+
+                balanced.append(item)
+                used.add(fingerprint)
+
+            cleaned = balanced
 
         return cleaned[:limit]
 

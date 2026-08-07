@@ -1,68 +1,32 @@
-from knowledge.search.search import search_engine
-
-
 class ContextBuilder:
 
     def build(self, question, documents):
 
-        parts = []
+        if not documents:
+            return ""
 
-        if documents:
-            parts.append("=== Retrieved Context ===")
+        parts = [
+            "=== QAI Retrieved Knowledge ===",
+            f"Question: {question}",
+            "Use retrieved knowledge only when it is directly relevant."
+        ]
 
-            for item in documents[:5]:
+        for item in documents[:5]:
 
-                score = item.get("score", 0)
-                text = item.get("text", "")
+            text = item.get("text", "")
 
-                if text and score >= 5:
-                    parts.append(text)
+            if not text:
+                continue
 
+            source = item.get("source", "")
+            score = item.get("score", 0)
+            relevance = item.get("relevance", 0)
 
-        knowledge = search_engine.search(question)
+            parts.append(
+                f"[source={source}; score={score}; relevance={relevance}]"
+            )
 
-        if knowledge:
-
-            selected = []
-
-            for item in knowledge:
-
-                score = item.get("score", 0)
-
-                value = item.get("value")
-
-                text = ""
-
-                if isinstance(value, dict):
-
-                    content = value.get("content")
-
-                    if isinstance(content, dict):
-                        text = content.get("ar", "")
-
-                    elif content:
-                        text = str(content)
-
-                if text and score >= 5:
-                    selected.append(text)
-
-
-            if selected:
-
-                existing = set(parts)
-
-                unique = [
-                    t for t in selected[:3]
-                    if t not in existing
-                ]
-
-                if unique:
-                    parts.append("")
-                    parts.append("=== Knowledge Base ===")
-
-                    for text in unique:
-                        parts.append(text)
-
+            parts.append(text)
 
         return "\n".join(parts)
 

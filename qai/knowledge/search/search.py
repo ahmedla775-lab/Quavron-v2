@@ -1,24 +1,49 @@
 import json
-import re
 from pathlib import Path
 
 
 class KnowledgeSearch:
 
     def __init__(self):
+
         self.knowledge = {}
+
+        self.path = Path(
+            "knowledge/store/quavron_knowledge.json"
+        )
+
         self.load()
 
+    # --------------------------------------------------
+    # Load
+    # --------------------------------------------------
 
     def load(self):
 
-        path = Path("knowledge/store/quavron_knowledge.json")
+        if not self.path.exists():
+            return
 
-        if path.exists():
+        try:
 
-            with open(path, "r", encoding="utf-8") as file:
+            with open(
+                self.path,
+                "r",
+                encoding="utf-8"
+            ) as file:
+
                 self.knowledge = json.load(file)
 
+        except Exception as e:
+
+            print(
+                "[KnowledgeSearch] Load error:",
+                type(e).__name__,
+                str(e)
+            )
+
+    # --------------------------------------------------
+    # Normalize
+    # --------------------------------------------------
 
     def normalize(self, text):
 
@@ -29,29 +54,35 @@ class KnowledgeSearch:
             "إ": "ا",
             "آ": "ا",
             "ى": "ي",
-            "ة": "ه"
+            "ة": "ه",
         }
 
-        for a,b in replacements.items():
-            text = text.replace(a,b)
+        for a, b in replacements.items():
+            text = text.replace(a, b)
 
         return text
 
+    # --------------------------------------------------
+    # Keywords
+    # --------------------------------------------------
 
     def extract_keywords(self, text):
 
         text = self.normalize(text)
 
-        stop_words = [
+        stop_words = {
             "ما",
             "هو",
             "هي",
+            "هل",
+            "من",
             "عن",
             "كيف",
             "لماذا",
+            "ماذا",
             "اشرح",
             "اخبرني",
-            "اخبرني عن",
+            "لي",
             "اريد",
             "اريد ان",
             "the",
@@ -60,131 +91,236 @@ class KnowledgeSearch:
             "about",
             "tell",
             "me",
-            "create",
-            "build"
-        ]
+            "how",
+            "why",
+            "can",
+            "do",
+        }
 
         words = text.split()
 
         return [
-            w for w in words
-            if w not in stop_words
+            word
+            for word in words
+            if word and word not in stop_words
         ]
 
+    # --------------------------------------------------
+    # Extract multilingual text
+    # --------------------------------------------------
+
+    def multilingual_text(self, value):
+
+        if isinstance(value, str):
+            return value
+
+        if isinstance(value, dict):
+
+            parts = []
+
+            for language in ("ar", "en", "fr"):
+
+                if value.get(language):
+                    parts.append(
+                        str(value[language])
+                    )
+
+            return " ".join(parts)
+
+        return ""
+
+    # --------------------------------------------------
+    # Search
+    # --------------------------------------------------
 
     def search(self, keyword):
 
         keywords = self.extract_keywords(keyword)
+
+        if not keywords:
+            return []
+
         results = []
 
-        ignore_keys = [
-            "ar",
-            "en",
-            "fr",
-            "content",
-            "title",
-            "keywords"
-        ]
+        def score_text(text):
+
+            normalized = self.normalize(text)
+
+            score = 0
+
+            for word in keywords:
+
+                if word in normalized:
+                    score += 10
+
+            return score
+
+        def add_result(
+            question,
+            answer,
+            score,
+            category=None
+        ):
+
+            if not answer:
+                return
+
+            answer_text = self.multilingual_text(
+                answer
+            ).strip()
+
+            question_text = self.multilingual_text(
+                question
+            ).strip()
+
+            if not answer_text:
+                return
+
+            # Question relevance gets stronger weight.
+            question_score = score_text(
+                question_text
+            )
+
+            answer_score = score_text(
+                answer_text
+            )
+
+            total = (
+                score
+                + question_score * 5
+                + answer_score
+            )
+
+            if total <= 0:
+                return
+
+            results.append({
+                "key": "faq",
+                "value": {
+                    "content": answer
+                },
+                "question": question,
+                "category": category,
+                "score": total,
+            })
 
         def scan(data, parent=None):
 
+            # ------------------------------------------
+            # Dictionary
+            # ------------------------------------------
+
             if isinstance(data, dict):
 
-                # لا نبحث داخل الحقول الوصفية
-                if any(k in data for k in ["content", "keywords", "title"]):
-                    score = 0
+                # FAQ / knowledge record
+                if (
+                    "question" in data
+                    and "answer" in data
+                ):
 
-                    text_blob = self.normalize(str(data))
+                    add_result(
+                        data.get("question"),
+                        data.get("answer"),
+                        0,
+                        data.get("category")
+                    )
 
-                    for word in keywords:
-                        if word in text_blob:
-                            score += 10
+                    return
+
+                # Content record
+                if "content" in data:
+
+                    content = data.get(
+                        "content"
+                    )
+
+                    text = self.multilingual_text(
+                        content
+                    )
+
+                    score = score_text(text)
 
                     if score:
+
                         results.append({
                             "key": parent,
                             "value": data,
-                            "score": score
+                            "score": score + 50,
                         })
 
                     return
 
                 for key, value in data.items():
 
-                    if key in ignore_keys:
+                    if key in {
+                        "ar",
+                        "en",
+                        "fr",
+                        "content",
+                        "keywords",
+                        "title",
+                    }:
                         continue
 
-                    key_text = self.normalize(key)
-                    value_text = self.normalize(str(value))
+                    key_score = score_text(
+                        str(key)
+                    )
 
-                    score = 0
+                    if key_score:
 
-                    for word in keywords:
-                        if word in key_text:
-                            score += 20
+                        results.append({
+                            "key": key,
+                            "value": value,
+                            "score": key_score * 2,
+                        })
 
-                        if word in value_text:
-                            score += 5
+                    scan(
+                        value,
+                        key
+                    )
 
-                    if score:
-
-                        # boost structured knowledge entries
-                        if isinstance(value, dict) and "content" in value:
-                            score += 50
-
-                        # ignore generic terminology block
-                        if key == "terminology":
-                            score = 0
-
-                        if score:
-                            results.append({
-                                "key": key,
-                                "value": value,
-                                "score": score
-                            })
-
-                    scan(value, key)
-
+            # ------------------------------------------
+            # List
+            # ------------------------------------------
 
             elif isinstance(data, list):
+
                 for item in data:
                     scan(item, parent)
 
-
         scan(self.knowledge)
 
+        # ------------------------------------------
+        # Sort
+        # ------------------------------------------
+
         results.sort(
-            key=lambda x: x["score"],
+            key=lambda x: x.get("score", 0),
             reverse=True
         )
 
-        # remove duplicate nested results
+        # ------------------------------------------
+        # Remove duplicates
+        # ------------------------------------------
+
         cleaned = []
         seen = set()
 
         for item in results:
-            key = str(item["key"])
-            value = str(item["value"])
 
-            fingerprint = value[:100]
+            value = item.get("value")
 
-            if fingerprint not in seen:
-                seen.add(fingerprint)
-                cleaned.append(item)
+            fingerprint = str(
+                value
+            )[:300]
 
-        # keep only answer-bearing knowledge entries when available
-        answer_results = []
+            if fingerprint in seen:
+                continue
 
-        for item in cleaned:
-            value = item["value"]
+            seen.add(fingerprint)
+            cleaned.append(item)
 
-            if isinstance(value, dict) and "content" in value:
-                answer_results.append(item)
-
-        if answer_results:
-            cleaned = answer_results
-
-        return cleaned[:3]
+        return cleaned[:8]
 
 
 search_engine = KnowledgeSearch()
