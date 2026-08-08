@@ -91,9 +91,8 @@ class LearningRetriever:
                             "answer": answer,
                             "teacher": item.get("teacher"),
                             "confidence": item.get("confidence", 0),
-                            "approved": item.get("approved", False),
                             "score": score,
-                            "source": "qai_learning"
+                            "source": "learning_dataset"
                         })
 
         except OSError:

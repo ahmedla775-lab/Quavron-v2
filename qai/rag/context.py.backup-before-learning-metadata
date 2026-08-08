@@ -21,15 +21,9 @@ class ContextBuilder:
             source = item.get("source", "")
             score = item.get("score", 0)
             relevance = item.get("relevance", 0)
-            final_score = item.get("final_score", 0)
-            approved = item.get("approved", False)
-            confidence = item.get("confidence", 0)
-            teacher = item.get("teacher", "")
 
             parts.append(
-                f"[source={source}; score={score}; relevance={relevance}; "
-                f"final_score={final_score}; approved={str(approved).lower()}; "
-                f"confidence={confidence}; teacher={teacher}]"
+                f"[source={source}; score={score}; relevance={relevance}]"
             )
 
             parts.append(text)

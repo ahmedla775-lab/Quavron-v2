@@ -4,7 +4,6 @@ from llm.router import router as llm_router
 from llm.gateway import gateway
 from memory.memory import memory
 from users.context.builder import context_builder
-from learning.bridge import learning_bridge
 
 
 class Brain:
@@ -49,23 +48,6 @@ class Brain:
 
                 relevance = self._document_relevance(doc)
 
-                approved = doc.get("approved", False) is True
-
-                confidence = float(
-                    doc.get("confidence", 0) or 0
-                )
-
-                # Supervisor-approved learning is trusted
-                # even when lexical relevance is moderate.
-                if (
-                    approved
-                    and confidence >= 1.0
-                    and relevance >= 20
-                ):
-                    return True
-
-                # Unapproved learning still requires
-                # the normal stronger relevance threshold.
                 if relevance >= 25:
                     return True
 
@@ -201,61 +183,6 @@ class Brain:
                 type(e).__name__,
                 str(e)
             )
-
-    # =====================================================
-    # LEARNING CANDIDATE
-    # =====================================================
-
-    def _prepare_learning_candidate(
-        self,
-        question,
-        llm_result,
-    ):
-        """
-        Prepare a successful external answer for the
-        supervisor-controlled learning pipeline.
-
-        IMPORTANT:
-        This method NEVER saves knowledge automatically.
-        """
-
-        if not isinstance(llm_result, dict):
-            return None
-
-        if llm_result.get("status") != "completed":
-            return None
-
-        answer = str(
-            llm_result.get("answer", "")
-            or ""
-        ).strip()
-
-        if not answer:
-            return None
-
-        provider = llm_result.get(
-            "provider",
-            ""
-        )
-
-        if provider == "local":
-            return None
-
-        evaluation = learning_bridge.evaluate_teacher_answer(
-            question,
-            answer,
-            teacher=provider,
-        )
-
-        return {
-            "question": question,
-            "answer": answer,
-            "teacher": provider,
-            "evaluation": evaluation,
-            "can_learn": learning_bridge.can_learn(
-                evaluation
-            ),
-        }
 
     # =====================================================
     # THINK
@@ -435,18 +362,7 @@ class Brain:
                 provider = "local"
 
         # -------------------------------------------------
-        # 9. LEARNING CANDIDATE
-        # -------------------------------------------------
-
-        learning_candidate = (
-            self._prepare_learning_candidate(
-                question,
-                llm_result,
-            )
-        )
-
-        # -------------------------------------------------
-        # 10. MEMORY
+        # 9. MEMORY
         # -------------------------------------------------
 
         if llm_result.get("status") == "completed":
@@ -482,7 +398,6 @@ class Brain:
             "documents": len(documents),
             "fallback_from": fallback_from,
             "user_context": user_context,
-            "learning_candidate": learning_candidate,
             "llm": llm_result,
         }
 

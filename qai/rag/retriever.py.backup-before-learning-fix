@@ -291,10 +291,6 @@ class Retriever:
                         "confidence",
                         0
                     ),
-                    "approved": item.get(
-                        "approved",
-                        False
-                    ),
                     "question": question,
                 })
 
@@ -468,17 +464,6 @@ class Retriever:
             # Strong result
             if relevance >= 40:
 
-                filtered.append(item)
-                continue
-
-            # -----------------------------------------------------
-            # Approved supervisor learning
-            # -----------------------------------------------------
-            if (
-                item.get("source") == "qai_learning"
-                and item.get("approved", False) is True
-                and float(item.get("confidence", 0) or 0) >= 1.0
-            ):
                 filtered.append(item)
                 continue
 

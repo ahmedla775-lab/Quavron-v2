@@ -49,23 +49,6 @@ class Brain:
 
                 relevance = self._document_relevance(doc)
 
-                approved = doc.get("approved", False) is True
-
-                confidence = float(
-                    doc.get("confidence", 0) or 0
-                )
-
-                # Supervisor-approved learning is trusted
-                # even when lexical relevance is moderate.
-                if (
-                    approved
-                    and confidence >= 1.0
-                    and relevance >= 20
-                ):
-                    return True
-
-                # Unapproved learning still requires
-                # the normal stronger relevance threshold.
                 if relevance >= 25:
                     return True
 
