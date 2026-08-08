@@ -2,6 +2,8 @@ from intent.router import router
 from rag.engine import engine
 from llm.router import router as llm_router
 from llm.gateway import gateway
+from memory.memory import memory
+from users.context.builder import context_builder
 
 
 class Brain:
@@ -136,7 +138,27 @@ class Brain:
     # Think
     # =====================================================
 
-    def think(self, question):
+    def think(self, question, user_id="guest"):
+
+        # =================================================
+        # 0. User context
+        # =================================================
+
+        user_context = {}
+
+        if user_id and user_id != "guest":
+            try:
+                user_context = context_builder.build(
+                    user_id,
+                    question
+                )
+            except Exception as e:
+                print(
+                    "[Brain] User context error:",
+                    type(e).__name__,
+                    str(e)
+                )
+                user_context = {}
 
         # =================================================
         # 1. Intent
@@ -198,21 +220,43 @@ class Brain:
 
             if local_answer:
 
+                llm_result = {
+                    "provider": "local",
+                    "status": "completed",
+                    "source": "local_knowledge",
+                    "confidence": 0.85,
+                    "relevance": 100,
+                    "answer": local_answer,
+                    "message": None,
+                }
+
+                # Save successful answer in the user's memory.
+                try:
+                    memory.remember(
+                        question,
+                        local_answer,
+                        user=user_id or "guest",
+                        metadata={
+                            "provider": "local",
+                            "pipeline": intent,
+                            "source": "local_knowledge"
+                        }
+                    )
+                except Exception as e:
+                    print(
+                        "[Brain] Memory save error:",
+                        type(e).__name__,
+                        str(e)
+                    )
+
                 return {
                     "intent": intent,
                     "domain": domain,
                     "provider": "local",
                     "documents": len(documents),
                     "fallback_from": None,
-                    "llm": {
-                        "provider": "local",
-                        "status": "completed",
-                        "source": "local_knowledge",
-                        "confidence": 0.85,
-                        "relevance": 100,
-                        "answer": local_answer,
-                        "message": None,
-                    },
+                    "user_context": user_context,
+                    "llm": llm_result,
                 }
 
         # =================================================
@@ -269,7 +313,34 @@ class Brain:
                 provider = "local"
 
         # =================================================
-        # 7. Unified result
+        # 7. Memory
+        # =================================================
+
+        if llm_result.get("status") == "completed":
+            answer = llm_result.get("answer")
+
+            if answer:
+                try:
+                    memory.remember(
+                        question,
+                        answer,
+                        user=user_id or "guest",
+                        metadata={
+                            "provider": provider,
+                            "pipeline": intent,
+                            "domain": domain,
+                            "source": llm_result.get("source")
+                        }
+                    )
+                except Exception as e:
+                    print(
+                        "[Brain] Memory save error:",
+                        type(e).__name__,
+                        str(e)
+                    )
+
+        # =================================================
+        # 8. Unified result
         # =================================================
 
         return {
@@ -278,6 +349,7 @@ class Brain:
             "provider": provider,
             "documents": len(documents),
             "fallback_from": fallback_from,
+            "user_context": user_context,
             "llm": llm_result,
         }
 
