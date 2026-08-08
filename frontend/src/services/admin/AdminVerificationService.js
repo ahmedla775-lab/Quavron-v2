@@ -39,7 +39,19 @@ class AdminVerificationService {
       .single();
   }
 
-  async approve(requestId, userId, type = "blue") {
+  async approve(requestId, type = "blue") {
+    console.log("RPC approve_verification_request:", {
+      p_request_id: requestId,
+      p_type: type,
+    });
+
+    if (!requestId) {
+      return {
+        data: null,
+        error: new Error("Missing verification request ID"),
+      };
+    }
+
     return await supabase.rpc(
       "approve_verification_request",
       {

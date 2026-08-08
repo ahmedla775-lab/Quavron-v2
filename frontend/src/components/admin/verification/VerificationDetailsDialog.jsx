@@ -43,7 +43,6 @@ export default function VerificationDetailsDialog({
 
     const {error}=await AdminVerificationService.approve(
       request.id,
-      profile.id,
       type
     );
 

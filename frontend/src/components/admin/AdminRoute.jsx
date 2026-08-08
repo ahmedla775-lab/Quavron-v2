@@ -29,7 +29,8 @@ export default function AdminRoute({
 
   const isAdmin =
     role === "owner" ||
-    role === "admin";
+    role === "admin" ||
+    role === "quavron_official";
 
   const hasRequestedPermission =
     permission &&
