@@ -69,11 +69,15 @@ class Retriever:
 
     def relevance(self, query, text):
         """
-        General lexical/topic relevance.
+        Semantic-ish lexical relevance.
 
-        This layer is intentionally conservative.
-        Domain words such as Quavron, QAI, platform, learning, and test
-        are not sufficient by themselves to establish relevance.
+        Important:
+        - Shared generic words such as "Quavron" alone are weak evidence.
+        - Exact question matches remain strongest.
+        - Important topic words such as مجانية/مدفوعة/سعر/منصة
+          receive additional weight.
+        - Unrelated learned knowledge must not become relevant merely
+          because it belongs to the same domain.
         """
 
         q = self.normalize(query)
@@ -91,82 +95,43 @@ class Retriever:
         qset = set(q_words)
         tset = set(t_words)
 
-        # ---------------------------------------------------------
+        # -----------------------------------------------------
         # Exact full text
-        # ---------------------------------------------------------
+        # -----------------------------------------------------
 
         if q == t:
             return 100
 
-        # ---------------------------------------------------------
-        # Topic groups
-        # ---------------------------------------------------------
+        # -----------------------------------------------------
+        # Semantic/topic groups
+        # -----------------------------------------------------
 
         topic_groups = {
             "platform": {
-                "منصه",
-                "منصة",
-                "منصات",
+                "منصه", "منصة", "منصات",
                 "quavron",
             },
-
             "pricing": {
-                "مجاني",
-                "مجانيه",
-                "مجانية",
-                "مدفوع",
-                "مدفوعة",
-                "مدفوعه",
-                "سعر",
-                "اسعار",
-                "أسعار",
-                "اشتراك",
-                "اشتراكات",
-                "خطه",
-                "خطة",
-                "خطط",
-                "تكلفه",
-                "تكلفة",
+                "مجاني", "مجانيه", "مجانية",
+                "مدفوع", "مدفوعة", "مدفوعه",
+                "سعر", "اسعار", "أسعار",
+                "اشتراك", "اشتراكات",
+                "خطه", "خطة", "خطط",
+                "تكلفه", "تكلفة",
                 "رسوم",
             },
-
             "ai": {
-                "ذكاء",
-                "ذكاء اصطناعي",
-                "qai",
-                "مساعد",
-                "مساعد ذكي",
+                "ذكاء", "ذكاء اصطناعي",
+                "qai", "مساعد", "مساعد ذكي",
             },
-
             "learning": {
-                "تعلم",
-                "تعليم",
-                "دوره",
-                "دورة",
-                "اختبار",
-                "معرفه",
-                "معرفة",
-                "تعلمية",
-                "تعلميه",
-            },
-
-            "official": {
-                "رسمي",
-                "رسمية",
-                "اعتماد",
-                "معتمد",
-                "اعتمد",
-            },
-
-            "local": {
-                "محلي",
-                "محليه",
-                "محلية",
+                "تعلم", "تعليم", "دوره", "دورة",
+                "اختبار", "معرفه", "معرفة",
+                "تعلمية", "تعلميه",
             },
         }
 
         query_topics = set()
-        text_topics = set()
 
         for topic, words in topic_groups.items():
             normalized_words = {
@@ -177,105 +142,69 @@ class Retriever:
             if any(word in qset for word in normalized_words):
                 query_topics.add(topic)
 
+        text_topics = set()
+
+        for topic, words in topic_groups.items():
+            normalized_words = {
+                self.normalize(word)
+                for word in words
+            }
+
             if any(word in tset for word in normalized_words):
                 text_topics.add(topic)
 
-        # ---------------------------------------------------------
-        # Strong semantic exclusions
-        # ---------------------------------------------------------
-
-        # Explicit official request requires official evidence.
-        if "official" in query_topics and "official" not in text_topics:
-            return 0
-
-        # Explicit local request requires local evidence.
-        if "local" in query_topics and "local" not in text_topics:
-            return 0
-
-        # Official and local are different concepts.
-        if "official" in query_topics and "local" in text_topics:
-            return 0
-
-        if "local" in query_topics and "official" in text_topics:
-            return 0
-
-        # If query is about learning/testing and text is only platform
-        # identity, platform overlap is not enough.
-        if (
-            "learning" in query_topics
-            and "learning" not in text_topics
-        ):
-            return 0
-
-        # If query is specifically about pricing, platform identity
-        # alone is not sufficient.
-        if (
-            "pricing" in query_topics
-            and "pricing" not in text_topics
-        ):
-            return 0
-
-        # ---------------------------------------------------------
+        # -----------------------------------------------------
         # Exact meaningful word matching
-        # ---------------------------------------------------------
+        # -----------------------------------------------------
 
         score = 0
         matched = 0
 
-        weak_domain_words = {
-            "quavron",
-            "منصه",
-            "منصة",
-            "qai",
-        }
-
         for word in qset:
-            if word not in tset:
-                continue
+            if word in tset:
+                matched += 1
 
-            matched += 1
+                # Domain word alone is weak.
+                if word in {
+                    "quavron",
+                    "منصه",
+                    "منصة",
+                }:
+                    score += 8
 
-            if word in weak_domain_words:
-                score += 5
-            elif len(word) >= 5:
-                score += 30
-            else:
-                score += 15
+                elif len(word) >= 5:
+                    score += 30
 
-        # ---------------------------------------------------------
+                else:
+                    score += 15
+
+        # -----------------------------------------------------
         # Topic alignment
-        # ---------------------------------------------------------
+        # -----------------------------------------------------
 
         shared_topics = query_topics & text_topics
 
         for topic in shared_topics:
             if topic == "pricing":
                 score += 35
-
             elif topic == "learning":
-                score += 20
-
+                score += 30
             elif topic == "ai":
-                score += 15
-
-            elif topic == "official":
-                score += 15
-
-            elif topic == "local":
-                score += 15
-
+                score += 20
             elif topic == "platform":
-                score += 5
+                score += 10
 
-        # ---------------------------------------------------------
+        # -----------------------------------------------------
         # Partial matching
-        # ---------------------------------------------------------
+        # -----------------------------------------------------
 
         for qword in qset:
+
             if len(qword) < 5:
                 continue
 
             for tword in tset:
+
                 if len(tword) < 5:
                     continue
 
@@ -283,33 +212,40 @@ class Retriever:
                     continue
 
                 if qword in tword or tword in qword:
-                    score += 3
+                    score += 5
 
-        # ---------------------------------------------------------
+        # -----------------------------------------------------
         # Coverage
-        # ---------------------------------------------------------
+        # -----------------------------------------------------
 
         coverage = matched / max(len(qset), 1)
 
-        if len(qset) >= 5 and coverage < 0.30:
-            score = min(score, 15)
-
-        elif len(qset) >= 4 and coverage < 0.35:
+        if len(qset) >= 4 and coverage < 0.30:
             score = min(score, 20)
 
         elif len(qset) >= 3 and coverage < 0.50:
-            score = min(score, 30)
+            score = min(score, 35)
 
         elif len(qset) >= 2 and coverage < 0.50:
             score = min(score, 40)
 
-        # ---------------------------------------------------------
-        # Cross-topic protection
-        # ---------------------------------------------------------
+        # -----------------------------------------------------
+        # Strong protection against cross-topic contamination
+        # -----------------------------------------------------
 
         if query_topics and text_topics:
             if not shared_topics:
                 return 0
+
+        # If the query contains a pricing topic, a document that
+        # only talks about the platform is not enough.
+        if "pricing" in query_topics and "pricing" not in text_topics:
+            score = min(score, 35)
+
+        # If the query is specifically about learning/testing,
+        # unrelated platform knowledge must not score highly.
+        if "learning" in query_topics and "learning" not in text_topics:
+            score = min(score, 25)
 
         return min(score, 100)
 
@@ -405,452 +341,344 @@ class Retriever:
 
     def _learning_relevance(self, query, stored_question, answer=""):
         """
-        Strict relevance for supervisor-approved QAI learning records.
+        Relevance for supervisor-approved learning.
 
-        Design goals:
-        - Exact question remains strongest.
-        - Similar wording is allowed only when the semantic intent matches.
-        - "course", "learning", "test", "official", "local", and "platform"
-          are NOT interchangeable.
-        - A course-process question must not retrieve a course-test record.
-        - A local-test question must not retrieve an official-test record.
-        - A platform identity question must not retrieve a platform-test record.
-        - Answer text may reinforce an already-valid match, but can never
-          create a match by itself.
+        Uses:
+        1. normalized lexical matching
+        2. concept aliases
+        3. question intent
+        4. topic protection
+
+        The goal is to recognize paraphrases without allowing
+        unrelated platform/domain questions to match.
         """
 
-        def normalize_learning(value):
-            value = self.normalize(str(value or ""))
+        import re
 
-            # Arabic morphology / spelling normalization used specifically
-            # for learning intent detection.
+        query = str(query or "").strip()
+        stored_question = str(stored_question or "").strip()
+        answer = str(answer or "").strip()
+
+        if not query or not stored_question:
+            return 0
+
+        def normalize_learning(value):
+            value = self.normalize(value)
+            value = value.lower()
+
+            # Remove punctuation BEFORE tokenization.
+            value = re.sub(
+                r"""[؟?!.,،؛:;"'`()\[\]{}<>«»/\\|+*=#@%&^~`_-]+""",
+                " ",
+                value,
+            )
+
+            # Normalize common Arabic variants.
             replacements = {
-                "الاختبار": "اختبار",
-                "الاختبارات": "اختبارات",
-                "الدوره": "دوره",
-                "الدورة": "دوره",
-                "التعلم": "تعلم",
-                "التعليم": "تعليم",
-                "المحلي": "محلي",
-                "المحليه": "محليه",
-                "المحلية": "محليه",
-                "الرسمي": "رسمي",
-                "الرسمية": "رسمي",
-                "المنصه": "منصه",
-                "المنصة": "منصه",
-                "لمنصه": "لمنصه",
-                "لمنصة": "لمنصه",
-                "المشرف": "مشرف",
-                "المعلم": "معلم",
+                "أ": "ا",
+                "إ": "ا",
+                "آ": "ا",
+                "ى": "ي",
+                "ة": "ه",
             }
 
             for a, b in replacements.items():
                 value = value.replace(a, b)
 
-            return " ".join(value.split())
+            words = []
+
+            for word in value.split():
+                if not word:
+                    continue
+
+                # Remove common Arabic definite/article prefixes.
+                prefixes = (
+                    "وال",
+                    "بال",
+                    "كال",
+                    "فال",
+                    "لل",
+                    "ال",
+                )
+
+                changed = True
+
+                while changed:
+                    changed = False
+
+                    for prefix in prefixes:
+                        if (
+                            word.startswith(prefix)
+                            and len(word) > len(prefix) + 2
+                        ):
+                            word = word[len(prefix):]
+                            changed = True
+                            break
+
+                # Normalize a few common forms.
+                aliases = {
+                    "اختبار": "اختبار",
+                    "اختبارات": "اختبار",
+                    "امتحان": "اختبار",
+                    "امتحانات": "اختبار",
+
+                    "دوره": "دوره",
+                    "دورات": "دوره",
+
+                    "تعلم": "تعلم",
+                    "تعليم": "تعلم",
+                    "التعلم": "تعلم",
+                    "التعليم": "تعلم",
+
+                    "منصه": "منصه",
+                    "منصات": "منصه",
+
+                    "اشرح": "شرح",
+                    "شرح": "شرح",
+                    "توضيح": "شرح",
+                    "وضح": "شرح",
+
+                    "تعمل": "عمل",
+                    "يعمل": "عمل",
+                    "عمل": "عمل",
+
+                    "يمكن": "قدره",
+                    "يستطيع": "قدره",
+                    "تستطيع": "قدره",
+
+                    "qai": "qai",
+                    "qai؟": "qai",
+                    "quavron": "quavron",
+                    "quavron؟": "quavron",
+                }
+
+                word = aliases.get(word, word)
+
+                if len(word) >= 2:
+                    words.append(word)
+
+            return set(words)
 
         q = normalize_learning(query)
         s = normalize_learning(stored_question)
-        a = normalize_learning(answer)
 
         if not q or not s:
             return 0
 
-        q_words = set(self.meaningful_words(q))
-        s_words = set(self.meaningful_words(s))
-        a_words = set(self.meaningful_words(a))
-
-        if not q_words or not s_words:
-            return 0
-
-        # ---------------------------------------------------------
-        # 1. Exact question
-        # ---------------------------------------------------------
+        # -----------------------------------------------------
+        # EXACT MATCH
+        # -----------------------------------------------------
 
         if q == s:
             return 100
 
-        # ---------------------------------------------------------
-        # 2. Explicit semantic signatures
-        # ---------------------------------------------------------
+        # -----------------------------------------------------
+        # QUESTION INTENT
+        # -----------------------------------------------------
 
-        def has_any(words, values):
-            return bool(words & values)
+        def detect_intent(words):
+            intents = set()
 
-        # QAI / AI identity
-        qai_words = {
-            "qai",
-            "ذكاء",
-            "مساعد",
-            "مساعد ذكي",
-        }
+            if "اختبار" in words:
+                intents.add("test")
 
-        # Platform identity
-        platform_words = {
-            "quavron",
-            "منصه",
-            "منصات",
-        }
+            if "ما" in words and (
+                "هي" in words or "هو" in words
+            ):
+                intents.add("definition")
 
-        # Learning/course vocabulary
-        course_words = {
-            "دوره",
-            "تعلم",
-            "تعليم",
-            "تعلميه",
-            "تعليميه",
-            "مسار",
-            "مسار تعليمي",
-        }
+            if (
+                "كيف" in words
+                or "عمل" in words
+            ):
+                intents.add("how")
 
-        # Test vocabulary
-        test_words = {
-            "اختبار",
-            "اختبارات",
-            "فحص",
-            "تحقق",
-        }
+            if (
+                "هل" in words
+                or "قدره" in words
+            ):
+                intents.add("capability")
 
-        # Official/local markers
-        official_words = {
+            if "شرح" in words:
+                intents.add("explanation")
+
+            return intents
+
+        query_intents = detect_intent(q)
+        stored_intents = detect_intent(s)
+
+        # -----------------------------------------------------
+        # TOPIC / CONCEPT GROUPS
+        # -----------------------------------------------------
+
+        test_topic = {"اختبار"}
+        course_topic = {"دوره", "تعلم"}
+        platform_topic = {"منصه", "quavron"}
+        qai_topic = {"qai"}
+
+        query_test = bool(q & test_topic)
+        stored_test = bool(s & test_topic)
+
+        query_course = bool(q & course_topic)
+        stored_course = bool(s & course_topic)
+
+        query_platform = bool(q & platform_topic)
+        stored_platform = bool(s & platform_topic)
+
+        query_qai = bool(q & qai_topic)
+        stored_qai = bool(s & qai_topic)
+
+        # -----------------------------------------------------
+        # HARD TOPIC PROTECTION
+        # -----------------------------------------------------
+
+        # A platform-specific test question is different from
+        # a course-specific test question.
+        #
+        # Example:
+        #   "ما هو الاختبار الرسمي لمنصة Quavron؟"
+        # must NOT match:
+        #   "ما هو الاختبار الرسمي لدورة تعلم QAI؟"
+        #
+        # The shared words "الاختبار الرسمي" are not enough.
+        if (
+            query_test
+            and query_platform
+            and stored_test
+            and not query_course
+        ):
+            return 0
+
+        # A platform question without a course/test topic must
+        # not select a course-specific learning record.
+        if (
+            query_platform
+            and not query_course
+            and not query_test
+            and stored_course
+        ):
+            return 0
+
+        # A course/test record must not answer a pure platform
+        # definition question.
+        if (
+            query_platform
+            and not query_course
+            and not query_test
+            and stored_test
+        ):
+            return 0
+
+        # Capability questions should not select a test record.
+        if (
+            "capability" in query_intents
+            and stored_test
+        ):
+            return 0
+
+        # -----------------------------------------------------
+        # SHARED CONCEPTS
+        # -----------------------------------------------------
+
+        shared = q & s
+
+        # Ignore very generic words when calculating coverage.
+        generic = {
             "رسمي",
-            "اعتماد",
-            "معتمد",
-            "اعتمده",
-            "اعتمد",
-        }
-
-        local_words = {
-            "محلي",
-            "محليه",
-            "محليًا",
-        }
-
-        # Supervisor / teacher learning
-        supervisor_words = {
-            "مشرف",
-            "معلم",
-            "مدرس",
-            "تعتمد",
-            "يعتمد",
-        }
-
-        # Question/process markers
-        how_words = {
+            "ما",
+            "هي",
+            "هو",
+            "لي",
+            "من",
+            "الى",
+            "في",
+            "عن",
+            "هل",
             "كيف",
-            "تعمل",
-            "يعمل",
-            "تعمل",
-            "تتم",
-            "يتم",
-            "طريقه",
-            "طريقة",
-            "مراحل",
-            "خطوات",
         }
 
-        # ---------------------------------------------------------
-        # 3. Determine the query's concrete intent
-        # ---------------------------------------------------------
+        q_specific = q - generic
+        s_specific = s - generic
 
-        query_has_qai = has_any(q_words, qai_words)
-        query_has_platform = has_any(q_words, platform_words)
-        query_has_course = has_any(q_words, course_words)
-        query_has_test = has_any(q_words, test_words)
-        query_has_official = has_any(q_words, official_words)
-        query_has_local = has_any(q_words, local_words)
-        query_has_supervisor = has_any(q_words, supervisor_words)
-        query_has_how = has_any(q_words, how_words)
+        shared_specific = q_specific & s_specific
 
-        # A course/process question is different from a test question.
-        query_course_test = (
-            query_has_course
-            and query_has_test
-        )
-
-        query_course_process = (
-            query_has_course
-            and query_has_how
-            and not query_has_test
-        )
-
-        query_local_test = (
-            query_has_local
-            and query_has_test
-        )
-
-        query_platform_identity = (
-            query_has_platform
-            and not query_has_test
-            and not query_has_official
-        )
-
-        query_platform_official_test = (
-            query_has_platform
-            and query_has_test
-            and query_has_official
-        )
-
-        query_supervisor_learning = (
-            query_has_supervisor
-            and query_has_course
-            and not query_has_test
-        )
-
-        # ---------------------------------------------------------
-        # 4. Determine stored record's concrete intent
-        # ---------------------------------------------------------
-
-        stored_has_qai = has_any(s_words, qai_words)
-        stored_has_platform = has_any(s_words, platform_words)
-        stored_has_course = has_any(s_words, course_words)
-        stored_has_test = has_any(s_words, test_words)
-        stored_has_official = has_any(s_words, official_words)
-        stored_has_local = has_any(s_words, local_words)
-        stored_has_supervisor = has_any(s_words, supervisor_words)
-
-        # Also inspect the approved answer. This is useful because
-        # supervisor approval metadata may describe the record even
-        # when the question itself is short.
-        answer_has_official = has_any(a_words, official_words)
-        answer_has_local = has_any(a_words, local_words)
-        answer_has_supervisor = has_any(a_words, supervisor_words)
-
-        stored_is_official = (
-            stored_has_official
-            or answer_has_official
-        )
-
-        stored_is_local = (
-            stored_has_local
-            or answer_has_local
-        )
-
-        stored_course_test = (
-            stored_has_course
-            and stored_has_test
-        )
-
-        stored_course_process = (
-            stored_has_course
-            and not stored_has_test
-        )
-
-        stored_local_test = (
-            stored_is_local
-            and stored_has_test
-        )
-
-        stored_platform_identity = (
-            stored_has_platform
-            and not stored_has_test
-            and not stored_is_official
-        )
-
-        stored_platform_official_test = (
-            stored_has_platform
-            and stored_has_test
-            and stored_is_official
-        )
-
-        stored_supervisor_learning = (
-            (
-                stored_has_supervisor
-                or answer_has_supervisor
-            )
-            and stored_has_course
-            and not stored_has_test
-        )
-
-        # ---------------------------------------------------------
-        # 5. Hard semantic exclusions
-        # ---------------------------------------------------------
-
-        # Course-process != course-test
-        if query_course_process and stored_course_test:
+        if not q_specific:
             return 0
 
-        if query_course_test and stored_course_process:
-            return 0
+        coverage = (
+            len(shared_specific)
+            / max(len(q_specific), 1)
+        )
 
-        # Local test != official test
-        if query_local_test and not stored_is_local:
-            return 0
+        # -----------------------------------------------------
+        # CORE TOPIC BONUS
+        # -----------------------------------------------------
 
-        if query_has_official and not stored_is_official:
-            return 0
+        score = 0
 
-        if query_has_local and not stored_is_local:
-            return 0
+        # Test + course is a very strong signature for this
+        # type of supervisor learning record.
+        if query_test and stored_test:
+            score += 35
 
-        # Official/local must never cross-match.
-        if query_has_official and stored_is_local:
-            return 0
+        if query_course and stored_course:
+            score += 25
 
-        if query_has_local and stored_is_official:
-            return 0
+        if query_qai and stored_qai:
+            score += 15
 
-        # Platform identity != platform test.
-        if query_platform_identity and stored_has_test:
-            return 0
+        # -----------------------------------------------------
+        # LEXICAL COVERAGE
+        # -----------------------------------------------------
 
-        if query_platform_official_test and not stored_platform_official_test:
-            return 0
+        if coverage >= 0.80:
+            score += 35
+        elif coverage >= 0.60:
+            score += 25
+        elif coverage >= 0.40:
+            score += 15
+        elif coverage > 0:
+            score += 5
 
-        # A platform question should not be satisfied by a generic
-        # course/test record merely because QAI or Quavron appears.
-        if query_has_platform and not stored_has_platform:
-            return 0
+        # -----------------------------------------------------
+        # INTENT COMPATIBILITY
+        # -----------------------------------------------------
 
-        # A course/test question should not be satisfied by a generic
-        # platform identity record.
-        if query_has_course and stored_has_platform and not stored_has_course:
-            return 0
+        if query_intents & stored_intents:
+            score += 10
 
-        # ---------------------------------------------------------
-        # 6. Concrete lexical overlap
-        # ---------------------------------------------------------
+        # Explanation of a test is still a test-related query.
+        if (
+            "explanation" in query_intents
+            and stored_test
+            and query_course
+        ):
+            score += 10
 
-        shared_specific = q_words & s_words
+        # "How does the course work?" can reasonably retrieve
+        # a supervisor test about the learning pipeline, but
+        # with less confidence than an explicit test question.
+        if (
+            "how" in query_intents
+            and stored_course
+        ):
+            score += 10
 
-        # Remove weak domain markers from the concrete overlap.
-        weak_words = {
-            "qai",
-            "quavron",
-            "منصه",
-            "منصات",
-            "دوره",
-            "تعلم",
-            "تعليم",
-            "اختبار",
-            "رسمي",
-            "محلي",
-            "مشرف",
-            "معلم",
-        }
+        # -----------------------------------------------------
+        # ANSWER REINFORCEMENT
+        # -----------------------------------------------------
 
-        concrete_overlap = {
-            word
-            for word in shared_specific
-            if word not in weak_words
-        }
+        if answer:
+            answer_words = normalize_learning(answer)
+            answer_shared = q_specific & answer_words
 
-        # ---------------------------------------------------------
-        # 7. Exact intent signatures
-        # ---------------------------------------------------------
+            if answer_shared:
+                score += min(
+                    10,
+                    len(answer_shared) * 5
+                )
 
-        # Exact course-test concept:
-        # "ما هو الاختبار الرسمي لدورة تعلم QAI؟"
-        if query_course_test and stored_course_test:
-            score = 72
-
-            if query_has_official and stored_is_official:
-                score += 10
-
-            if query_has_qai and stored_has_qai:
-                score += 5
-
-            if concrete_overlap:
-                score += min(8, len(concrete_overlap) * 4)
-
-            return min(score, 95)
-
-        # Exact local-test concept:
-        # "ما هو اختبار التعلم المحلي في QAI؟"
-        if query_local_test and stored_local_test:
-            score = 85
-
-            if query_has_qai and stored_has_qai:
-                score += 5
-
-            if concrete_overlap:
-                score += min(5, len(concrete_overlap) * 2)
-
-            return min(score, 100)
-
-        # Exact platform official-test concept.
-        if query_platform_official_test and stored_platform_official_test:
-            score = 82
-
-            if query_has_qai and stored_has_qai:
-                score += 4
-
-            if concrete_overlap:
-                score += min(8, len(concrete_overlap) * 3)
-
-            return min(score, 98)
-
-        # Course-process question must retrieve course-process records,
-        # not course tests.
-        if query_course_process:
-            if not stored_course_process:
-                return 0
-
-            score = 50
-
-            if query_has_qai and stored_has_qai:
-                score += 8
-
-            if concrete_overlap:
-                score += min(20, len(concrete_overlap) * 5)
-
-            return min(score, 85)
-
-        # Supervisor learning question must match explicit supervisor
-        # learning records, not merely a learning/test record.
-        if query_supervisor_learning:
-            if not stored_supervisor_learning:
-                return 0
-
-            score = 65
-
-            if query_has_qai and stored_has_qai:
-                score += 8
-
-            if concrete_overlap:
-                score += min(12, len(concrete_overlap) * 4)
-
-            return min(score, 90)
-
-        # Platform identity question.
-        if query_platform_identity:
-            if not stored_platform_identity:
-                return 0
-
-            score = 55
-
-            if query_has_qai and stored_has_qai:
-                score += 5
-
-            if concrete_overlap:
-                score += min(20, len(concrete_overlap) * 5)
-
-            return min(score, 90)
-
-        # ---------------------------------------------------------
-        # 8. Generic fallback
-        # ---------------------------------------------------------
-
-        # If both records clearly belong to the same broad learning
-        # topic, require actual overlap. Do not let topic labels alone
-        # create relevance.
-        if query_has_course and stored_has_course:
-            if not concrete_overlap:
-                return 0
-
-            score = 30 + min(30, len(concrete_overlap) * 8)
-
-            if query_has_qai and stored_has_qai:
-                score += 5
-
-            return min(score, 70)
-
-        # QAI alone is never enough.
-        if query_has_qai and stored_has_qai:
-            if concrete_overlap:
-                return min(25 + len(concrete_overlap) * 8, 55)
-
-        return 0
+        return min(score, 100)
 
     # =========================================================
     # SINGLE SOURCE SEARCH

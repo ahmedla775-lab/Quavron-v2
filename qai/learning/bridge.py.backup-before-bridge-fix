@@ -9,10 +9,6 @@ class LearningBridge:
         self.evaluator = LearningEvaluator()
         self.engine = LearningEngine()
 
-    # =========================================================
-    # TEACHER EVALUATION
-    # =========================================================
-
     def evaluate_teacher_answer(
         self,
         question,
@@ -52,10 +48,6 @@ class LearningBridge:
                 "reason": f"Evaluation error: {type(e).__name__}",
             }
 
-    # =========================================================
-    # LEARNING GATE
-    # =========================================================
-
     def can_learn(
         self,
         evaluation,
@@ -65,10 +57,6 @@ class LearningBridge:
             evaluation,
             supervisor=supervisor,
         )
-
-    # =========================================================
-    # SUPERVISOR APPROVED LEARNING
-    # =========================================================
 
     def save_approved(
         self,
@@ -87,18 +75,6 @@ class LearningBridge:
                 "reason": "Missing question or answer",
             }
 
-        # -----------------------------------------------------
-        # Approval is explicit.
-        # Do not allow a non-supervisor caller to create
-        # supervisor-approved knowledge.
-        # -----------------------------------------------------
-
-        if supervisor is not True:
-            return {
-                "status": "rejected",
-                "reason": "Supervisor approval is required",
-            }
-
         evaluation = {
             "accepted": True,
             "confidence": 1.0,
@@ -107,23 +83,15 @@ class LearningBridge:
             "reason": "Approved by supervisor",
         }
 
-        # -----------------------------------------------------
-        # Learning gate
-        # -----------------------------------------------------
-
         if not self.can_learn(
             evaluation,
-            supervisor=True,
+            supervisor=supervisor,
         ):
             return {
                 "status": "rejected",
                 "evaluation": evaluation,
                 "reason": "Learning gate rejected the knowledge",
             }
-
-        # -----------------------------------------------------
-        # Save approved knowledge
-        # -----------------------------------------------------
 
         try:
             result = self.engine.learn(

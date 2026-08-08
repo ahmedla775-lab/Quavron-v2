@@ -25,11 +25,22 @@ class ContextBuilder:
             approved = item.get("approved", False)
             confidence = item.get("confidence", 0)
             teacher = item.get("teacher", "")
+            stored_question = item.get("question", "")
+
+            if isinstance(stored_question, dict):
+                stored_question = " | ".join(
+                    str(value)
+                    for value in stored_question.values()
+                    if value
+                )
+
+            stored_question = str(stored_question or "").replace("]", " ")
 
             parts.append(
                 f"[source={source}; score={score}; relevance={relevance}; "
                 f"final_score={final_score}; approved={str(approved).lower()}; "
-                f"confidence={confidence}; teacher={teacher}]"
+                f"confidence={confidence}; teacher={teacher}; "
+                f"question={stored_question}]"
             )
 
             parts.append(text)

@@ -41,6 +41,11 @@ class LearningRetriever:
         if not self.path.exists():
             return []
 
+        question = str(question or "").strip()
+
+        if not question:
+            return []
+
         query_words = self.keywords(question)
 
         if not query_words:
@@ -62,16 +67,54 @@ class LearningRetriever:
                     except json.JSONDecodeError:
                         continue
 
-                    # QAI لا يتعلم إلا من المعرفة المقبولة
+                    # QAI لا يستخدم إلا المعرفة المعتمدة.
                     if not item.get("approved", False):
                         continue
 
-                    answer = item.get("answer", "")
-                    original_question = item.get("question", "")
-                    context = item.get("context", "")
+                    answer = str(item.get("answer", "") or "")
+                    original_question = str(
+                        item.get("question", "") or ""
+                    )
+                    context = str(
+                        item.get("context", "") or ""
+                    )
 
-                    if not answer:
+                    if not answer or not original_question:
                         continue
+
+                    # -------------------------------------------------
+                    # IMPORTANT:
+                    # Use the SAME semantic/topic relevance logic
+                    # used by the main RAG retriever.
+                    #
+                    # This prevents generic keyword overlap from
+                    # mixing official/local/platform/course records.
+                    # -------------------------------------------------
+
+                    try:
+                        from rag.retriever import retriever
+
+                        relevance = retriever._learning_relevance(
+                            question,
+                            original_question,
+                            answer,
+                        )
+
+                    except Exception:
+                        relevance = 0
+
+                    # A learning record is useful only when the
+                    # supervisor-learning relevance function accepts it.
+                    if relevance <= 0:
+                        continue
+
+                    # -------------------------------------------------
+                    # Raw lexical score
+                    # -------------------------------------------------
+
+                    normalized_question = self.normalize(
+                        original_question
+                    )
 
                     searchable = self.normalize(
                         f"{original_question} {answer} {context}"
@@ -80,31 +123,58 @@ class LearningRetriever:
                     score = 0
 
                     for word in query_words:
-                        if word in self.normalize(original_question):
+
+                        if word in normalized_question:
                             score += 30
+
                         elif word in searchable:
                             score += 10
 
-                    if score > 0:
-                        results.append({
-                            "question": original_question,
-                            "answer": answer,
-                            "teacher": item.get("teacher"),
-                            "confidence": item.get("confidence", 0),
-                            "approved": item.get("approved", False),
-                            "score": score,
-                            "source": "qai_learning"
-                        })
+                    # -------------------------------------------------
+                    # Combine lexical score with semantic/topic
+                    # relevance.
+                    #
+                    # Relevance is the gate.
+                    # Lexical score is only a ranking signal.
+                    # -------------------------------------------------
+
+                    final_score = (
+                        relevance * 2
+                        + score
+                        + int(
+                            float(
+                                item.get("confidence", 0) or 0
+                            ) * 20
+                        )
+                    )
+
+                    results.append({
+                        "question": original_question,
+                        "answer": answer,
+                        "teacher": item.get("teacher"),
+                        "confidence": item.get(
+                            "confidence",
+                            0,
+                        ),
+                        "approved": item.get(
+                            "approved",
+                            False,
+                        ),
+                        "score": final_score,
+                        "relevance": relevance,
+                        "source": "qai_learning",
+                    })
 
         except OSError:
             return []
 
         results.sort(
             key=lambda x: (
-                x["score"],
-                x["confidence"]
+                x.get("relevance", 0),
+                x.get("score", 0),
+                x.get("confidence", 0),
             ),
-            reverse=True
+            reverse=True,
         )
 
         return results[:limit]
