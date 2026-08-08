@@ -69,13 +69,21 @@ class Brain:
                 return True
 
         # -------------------------------------------------
-        # Multiple strong pieces of local evidence
+        # Multiple strong trusted pieces of local evidence
         # -------------------------------------------------
+
+        trusted_sources = {
+            "qai_learning",
+            "knowledge",
+        }
 
         strong = [
             doc
             for doc in documents
-            if self._document_relevance(doc) >= 40
+            if (
+                doc.get("source") in trusted_sources
+                and self._document_relevance(doc) >= 40
+            )
         ]
 
         if len(strong) >= 2:

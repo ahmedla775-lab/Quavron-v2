@@ -503,7 +503,8 @@ class Retriever:
         filtered.sort(
             key=lambda x: (
                 x.get("relevance", 0),
-                x.get("final_score", 0)
+                x.get("final_score", 0),
+                x.get("score", 0)
             ),
             reverse=True
         )

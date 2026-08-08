@@ -1,19 +1,3 @@
-from router.router import router
-from memory.memory import memory
+from brain.core.brain import brain, Brain
 
-
-class QuavronBrain:
-
-    def think(self, message):
-
-        memory.remember(message)
-
-        result = router.route(message)
-
-        return {
-            "status": "completed",
-            "response": result
-        }
-
-
-brain = QuavronBrain()
+__all__ = ["brain", "Brain"]
