@@ -1,0 +1,37 @@
+Metadata-Version: 2.4
+Name: quavron-data
+Version: 0.1.0
+Summary: Quavron Data Engine - standalone data processing engine
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi>=0.115
+Requires-Dist: uvicorn[standard]>=0.30
+Requires-Dist: pydantic>=2.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
+
+# Quavron Data Engine
+
+Standalone data processing engine developed as part of the Quavron ecosystem.
+
+## Goals
+
+- Data ingestion
+- Data validation
+- Data cleaning
+- Data transformation
+- Data normalization
+- Data statistics
+- Data indexing preparation
+- Standalone CLI/API usage
+- Future integration with QAI
+
+## Architecture
+
+The engine is designed to operate independently from QAI and the Quavron platform.
+
+QAI integration will be added later through a stable API contract.
+
+## Status
+
+Development - v0.1.0
