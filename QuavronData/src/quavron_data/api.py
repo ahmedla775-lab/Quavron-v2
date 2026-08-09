@@ -2,16 +2,16 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterable
 
-from ..engine import DataEngine
-from ..index import DataIndex
-from ..search import DataSearch
+from .engine import DataEngine
+from .search import DataSearch
+from .index import DataIndex
 
 
 class QuavronData:
     """
     Public facade for the Quavron Data Engine.
 
-    Provides a stable entry point for applications
+    Provides a stable entry point for Quavron applications
     without exposing internal implementation details.
     """
 

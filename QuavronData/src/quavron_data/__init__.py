@@ -1,3 +1,4 @@
+from .api import QuavronData
 from .engine import DataEngine
 from .index import DataIndex
 from .search import DataSearch, SearchResult
@@ -10,6 +11,7 @@ from .schema import DataSchema
 from .types import DataResult, DetectionResult, ValidationResult
 
 __all__ = [
+    "QuavronData",
     "DataEngine",
     "DataIndex",
     "DataSearch",
