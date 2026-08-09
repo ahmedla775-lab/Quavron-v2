@@ -22,8 +22,10 @@ export default function QuavronAI() {
 
     } catch (error) {
 
+      console.error("QUAVRON AI ERROR:", error);
+
       setResponse({
-        answer: "Connection error with Quavron AI"
+        answer: error?.message || "Connection error with Quavron AI"
       });
 
     }

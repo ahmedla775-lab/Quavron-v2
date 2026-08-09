@@ -30,12 +30,22 @@ class KnowledgeRepository:
         if not isinstance(item, dict):
             return
 
+        # Official knowledge normally uses "key".
+        # Runtime/local memory may use "subject".
+        # Normalize subject -> key so both formats are searchable.
         key = str(item.get("key", "")).strip()
+        subject = str(item.get("subject", "")).strip()
+
+        if not key and subject:
+            key = subject
 
         if not key:
             return
 
-        self._items.append(dict(item))
+        normalized = dict(item)
+        normalized["key"] = key
+
+        self._items.append(normalized)
 
     def add_research(self, item: Any) -> bool:
         """
