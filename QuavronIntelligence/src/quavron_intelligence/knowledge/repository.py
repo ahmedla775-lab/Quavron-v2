@@ -37,6 +37,52 @@ class KnowledgeRepository:
 
         self._items.append(dict(item))
 
+    def add_research(self, item: Any) -> bool:
+        """
+        Add one already-validated research knowledge item.
+
+        Research validation must happen before this method is called.
+        The repository stores the item as research-derived knowledge.
+        """
+        if item is None:
+            return False
+
+        if hasattr(item, "__dataclass_fields__"):
+            item = {
+                field: getattr(item, field)
+                for field in item.__dataclass_fields__
+            }
+
+        if not isinstance(item, dict):
+            return False
+
+        if not item.get("research"):
+            metadata = item.get("metadata") or {}
+
+            if not metadata.get("research"):
+                return False
+
+        key = str(item.get("key", "")).strip()
+
+        if not key:
+            return False
+
+        # Research knowledge is immutable-by-key inside the repository.
+        # The same research fact must not be stored more than once.
+        for existing in self._items:
+            if str(existing.get("key", "")).strip() == key:
+                existing_metadata = existing.get("metadata") or {}
+
+                if (
+                    existing.get("source") == "research"
+                    or existing.get("research")
+                    or existing_metadata.get("research")
+                ):
+                    return False
+
+        self._items.append(dict(item))
+        return True
+
     def add_many(self, items: Iterable[Any]) -> int:
         count = 0
 
