@@ -6,7 +6,6 @@ from learning.datasets.retriever import learning_retriever
 SOURCE_PRIORITY = {
     "qai_learning": 300,
     "knowledge": 200,
-    "web": 250,
     "vector": 100,
 }
 

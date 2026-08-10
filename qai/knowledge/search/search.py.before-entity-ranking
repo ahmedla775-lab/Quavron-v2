@@ -263,24 +263,17 @@ class KnowledgeSearch:
         results = []
 
         # -------------------------------------------------
-        # Query intent + exact subject extraction
+        # Query intent
         # -------------------------------------------------
-
         query_normalized = self.normalize(keyword)
-
-        # -------------------------------------------------
-        # Detect query type
-        # -------------------------------------------------
         is_definition_query = any(
             phrase in query_normalized
             for phrase in (
                 "ما هو",
                 "ما هي",
                 "ما معنى",
-                "ما المقصود",
                 "what is",
                 "what are",
-                "who is",
                 "qu est ce que",
                 "qu est-ce que",
             )
@@ -293,7 +286,6 @@ class KnowledgeSearch:
                 "هل",
                 "can ",
                 "do ",
-                "does ",
                 "is ",
                 "are ",
                 "est-ce",
@@ -301,56 +293,6 @@ class KnowledgeSearch:
             )
         )
 
-        # -------------------------------------------------
-        # Extract subject from the query
-        # -------------------------------------------------
-        def extract_subject(value):
-            value = self.normalize(value)
-
-            prefixes = (
-                "ما هو ",
-                "ما هي ",
-                "ما معنى ",
-                "ما المقصود ب",
-                "what is ",
-                "what are ",
-                "who is ",
-                "qu est ce que ",
-                "qu est-ce que ",
-            )
-
-            for prefix in prefixes:
-                if value.startswith(prefix):
-                    value = value[len(prefix):]
-                    break
-
-            # Remove common Arabic structural words.
-            value = re.sub(
-                r"^(منصة|المنصة|في|عن)\s+",
-                "",
-                value,
-            ).strip()
-
-            return value
-
-        query_subject = extract_subject(query_normalized)
-
-        # Subject tokens are used only when necessary.
-        subject_words = [
-            word
-            for word in re.findall(
-                r"[\w\u0600-\u06ff.-]+",
-                query_subject,
-                flags=re.UNICODE,
-            )
-            if len(word) >= 2
-        ]
-
-        subject_words = list(dict.fromkeys(subject_words))
-
-        # -------------------------------------------------
-        # Score text
-        # -------------------------------------------------
         def score_text(text, title="", question=""):
             normalized = self.normalize(text)
             title_text = self.normalize(title)
@@ -358,117 +300,42 @@ class KnowledgeSearch:
 
             score = 0
 
-            # -------------------------------------------------
             # Basic keyword matching
-            # -------------------------------------------------
             for word in keywords:
                 if word in normalized:
                     score += 10
 
             # -------------------------------------------------
-            # Exact query match
+            # Exact / strong concept matching
             # -------------------------------------------------
-            if query_normalized:
-                if query_normalized == question_text:
-                    score += 1200
-                elif query_normalized in question_text:
-                    score += 700
-
-                if query_normalized == title_text:
-                    score += 1000
-                elif query_normalized in title_text:
-                    score += 500
+            if query_normalized and query_normalized in normalized:
+                score += 60
 
             # -------------------------------------------------
-            # Exact subject matching
-            # -------------------------------------------------
-            subject_exact_question = (
-                bool(query_subject)
-                and query_subject == extract_subject(question_text)
-            )
-
-            subject_exact_title = (
-                bool(query_subject)
-                and query_subject == extract_subject(title_text)
-            )
-
-            if subject_exact_question:
-                score += 900
-
-            if subject_exact_title:
-                score += 750
-
-            # -------------------------------------------------
-            # Subject token matching
-            # -------------------------------------------------
-            matched_question = 0
-            matched_title = 0
-            matched_content = 0
-
-            for word in subject_words:
-                if word in question_text:
-                    matched_question += 1
-
-                if word in title_text:
-                    matched_title += 1
-
-                if word in normalized:
-                    matched_content += 1
-
-            score += matched_question * 100
-            score += matched_title * 70
-            score += matched_content * 10
-
-            # -------------------------------------------------
-            # Definition intent
+            # Definition-question boosting
             # -------------------------------------------------
             if is_definition_query:
-                # A definition result must actually answer the
-                # requested subject, not merely mention it.
-                if subject_exact_question:
-                    score += 1400
-                elif subject_exact_title:
-                    score += 1100
-                elif matched_question:
-                    score += matched_question * 30
-
-                # Strongly prefer question/title matches over
-                # generic knowledge leaves.
                 if question_text:
-                    score += 250
+                    if query_normalized in question_text:
+                        score += 80
+
+                    for word in keywords:
+                        if word in question_text:
+                            score += 25
+
+                if title_text:
+                    for word in keywords:
+                        if word in title_text:
+                            score += 20
 
             # -------------------------------------------------
-            # Yes / No intent
+            # Yes / No question boosting
             # -------------------------------------------------
             elif is_yes_no_query:
-                if matched_question:
-                    score += matched_question * 120
-
-                # A question-form knowledge record is preferable
-                # to a generic concept when the query is yes/no.
                 if question_text:
-                    score += 100
-
-            # -------------------------------------------------
-            # Entity-aware exact subject protection
-            # -------------------------------------------------
-            # Prevent unrelated records containing the same entity
-            # (e.g. Quavron, QAI, AI) from outranking the exact FAQ.
-            if query_subject:
-                entity = self.normalize(query_subject)
-
-                if entity:
-                    if question_text:
-                        if extract_subject(question_text) == entity:
-                            score += 1200
-                        elif entity in question_text:
-                            score += 120
-
-                    if title_text:
-                        if extract_subject(title_text) == entity:
-                            score += 1000
-                        elif entity in title_text:
-                            score += 100
+                    for word in keywords:
+                        if word in question_text:
+                            score += 25
 
             return score
 
@@ -667,15 +534,11 @@ class KnowledgeSearch:
                     ).strip()
 
                     text_score = score_text(
-                        multilingual_text,
-                        title=str(parent or ""),
-                        question=str(parent or ""),
+                        multilingual_text
                     )
 
                     key_score = score_text(
-                        str(parent or ""),
-                        title=str(parent or ""),
-                        question=str(parent or ""),
+                        str(parent or "")
                     )
 
                     if text_score or key_score:

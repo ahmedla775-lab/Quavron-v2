@@ -255,449 +255,214 @@ class KnowledgeSearch:
 
     def _local_search(self, keyword):
 
-        keywords = self.extract_keywords(keyword)
+        keywords = self.extract_keywords(
+            keyword
+        )
 
         if not keywords:
             return []
 
         results = []
 
-        # -------------------------------------------------
-        # Query intent + exact subject extraction
-        # -------------------------------------------------
-
-        query_normalized = self.normalize(keyword)
-
-        # -------------------------------------------------
-        # Detect query type
-        # -------------------------------------------------
-        is_definition_query = any(
-            phrase in query_normalized
-            for phrase in (
-                "ما هو",
-                "ما هي",
-                "ما معنى",
-                "ما المقصود",
-                "what is",
-                "what are",
-                "who is",
-                "qu est ce que",
-                "qu est-ce que",
+        def score_text(text):
+            normalized = self.normalize(
+                text
             )
-        )
-
-        is_yes_no_query = any(
-            phrase in query_normalized
-            for phrase in (
-                "هل ",
-                "هل",
-                "can ",
-                "do ",
-                "does ",
-                "is ",
-                "are ",
-                "est-ce",
-                "est ce",
-            )
-        )
-
-        # -------------------------------------------------
-        # Extract subject from the query
-        # -------------------------------------------------
-        def extract_subject(value):
-            value = self.normalize(value)
-
-            prefixes = (
-                "ما هو ",
-                "ما هي ",
-                "ما معنى ",
-                "ما المقصود ب",
-                "what is ",
-                "what are ",
-                "who is ",
-                "qu est ce que ",
-                "qu est-ce que ",
-            )
-
-            for prefix in prefixes:
-                if value.startswith(prefix):
-                    value = value[len(prefix):]
-                    break
-
-            # Remove common Arabic structural words.
-            value = re.sub(
-                r"^(منصة|المنصة|في|عن)\s+",
-                "",
-                value,
-            ).strip()
-
-            return value
-
-        query_subject = extract_subject(query_normalized)
-
-        # Subject tokens are used only when necessary.
-        subject_words = [
-            word
-            for word in re.findall(
-                r"[\w\u0600-\u06ff.-]+",
-                query_subject,
-                flags=re.UNICODE,
-            )
-            if len(word) >= 2
-        ]
-
-        subject_words = list(dict.fromkeys(subject_words))
-
-        # -------------------------------------------------
-        # Score text
-        # -------------------------------------------------
-        def score_text(text, title="", question=""):
-            normalized = self.normalize(text)
-            title_text = self.normalize(title)
-            question_text = self.normalize(question)
 
             score = 0
 
-            # -------------------------------------------------
-            # Basic keyword matching
-            # -------------------------------------------------
             for word in keywords:
+
                 if word in normalized:
                     score += 10
 
-            # -------------------------------------------------
-            # Exact query match
-            # -------------------------------------------------
-            if query_normalized:
-                if query_normalized == question_text:
-                    score += 1200
-                elif query_normalized in question_text:
-                    score += 700
-
-                if query_normalized == title_text:
-                    score += 1000
-                elif query_normalized in title_text:
-                    score += 500
-
-            # -------------------------------------------------
-            # Exact subject matching
-            # -------------------------------------------------
-            subject_exact_question = (
-                bool(query_subject)
-                and query_subject == extract_subject(question_text)
-            )
-
-            subject_exact_title = (
-                bool(query_subject)
-                and query_subject == extract_subject(title_text)
-            )
-
-            if subject_exact_question:
-                score += 900
-
-            if subject_exact_title:
-                score += 750
-
-            # -------------------------------------------------
-            # Subject token matching
-            # -------------------------------------------------
-            matched_question = 0
-            matched_title = 0
-            matched_content = 0
-
-            for word in subject_words:
-                if word in question_text:
-                    matched_question += 1
-
-                if word in title_text:
-                    matched_title += 1
-
-                if word in normalized:
-                    matched_content += 1
-
-            score += matched_question * 100
-            score += matched_title * 70
-            score += matched_content * 10
-
-            # -------------------------------------------------
-            # Definition intent
-            # -------------------------------------------------
-            if is_definition_query:
-                # A definition result must actually answer the
-                # requested subject, not merely mention it.
-                if subject_exact_question:
-                    score += 1400
-                elif subject_exact_title:
-                    score += 1100
-                elif matched_question:
-                    score += matched_question * 30
-
-                # Strongly prefer question/title matches over
-                # generic knowledge leaves.
-                if question_text:
-                    score += 250
-
-            # -------------------------------------------------
-            # Yes / No intent
-            # -------------------------------------------------
-            elif is_yes_no_query:
-                if matched_question:
-                    score += matched_question * 120
-
-                # A question-form knowledge record is preferable
-                # to a generic concept when the query is yes/no.
-                if question_text:
-                    score += 100
-
-            # -------------------------------------------------
-            # Entity-aware exact subject protection
-            # -------------------------------------------------
-            # Prevent unrelated records containing the same entity
-            # (e.g. Quavron, QAI, AI) from outranking the exact FAQ.
-            if query_subject:
-                entity = self.normalize(query_subject)
-
-                if entity:
-                    if question_text:
-                        if extract_subject(question_text) == entity:
-                            score += 1200
-                        elif entity in question_text:
-                            score += 120
-
-                    if title_text:
-                        if extract_subject(title_text) == entity:
-                            score += 1000
-                        elif entity in title_text:
-                            score += 100
-
             return score
 
-        def make_result(
-            *,
-            key,
-            value,
+        def add_result(
+            question,
+            answer,
             score,
-            title="",
-            question="",
             category=None,
-            content="",
         ):
-            content = str(content or "").strip()
-
-            if not content:
-                content = self.multilingual_text(value).strip()
-
-            if not content:
-                return
-
-            final_score = int(score)
-
-            results.append({
-                "key": key,
-                "value": value,
-                "question": question,
-                "category": category,
-                "score": final_score,
-                "relevance": min(final_score, 100),
-                "final_score": final_score,
-                "source": "knowledge",
-                "title": title or str(key),
-                "url": None,
-                "content": content,
-                "text": content,
-                "approved": True,
-                "confidence": 1.0,
-                "teacher": "knowledge",
-                "external": False,
-            })
-
-        def add_faq_result(data):
-            question = data.get("question")
-            answer = data.get("answer")
 
             if not answer:
                 return
 
-            question_text = self.multilingual_text(
-                question
-            ).strip()
-
             answer_text = self.multilingual_text(
                 answer
+            ).strip()
+
+            question_text = self.multilingual_text(
+                question
             ).strip()
 
             if not answer_text:
                 return
 
             question_score = score_text(
-                question_text,
-                title=question_text,
-                question=question_text,
+                question_text
             )
 
             answer_score = score_text(
-                answer_text,
-                title=question_text,
-                question=question_text,
+                answer_text
             )
 
             total = (
-                question_score * 5
+                score
+                + question_score * 5
                 + answer_score
             )
 
             if total <= 0:
                 return
 
-            make_result(
-                key="faq",
-                value={
-                    "question": question,
-                    "answer": answer,
-                },
-                score=total,
-                title=question_text,
-                question=question,
-                category=data.get("category"),
-                content=answer_text,
-            )
+            results.append({
+                "key": "faq",
 
-        def add_multilingual_result(
+                "value": {
+                    "content": answer,
+                },
+
+                "question": question,
+                "category": category,
+
+                "score": total,
+                "relevance": min(
+                    total,
+                    100,
+                ),
+
+                "final_score": total,
+
+                "source": "knowledge",
+                "title": question_text,
+                "url": None,
+
+                "content": answer_text,
+                "text": answer_text,
+
+                "approved": True,
+                "confidence": 1.0,
+                "teacher": "knowledge",
+
+                "external": False,
+            })
+
+        def add_content_result(
             key,
             data,
-            path_score=0,
+            score,
         ):
-            if not isinstance(data, dict):
-                return
 
-            text = self.multilingual_text(data).strip()
+            content = data.get(
+                "content",
+            )
+
+            text = self.multilingual_text(
+                content
+            ).strip()
 
             if not text:
                 return
 
-            text_score = score_text(text)
+            results.append({
+                "key": key,
 
-            if text_score <= 0:
-                return
+                "value": data,
 
-            title = (
-                self.multilingual_text(
-                    data.get("title", "")
-                ).strip()
-                or str(key)
-            )
+                "question": data.get(
+                    "question",
+                    "",
+                ),
 
-            make_result(
-                key=key,
-                value=data,
-                score=path_score + text_score + 50,
-                title=title,
-                question=data.get("question", ""),
-                category=data.get("category"),
-                content=text,
-            )
+                "category": data.get(
+                    "category",
+                ),
 
-        def scan(data, parent=None, path=None):
-            if path is None:
-                path = []
+                "score": score + 50,
 
-            # -----------------------------------------
-            # FAQ record
-            # -----------------------------------------
+                "relevance": min(
+                    score + 50,
+                    100,
+                ),
+
+                "final_score": score + 50,
+
+                "source": "knowledge",
+
+                "title": (
+                    self.multilingual_text(
+                        data.get("title", "")
+                    ).strip()
+                    or str(key)
+                ),
+
+                "url": data.get(
+                    "url"
+                ),
+
+                "content": text,
+                "text": text,
+
+                "approved": True,
+                "confidence": 1.0,
+                "teacher": "knowledge",
+
+                "external": False,
+            })
+
+        def scan(
+            data,
+            parent=None,
+        ):
 
             if isinstance(data, dict):
+
+                # -----------------------------------------
+                # FAQ / knowledge record
+                # -----------------------------------------
 
                 if (
                     "question" in data
                     and "answer" in data
                 ):
-                    add_faq_result(data)
+
+                    add_result(
+                        data.get("question"),
+                        data.get("answer"),
+                        0,
+                        data.get("category"),
+                    )
+
                     return
 
                 # -----------------------------------------
-                # Explicit content record
+                # Content record
                 # -----------------------------------------
 
                 if "content" in data:
-                    content = data.get("content")
+
+                    content = data.get(
+                        "content"
+                    )
 
                     text_value = self.multilingual_text(
                         content
-                    ).strip()
+                    )
 
-                    score = score_text(text_value)
+                    score = score_text(
+                        text_value
+                    )
 
                     if score:
-                        make_result(
-                            key=parent,
-                            value=data,
-                            score=score + 50,
-                            title=(
-                                self.multilingual_text(
-                                    data.get("title", "")
-                                ).strip()
-                                or str(parent)
-                            ),
-                            question=data.get(
-                                "question",
-                                "",
-                            ),
-                            category=data.get(
-                                "category"
-                            ),
-                            content=text_value,
+
+                        add_content_result(
+                            parent,
+                            data,
+                            score,
                         )
 
                     return
-
-                # -----------------------------------------
-                # Multilingual leaf / concept
-                # -----------------------------------------
-
-                language_values = {
-                    key: value
-                    for key, value in data.items()
-                    if key in {"ar", "en", "fr"}
-                }
-
-                if language_values:
-
-                    multilingual_text = self.multilingual_text(
-                        language_values
-                    ).strip()
-
-                    text_score = score_text(
-                        multilingual_text,
-                        title=str(parent or ""),
-                        question=str(parent or ""),
-                    )
-
-                    key_score = score_text(
-                        str(parent or ""),
-                        title=str(parent or ""),
-                        question=str(parent or ""),
-                    )
-
-                    if text_score or key_score:
-
-                        # Exact concept/question words are
-                        # more important than generic matches.
-
-                        concept_score = (
-                            text_score
-                            + key_score * 3
-                        )
-
-                        make_result(
-                            key=parent,
-                            value=data,
-                            score=concept_score + 50,
-                            title=str(parent or ""),
-                            content=multilingual_text,
-                        )
-
-                    # Do not stop here: nested multilingual
-                    # dictionaries may contain additional data.
 
                 # -----------------------------------------
                 # Nested knowledge
@@ -709,19 +474,11 @@ class KnowledgeSearch:
                         "ar",
                         "en",
                         "fr",
-                    }:
-                        continue
-
-                    if key in {
                         "content",
                         "keywords",
                         "title",
                     }:
                         continue
-
-                    child_path = (
-                        path + [str(key)]
-                    )
 
                     key_score = score_text(
                         str(key)
@@ -729,49 +486,68 @@ class KnowledgeSearch:
 
                     if key_score:
 
-                        nested_text = (
-                            self.multilingual_text(
+                        results.append({
+                            "key": key,
+                            "value": value,
+
+                            "score": key_score * 2,
+                            "relevance": key_score * 2,
+                            "final_score": key_score * 2,
+
+                            "source": "knowledge",
+
+                            "title": str(key),
+                            "url": None,
+
+                            "content": self.multilingual_text(
                                 value
-                            ).strip()
-                        )
+                            ).strip(),
 
-                        if nested_text:
+                            "text": self.multilingual_text(
+                                value
+                            ).strip(),
 
-                            make_result(
-                                key=key,
-                                value=value,
-                                score=key_score * 2,
-                                title=str(key),
-                                content=nested_text,
-                            )
+                            "question": "",
+                            "category": None,
+
+                            "approved": True,
+                            "confidence": 1.0,
+                            "teacher": "knowledge",
+
+                            "external": False,
+                        })
 
                     scan(
                         value,
-                        parent=key,
-                        path=child_path,
+                        key,
                     )
 
             elif isinstance(data, list):
 
                 for item in data:
+
                     scan(
                         item,
-                        parent=parent,
-                        path=path,
+                        parent,
                     )
 
-        scan(self.knowledge)
+        scan(
+            self.knowledge
+        )
 
-        # -----------------------------------------
-        # Ranking
-        # -----------------------------------------
+        # ---------------------------------------------
+        # Sort
+        # ---------------------------------------------
 
         results.sort(
             key=lambda x: (
                 float(
                     x.get(
                         "final_score",
-                        x.get("score", 0),
+                        x.get(
+                            "score",
+                            0,
+                        ),
                     )
                     or 0
                 ),
@@ -786,37 +562,36 @@ class KnowledgeSearch:
             reverse=True,
         )
 
-        # -----------------------------------------
-        # Deduplicate
-        # -----------------------------------------
+        # ---------------------------------------------
+        # Remove duplicates
+        # ---------------------------------------------
 
         cleaned = []
         seen = set()
 
         for item in results:
 
-            value = item.get("value")
-
-            fingerprint = (
-                item.get("question", "")
-                or item.get("title", "")
-                or str(value)
+            value = item.get(
+                "value"
             )
 
-            fingerprint = (
-                self.normalize(
-                    str(fingerprint)
-                )
-                [:500]
-            )
+            fingerprint = str(
+                value
+            )[:500]
 
             if fingerprint in seen:
                 continue
 
-            seen.add(fingerprint)
-            cleaned.append(item)
+            seen.add(
+                fingerprint
+            )
+
+            cleaned.append(
+                item
+            )
 
         return cleaned[:8]
+
 
     # =====================================================
     # WEB HTTP

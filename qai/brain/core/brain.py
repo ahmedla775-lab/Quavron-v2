@@ -381,58 +381,25 @@ class Brain:
                 }
 
         # -------------------------------------------------
-        # 5. LOCAL FIRST
+        # 5. QAI INTELLIGENCE
         # -------------------------------------------------
+        # OpenAI is not an answer fallback.
+        # QAI handles unanswered requests through its own
+        # intelligence/tools pipeline.
 
-        if has_knowledge:
-
-            provider = "local"
-
-        # -------------------------------------------------
-        # 6. EXTERNAL FALLBACK
-        # -------------------------------------------------
-
-        elif llm_router.openai_available():
-
-            provider = "openai"
-
-        else:
-
-            provider = "local"
+        provider = "local"
 
         # -------------------------------------------------
-        # 7. ASK PROVIDER
+        # 6. ASK QAI
         # -------------------------------------------------
 
         llm_result = gateway.ask(
-            provider,
+            "local",
             question,
             context,
         )
 
         fallback_from = None
-
-        # -------------------------------------------------
-        # 8. EXTERNAL FAILURE
-        # -------------------------------------------------
-
-        if (
-            provider == "openai"
-            and llm_result.get("status") != "completed"
-        ):
-
-            fallback_from = "openai"
-
-            local_result = gateway.ask(
-                "local",
-                question,
-                context,
-            )
-
-            if local_result.get("status") == "completed":
-
-                llm_result = local_result
-                provider = "local"
 
         # -------------------------------------------------
         # 9. LEARNING CANDIDATE
@@ -484,6 +451,31 @@ class Brain:
             "user_context": user_context,
             "learning_candidate": learning_candidate,
             "llm": llm_result,
+        }
+
+
+    # =====================================================
+    # CHAT API
+    # =====================================================
+
+    def chat(self, user_id="guest", message=""):
+
+        result = self.think(
+            message,
+            user_id=user_id or "guest"
+        )
+
+        llm = result.get("llm", {})
+
+        return {
+            "reply": llm.get("answer", ""),
+            "provider": result.get("provider"),
+            "source": llm.get("source"),
+            "confidence": llm.get("confidence", 0),
+            "documents": result.get("documents", 0),
+            "fallback_from": result.get("fallback_from"),
+            "intent": result.get("intent"),
+            "domain": result.get("domain"),
         }
 
 

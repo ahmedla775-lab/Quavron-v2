@@ -2069,6 +2069,19 @@
         "en": "It provides courses and education to improve user skills.",
         "fr": "Il propose des cours pour développer les compétences des utilisateurs."
       }
+    },
+    {
+      "question": {
+        "ar": "ما هو الذكاء الاصطناعي؟",
+        "en": "What is Artificial Intelligence?",
+        "fr": "Qu'est-ce que l'intelligence artificielle ?"
+      },
+      "answer": {
+        "ar": "الذكاء الاصطناعي هو مجال من علوم الحاسوب يهدف إلى بناء أنظمة قادرة على فهم المعلومات والتعلم من البيانات والاستدلال وحل المشكلات وتنفيذ مهام تتطلب عادةً قدرات ذهنية بشرية.",
+        "en": "Artificial Intelligence is a field of computer science focused on building systems that can understand information, learn from data, reason, solve problems, and perform tasks that normally require human intelligence.",
+        "fr": "L'intelligence artificielle est un domaine de l'informatique qui vise à construire des systèmes capables de comprendre des informations, d'apprendre à partir des données, de raisonner, de résoudre des problèmes et d'effectuer des tâches qui nécessitent généralement des capacités humaines."
+      },
+      "category": "artificial_intelligence"
     }
   ],
   "qai_personality": {

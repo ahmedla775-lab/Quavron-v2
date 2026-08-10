@@ -9,6 +9,7 @@ from brain.core.brain import brain
 from knowledge.index.indexer import indexer
 from knowledge.search.search import search_engine
 from api.routes import router as api_router
+from api.chat import router as chat_router
 
 
 app = FastAPI(
@@ -25,6 +26,7 @@ app.add_middleware(
 
 
 app.include_router(api_router)
+app.include_router(chat_router, prefix="/api")
 
 
 @app.get("/")
@@ -57,3 +59,4 @@ def search(keyword):
 
 
 from api.routes import router as api_router
+from api.chat import router as chat_router

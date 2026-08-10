@@ -316,19 +316,11 @@ class LocalDriver(BaseDriver):
         """
         Detect important Quavron concepts and semantic intents
         from one question part.
-
-        Intent boundaries are deliberately strict:
-        - learning_test = official/verification test questions
-        - learning_process = how the learning cycle works
-        - supervisor_learning = whether/how QAI learns from supervisor
         """
 
         q = self._normalize(question)
-        concepts = []
 
-        # ---------------------------------------------------------
-        # Known Quavron concepts
-        # ---------------------------------------------------------
+        concepts = []
 
         known = [
             "quavron ai",
@@ -346,10 +338,7 @@ class LocalDriver(BaseDriver):
             if self._normalize(concept) in q:
                 concepts.append(concept)
 
-        # ---------------------------------------------------------
-        # Semantic intent markers
-        # ---------------------------------------------------------
-
+        # Semantic intent markers.
         intents = {
             "identity": [
                 "ما هي",
@@ -360,7 +349,6 @@ class LocalDriver(BaseDriver):
                 "منصة",
                 "platform",
             ],
-
             "pricing": [
                 "مجاني",
                 "مجانية",
@@ -375,7 +363,6 @@ class LocalDriver(BaseDriver):
                 "pricing",
                 "free",
             ],
-
             "capabilities": [
                 "ماذا يساعد",
                 "ماذا يفعل",
@@ -387,57 +374,21 @@ class LocalDriver(BaseDriver):
                 "يقدم",
                 "يفعل",
             ],
-
-            # IMPORTANT:
-            # Do NOT use "دورة تعلم" alone here.
-            # A question saying "كيف تعمل دورة تعلم QAI؟"
-            # is about the learning process, not the official test.
             "learning_test": [
-                "الاختبار الرسمي",
+                "اختبار",
+                "دورة تعلم",
+                "التعلم المعتمد",
                 "اختبار رسمي",
-                "اختبار دورة",
-                "اختبار التعلم",
-                "اختبار تعلم",
-                "اختبار اعتماد",
-                "اختبار معتمد",
-                "اختبار التحقق",
-            ],
-
-            "learning_process": [
-                "كيف تعمل دورة",
-                "كيف تعمل دوره",
-                "كيف يعمل التعلم",
-                "كيف تعمل عملية التعلم",
-                "طريقة عمل دورة",
-                "طريقة عمل التعلم",
-                "دورة التعلم",
-                "دوره التعلم",
-            ],
-
-            "supervisor_learning": [
-                "يتعلم من المشرف",
-                "التعلم من المشرف",
-                "تعلم من المشرف",
-                "يمكنه التعلم من المشرف",
-                "يمكن لـ qai التعلم",
-                "يمكن ل qai التعلم",
-                "هل يستطيع qai التعلم",
-                "هل يمكن لـ qai التعلم",
-                "هل يمكن ل qai التعلم",
-                "qai يتعلم من المشرف",
             ],
         }
 
-        # ---------------------------------------------------------
-        # Identity
-        # ---------------------------------------------------------
-
+        # Identity can also appear as a shortened compound clause,
+        # e.g. "هو Quavron AI" after question splitting.
         identity_detected = any(
             self._normalize(marker) in q
             for marker in intents["identity"]
         )
 
-        # Identity can also appear as a shortened compound clause.
         if not identity_detected:
             if any(
                 self._normalize(entity) in q
@@ -453,10 +404,6 @@ class LocalDriver(BaseDriver):
         if identity_detected:
             concepts.append("intent:identity")
 
-        # ---------------------------------------------------------
-        # Explicit intents
-        # ---------------------------------------------------------
-
         for intent, markers in intents.items():
             if intent == "identity":
                 continue
@@ -467,45 +414,18 @@ class LocalDriver(BaseDriver):
             ):
                 concepts.append(f"intent:{intent}")
 
-        # ---------------------------------------------------------
-        # Intent precedence / conflict cleanup
-        # ---------------------------------------------------------
-
-        # "learning_test" is specifically about an official test.
-        # It must not be inferred merely because the question contains
-        # "دورة تعلم".
-        #
-        # If the question is explicitly about how the course/learning
-        # process works, remove learning_test.
-        if (
-            "intent:learning_test" in concepts
-            and "intent:learning_process" in concepts
-        ):
-            concepts.remove("intent:learning_test")
-
-        # Questions about learning from the supervisor are a distinct
-        # intent and must not inherit the official-test intent.
-        if "intent:supervisor_learning" in concepts:
-            if "intent:learning_test" in concepts:
-                concepts.remove("intent:learning_test")
-
         return concepts
+
     # =========================================================
     # Document relevance for a question part
     # =========================================================
 
     def _document_match_score(self, question, document):
         """
-        Strict intent/document matching.
+        Intent-aware document scoring.
 
-        A document must first belong to the same intent/topic boundary
-        before its lexical/relevance score can make it a candidate.
-
-        Critical boundaries:
-        - learning-test != learning-process
-        - learning-test != supervisor-learning
-        - QAI learning course != generic Quavron/platform knowledge
-        - platform test != QAI learning-course test
+        A document must match the actual question part, not merely
+        share the generic Quavron keyword.
         """
 
         text = str(
@@ -527,212 +447,8 @@ class LocalDriver(BaseDriver):
 
         q_words = set(self.keywords(question))
         d_words = set(self.keywords(text))
+
         overlap = len(q_words & d_words)
-
-        # -----------------------------------------------------
-        # Intent-aware matching
-        # -----------------------------------------------------
-
-        concepts = self._question_concepts(question)
-
-        # -----------------------------------------------------
-        # Strict learning-test boundary
-        # -----------------------------------------------------
-        #
-        # An official learned test is a very specific intent.
-        # Generic mentions of "learning", "QAI", or "course" are
-        # NOT sufficient.
-
-        if "intent:learning_test" in concepts:
-
-            question_test = any(
-                marker in q
-                for marker in [
-                    "الاختبار الرسمي",
-                    "اختبار رسمي",
-                    "اختبار دورة",
-                    "اختبار التعلم",
-                    "اختبار التعلم المعتمد",
-                ]
-            )
-
-            question_course = any(
-                marker in q
-                for marker in [
-                    "دورة تعلم",
-                    "دوره تعلم",
-                    "دورة التعلم",
-                    "دوره التعلم",
-                    "التعلم المعتمد",
-                ]
-            )
-
-            question_qai = "qai" in q
-
-            # -------------------------------------------------
-            # Official QAI learning-course test
-            # -------------------------------------------------
-
-            if question_test and question_course and question_qai:
-
-                valid_markers = [
-                    "اختبار رسمي",
-                    "الاختبار الرسمي",
-                    "دورة التعلم",
-                    "دورة تعلم",
-                    "التعلم المعتمد",
-                    "المعلم",
-                    "قاعدة المعرفة",
-                    "rag",
-                ]
-
-                has_learning_test_evidence = any(
-                    marker in t
-                    for marker in valid_markers
-                )
-
-                # A generic QAI/Quavron answer must never answer
-                # the official learning-test question.
-                if not has_learning_test_evidence:
-                    return -1
-
-                # Strong bonus for direct test evidence.
-                score = relevance * 10
-                score += overlap * 12
-                score += 260
-
-                if "اختبار رسمي" in t or "الاختبار الرسمي" in t:
-                    score += 120
-
-                if "قاعدة المعرفة" in t:
-                    score += 80
-
-                if "rag" in t:
-                    score += 80
-
-                if "المعلم" in t:
-                    score += 60
-
-                return score
-
-            # -------------------------------------------------
-            # Any other learning-test question
-            # -------------------------------------------------
-
-            if not any(
-                marker in t
-                for marker in [
-                    "اختبار",
-                    "دورة",
-                    "التعلم",
-                ]
-            ):
-                return -1
-
-        # -----------------------------------------------------
-        # Supervisor-learning boundary
-        # -----------------------------------------------------
-        #
-        # "هل يستطيع QAI التعلم من المشرف؟" must not inherit
-        # an answer that was approved for the official test.
-
-        supervisor_learning_markers = [
-            "يتعلم من المشرف",
-            "التعلم من المشرف",
-            "تعلم من المشرف",
-            "يمكن لـ qai التعلم",
-            "يمكن ل qai التعلم",
-            "qai يتعلم",
-            "qai تعلم",
-        ]
-
-        question_is_supervisor_learning = any(
-            marker in q
-            for marker in supervisor_learning_markers
-        )
-
-        document_is_official_test = any(
-            marker in t
-            for marker in [
-                "الاختبار الرسمي",
-                "اختبار رسمي",
-                "اختبار دورة",
-                "اختبار التعلم",
-            ]
-        )
-
-        if question_is_supervisor_learning and document_is_official_test:
-            return -1
-
-        # -----------------------------------------------------
-        # Learning process boundary
-        # -----------------------------------------------------
-        #
-        # "كيف تعمل دورة تعلم QAI؟" is not the official test.
-
-        process_markers = [
-            "كيف تعمل",
-            "كيف يعمل",
-            "كيف تتم",
-            "كيف يتم",
-            "طريقة عمل",
-            "اشرح كيف",
-        ]
-
-        question_is_learning_process = (
-            "qai" in q
-            and any(
-                marker in q
-                for marker in process_markers
-            )
-            and any(
-                marker in q
-                for marker in [
-                    "دورة تعلم",
-                    "دورة التعلم",
-                    "التعلم",
-                ]
-            )
-        )
-
-        if question_is_learning_process and document_is_official_test:
-            return -1
-
-        # -----------------------------------------------------
-        # Platform-test boundary
-        # -----------------------------------------------------
-        #
-        # "ما هو الاختبار الرسمي لمنصة Quavron؟" is NOT the
-        # approved QAI learning-course test.
-
-        question_is_platform_test = (
-            "quavron" in q
-            and any(
-                marker in q
-                for marker in [
-                    "اختبار",
-                    "الاختبار",
-                ]
-            )
-            and any(
-                marker in q
-                for marker in [
-                    "منصة",
-                    "منصه",
-                ]
-            )
-        )
-
-        if question_is_platform_test and document_is_official_test:
-            # The approved learning test belongs to the QAI course,
-            # not to the Quavron platform.
-            if (
-                "دورة تعلم" in t
-                or "دورة التعلم" in t
-                or "التعلم المعتمد" in t
-                or "qai" in t
-            ):
-                return -1
 
         # -----------------------------------------------------
         # Base RAG relevance
@@ -744,11 +460,13 @@ class LocalDriver(BaseDriver):
         score += overlap * 12
 
         # -----------------------------------------------------
-        # Identity / definition
+        # Intent-aware matching
         # -----------------------------------------------------
 
-        if "intent:identity" in concepts:
+        concepts = self._question_concepts(question)
 
+        # Identity / definition
+        if "intent:identity" in concepts:
             identity_markers = [
                 "منصه",
                 "منصه رقميه",
@@ -764,6 +482,8 @@ class LocalDriver(BaseDriver):
             ):
                 score += 120
 
+            # Definition questions require an actual definition,
+            # not merely a document mentioning Quavron.
             definition_markers = [
                 "هي منصه",
                 "هي منصة",
@@ -784,6 +504,8 @@ class LocalDriver(BaseDriver):
             if has_definition:
                 score += 180
             else:
+                # Generic operational/feature documents should not
+                # outrank an actual definition.
                 generic_markers = [
                     "ابدأ بإنشاء حساب",
                     "استكشاف لوحة التحكم",
@@ -799,12 +521,8 @@ class LocalDriver(BaseDriver):
                 ):
                     score -= 220
 
-        # -----------------------------------------------------
-        # Pricing
-        # -----------------------------------------------------
-
+        # Pricing / free plan
         if "intent:pricing" in concepts:
-
             pricing_markers = [
                 "مجاني",
                 "مجانيه",
@@ -823,12 +541,8 @@ class LocalDriver(BaseDriver):
             ):
                 score += 180
 
-        # -----------------------------------------------------
         # Capabilities
-        # -----------------------------------------------------
-
         if "intent:capabilities" in concepts:
-
             capability_markers = [
                 "يساعد",
                 "مساعد ذكي",
@@ -848,12 +562,8 @@ class LocalDriver(BaseDriver):
             ):
                 score += 180
 
-        # -----------------------------------------------------
-        # Learning-test positive evidence
-        # -----------------------------------------------------
-
+        # Learning-test questions
         if "intent:learning_test" in concepts:
-
             learning_markers = [
                 "اختبار رسمي",
                 "دورة التعلم",
@@ -875,7 +585,6 @@ class LocalDriver(BaseDriver):
         # -----------------------------------------------------
 
         for concept in concepts:
-
             if concept.startswith("intent:"):
                 continue
 
@@ -885,7 +594,8 @@ class LocalDriver(BaseDriver):
                 score += 100
 
         # -----------------------------------------------------
-        # Avoid generic documents for specific intents
+        # Avoid generic Quavron descriptions when the question
+        # asks about a more specific concept.
         # -----------------------------------------------------
 
         if (
@@ -916,23 +626,13 @@ class LocalDriver(BaseDriver):
         ):
             score -= 100
 
-        # Learning-test documents must contain actual test/course
-        # evidence. Generic QAI knowledge is not enough.
         if (
             "intent:learning_test" in concepts
-            and not any(
-                marker in t
-                for marker in [
-                    "اختبار",
-                    "دورة",
-                    "التعلم",
-                    "المعلم",
-                    "قاعدة المعرفة",
-                    "rag",
-                ]
-            )
+            and "اختبار" not in t
+            and "دورة" not in t
+            and "تعلم" not in t
         ):
-            return -1
+            score -= 150
 
         # Concise direct answers are preferable.
         if len(text) <= 300:
@@ -941,178 +641,8 @@ class LocalDriver(BaseDriver):
         return score
 
     # =========================================================
-    # Hard intent boundary
+    # Select documents per question part
     # =========================================================
-    def _document_allowed_for_intent(self, question, document):
-        """
-        Hard semantic boundary for sensitive/specific intents.
-
-        A document must actually belong to the requested intent.
-        Relevance or lexical similarity must never override this
-        boundary.
-        """
-        text = str(document.get("text", "") or "").strip()
-
-        if not text:
-            return False
-
-        q = self._normalize(question)
-        t = self._normalize(text)
-        concepts = self._question_concepts(question)
-
-        # ---------------------------------------------------------
-        # Official-test intent
-        # ---------------------------------------------------------
-        if "intent:learning_test" in concepts:
-
-            is_platform_test = (
-                "quavron" in q
-                and any(marker in q for marker in [
-                    "اختبار",
-                    "الاختبار",
-                ])
-                and any(marker in q for marker in [
-                    "منصة",
-                    "منصه",
-                ])
-            )
-
-            is_qai_learning_test = (
-                "qai" in q
-                and any(marker in q for marker in [
-                    "اختبار",
-                    "الاختبار",
-                ])
-                and any(marker in q for marker in [
-                    "دورة تعلم",
-                    "دوره تعلم",
-                    "دورة التعلم",
-                    "دوره التعلم",
-                    "التعلم المعتمد",
-                ])
-            )
-
-            document_is_learning_test = any(
-                marker in t
-                for marker in [
-                    "الاختبار الرسمي",
-                    "اختبار رسمي",
-                    "اختبار دورة",
-                    "اختبار التعلم",
-                    "اختبار اعتماد",
-                    "اختبار معتمد",
-                    "اختبار التحقق",
-                ]
-            )
-
-            document_is_qai_learning_test = (
-                document_is_learning_test
-                and any(
-                    marker in t
-                    for marker in [
-                        "دورة تعلم",
-                        "دورة التعلم",
-                        "التعلم المعتمد",
-                        "المعلم",
-                        "قاعدة المعرفة",
-                        "rag",
-                    ]
-                )
-            )
-
-            # Platform test and QAI learning-course test are
-            # different knowledge domains.
-            if is_platform_test:
-                return (
-                    document_is_learning_test
-                    and not document_is_qai_learning_test
-                )
-
-            if is_qai_learning_test:
-                return document_is_qai_learning_test
-
-            return document_is_learning_test
-
-        # ---------------------------------------------------------
-        # Learning-process intent
-        # ---------------------------------------------------------
-        if "intent:learning_process" in concepts:
-
-            # The official approval/test answer is not a process answer.
-            document_is_official_test = any(
-                marker in t
-                for marker in [
-                    "الاختبار الرسمي",
-                    "اختبار رسمي",
-                    "اختبار دورة",
-                    "اختبار التعلم",
-                    "اختبار اعتماد",
-                    "اختبار معتمد",
-                ]
-            )
-
-            if document_is_official_test:
-                return False
-
-            # A process document must explicitly discuss the
-            # QAI learning/course process.
-            process_evidence = any(
-                marker in t
-                for marker in [
-                    "دورة تعلم",
-                    "دورة التعلم",
-                    "عملية التعلم",
-                    "طريقة التعلم",
-                    "التعلم من المشرف",
-                    "المعلم",
-                    "قاعدة المعرفة",
-                    "rag",
-                ]
-            )
-
-            if not process_evidence:
-                return False
-
-        # ---------------------------------------------------------
-        # Supervisor-learning intent
-        # ---------------------------------------------------------
-        if "intent:supervisor_learning" in concepts:
-
-            # Never inherit the official-test knowledge.
-            document_is_official_test = any(
-                marker in t
-                for marker in [
-                    "الاختبار الرسمي",
-                    "اختبار رسمي",
-                    "اختبار دورة",
-                    "اختبار التعلم",
-                    "اختبار اعتماد",
-                    "اختبار معتمد",
-                ]
-            )
-
-            if document_is_official_test:
-                return False
-
-            # Generic QAI capabilities are not evidence that QAI
-            # can learn from the supervisor.
-            supervisor_evidence = any(
-                marker in t
-                for marker in [
-                    "التعلم من المشرف",
-                    "تعلم من المشرف",
-                    "يتعلم من المشرف",
-                    "يمكن لـ qai التعلم",
-                    "يمكن ل qai التعلم",
-                    "qai يتعلم من المشرف",
-                    "qai تعلم من المشرف",
-                ]
-            )
-
-            if not supervisor_evidence:
-                return False
-
-        return True
 
     def _select_documents_for_question(
         self,
@@ -1147,12 +677,6 @@ class LocalDriver(BaseDriver):
                 ).strip()
 
                 if not text:
-                    continue
-
-                if not self._document_allowed_for_intent(
-                    part,
-                    doc,
-                ):
                     continue
 
                 fingerprint = self._normalize(
@@ -2423,32 +1947,19 @@ class LocalDriver(BaseDriver):
         # Multi-document reasoning
         # -----------------------------------------------------
 
-        # First determine which documents are actually allowed
-        # for this question's intent.
-        #
-        # IMPORTANT:
-        # If the hard intent boundary rejects every document,
-        # NO legacy composer is allowed to resurrect a rejected
-        # document.
-        selected_for_intent = self._select_documents_for_question(
-            prompt,
-            documents,
-        )
-
         answer = self._compose_intent_answer(
             prompt,
             documents,
         )
 
-        # Fallback to the legacy composer ONLY when the intent-aware
-        # selector has already found at least one valid document.
+        # Fallback to the legacy composer only when the
+        # intent-aware composer cannot produce an answer.
         #
-        # This prevents the legacy path from bypassing:
-        # - learning-test boundaries
-        # - learning-process boundaries
-        # - supervisor-learning boundaries
-        # - platform-test boundaries
-        if not answer and selected_for_intent:
+        # IMPORTANT:
+        # The legacy result must still pass strict question/document
+        # validation. It must never bypass intent boundaries or
+        # supervisor-approved learning boundaries.
+        if not answer:
             legacy_answer = self._compose_multi_document_answer(
                 prompt,
                 documents,
@@ -2462,13 +1973,7 @@ class LocalDriver(BaseDriver):
                         prompt,
                         doc,
                     ):
-                        # The document must also belong to the
-                        # hard-intent-selected set.
-                        if any(
-                            selected_doc is doc
-                            for _, _, selected_doc in selected_for_intent
-                        ):
-                            legacy_documents.append(doc)
+                        legacy_documents.append(doc)
 
                 if legacy_documents:
                     answer = legacy_answer

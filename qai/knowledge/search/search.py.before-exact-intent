@@ -263,14 +263,10 @@ class KnowledgeSearch:
         results = []
 
         # -------------------------------------------------
-        # Query intent + exact subject extraction
+        # Query intent + entity extraction
         # -------------------------------------------------
-
         query_normalized = self.normalize(keyword)
 
-        # -------------------------------------------------
-        # Detect query type
-        # -------------------------------------------------
         is_definition_query = any(
             phrase in query_normalized
             for phrase in (
@@ -302,55 +298,45 @@ class KnowledgeSearch:
         )
 
         # -------------------------------------------------
-        # Extract subject from the query
+        # Extract the actual subject/entity of the question.
+        #
+        # Example:
+        #   ما هو QAI          -> QAI
+        #   ما هي منصة Quavron -> Quavron
+        #   ما هو Marketplace  -> Marketplace
         # -------------------------------------------------
-        def extract_subject(value):
-            value = self.normalize(value)
+        entity_words = []
 
-            prefixes = (
-                "ما هو ",
-                "ما هي ",
-                "ما معنى ",
-                "ما المقصود ب",
-                "what is ",
-                "what are ",
-                "who is ",
-                "qu est ce que ",
-                "qu est-ce que ",
-            )
+        for word in keywords:
+            normalized_word = self.normalize(word)
 
-            for prefix in prefixes:
-                if value.startswith(prefix):
-                    value = value[len(prefix):]
-                    break
+            if normalized_word in {
+                "ما",
+                "هو",
+                "هي",
+                "من",
+                "هل",
+                "عن",
+                "ماذا",
+                "كيف",
+                "لماذا",
+                "منصة",
+                "platform",
+                "what",
+                "is",
+                "are",
+                "who",
+                "the",
+                "qu est",
+            }:
+                continue
 
-            # Remove common Arabic structural words.
-            value = re.sub(
-                r"^(منصة|المنصة|في|عن)\s+",
-                "",
-                value,
-            ).strip()
+            if len(normalized_word) >= 2:
+                entity_words.append(normalized_word)
 
-            return value
+        # Keep important entities only.
+        entity_words = list(dict.fromkeys(entity_words))
 
-        query_subject = extract_subject(query_normalized)
-
-        # Subject tokens are used only when necessary.
-        subject_words = [
-            word
-            for word in re.findall(
-                r"[\w\u0600-\u06ff.-]+",
-                query_subject,
-                flags=re.UNICODE,
-            )
-            if len(word) >= 2
-        ]
-
-        subject_words = list(dict.fromkeys(subject_words))
-
-        # -------------------------------------------------
-        # Score text
-        # -------------------------------------------------
         def score_text(text, title="", question=""):
             normalized = self.normalize(text)
             title_text = self.normalize(title)
@@ -366,109 +352,47 @@ class KnowledgeSearch:
                     score += 10
 
             # -------------------------------------------------
-            # Exact query match
+            # Entity matching
             # -------------------------------------------------
-            if query_normalized:
-                if query_normalized == question_text:
-                    score += 1200
-                elif query_normalized in question_text:
-                    score += 700
+            entity_matches_content = 0
+            entity_matches_title = 0
+            entity_matches_question = 0
 
-                if query_normalized == title_text:
-                    score += 1000
-                elif query_normalized in title_text:
-                    score += 500
+            for entity in entity_words:
+                if entity in normalized:
+                    entity_matches_content += 1
 
-            # -------------------------------------------------
-            # Exact subject matching
-            # -------------------------------------------------
-            subject_exact_question = (
-                bool(query_subject)
-                and query_subject == extract_subject(question_text)
-            )
+                if entity in title_text:
+                    entity_matches_title += 1
 
-            subject_exact_title = (
-                bool(query_subject)
-                and query_subject == extract_subject(title_text)
-            )
+                if entity in question_text:
+                    entity_matches_question += 1
 
-            if subject_exact_question:
-                score += 900
-
-            if subject_exact_title:
-                score += 750
+            # Entity in title/question is much more meaningful
+            # than entity appearing somewhere in an answer.
+            score += entity_matches_content * 10
+            score += entity_matches_title * 55
+            score += entity_matches_question * 100
 
             # -------------------------------------------------
-            # Subject token matching
-            # -------------------------------------------------
-            matched_question = 0
-            matched_title = 0
-            matched_content = 0
-
-            for word in subject_words:
-                if word in question_text:
-                    matched_question += 1
-
-                if word in title_text:
-                    matched_title += 1
-
-                if word in normalized:
-                    matched_content += 1
-
-            score += matched_question * 100
-            score += matched_title * 70
-            score += matched_content * 10
-
-            # -------------------------------------------------
-            # Definition intent
+            # Definition question
             # -------------------------------------------------
             if is_definition_query:
-                # A definition result must actually answer the
-                # requested subject, not merely mention it.
-                if subject_exact_question:
-                    score += 1400
-                elif subject_exact_title:
-                    score += 1100
-                elif matched_question:
-                    score += matched_question * 30
-
-                # Strongly prefer question/title matches over
-                # generic knowledge leaves.
                 if question_text:
-                    score += 250
+                    # Exact subject question is the strongest signal.
+                    if entity_matches_question == len(entity_words) and entity_words:
+                        score += 150
+
+                if title_text:
+                    if entity_matches_title == len(entity_words) and entity_words:
+                        score += 100
 
             # -------------------------------------------------
-            # Yes / No intent
+            # Yes / No question
             # -------------------------------------------------
             elif is_yes_no_query:
-                if matched_question:
-                    score += matched_question * 120
-
-                # A question-form knowledge record is preferable
-                # to a generic concept when the query is yes/no.
-                if question_text:
-                    score += 100
-
-            # -------------------------------------------------
-            # Entity-aware exact subject protection
-            # -------------------------------------------------
-            # Prevent unrelated records containing the same entity
-            # (e.g. Quavron, QAI, AI) from outranking the exact FAQ.
-            if query_subject:
-                entity = self.normalize(query_subject)
-
-                if entity:
-                    if question_text:
-                        if extract_subject(question_text) == entity:
-                            score += 1200
-                        elif entity in question_text:
-                            score += 120
-
-                    if title_text:
-                        if extract_subject(title_text) == entity:
-                            score += 1000
-                        elif entity in title_text:
-                            score += 100
+                if question_text and entity_matches_question:
+                    score += 40
 
             return score
 
@@ -667,15 +591,11 @@ class KnowledgeSearch:
                     ).strip()
 
                     text_score = score_text(
-                        multilingual_text,
-                        title=str(parent or ""),
-                        question=str(parent or ""),
+                        multilingual_text
                     )
 
                     key_score = score_text(
-                        str(parent or ""),
-                        title=str(parent or ""),
-                        question=str(parent or ""),
+                        str(parent or "")
                     )
 
                     if text_score or key_score:
