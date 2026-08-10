@@ -1,0 +1,44 @@
+import os
+
+
+class LLMRouter:
+
+    def __init__(self):
+        pass
+
+    def openai_available(self):
+        return bool(os.environ.get("OPENAI_API_KEY", "").strip())
+
+    def select(self, task):
+
+        task = str(task).lower()
+
+        # OpenAI is optional.
+        # QAI must continue working without it.
+
+        if self.openai_available():
+
+            if any(x in task for x in [
+                "image",
+                "vision",
+                "analysis",
+                "architecture"
+            ]):
+                return "openai"
+
+            if any(x in task for x in [
+                "code",
+                "python",
+                "react",
+                "javascript",
+                "programming",
+                "برمجة",
+                "كود"
+            ]):
+                return "openai"
+
+        # Local engine is the default.
+        return "local"
+
+
+router = LLMRouter()

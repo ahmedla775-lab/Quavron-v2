@@ -1,0 +1,22 @@
+========== ROOT GIT STATUS ==========
+?? backups/
+?? qai/rag/retriever.py.before_multilingual_relevance
+
+========== ROOT GIT BRANCH ==========
+main
+
+========== ROOT GIT HEAD ==========
+2e20643 Improve QAI RAG retrieval and knowledge relevance
+
+========== QAI GIT STATUS ==========
+?? ../backups/
+?? rag/retriever.py.before_multilingual_relevance
+
+========== QAI GIT BRANCH ==========
+main
+
+========== QAI GIT HEAD ==========
+2e20643 Improve QAI RAG retrieval and knowledge relevance
+
+========== BACKUP CHECK ==========
+5632

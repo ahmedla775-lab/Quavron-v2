@@ -1,0 +1,61 @@
+{
+  "company": {
+    "name": "Quavron SARL",
+    "description": "Technology company building an integrated digital ecosystem.",
+    "vision": "Build a next generation platform combining artificial intelligence, software development, community and digital services."
+  },
+
+  "qai": {
+    "name": "Quavron AI",
+    "description": "Artificial intelligence core responsible for reasoning, knowledge management, automation and intelligent assistance inside Quavron."
+  },
+
+  "modules": {
+    "dashboard": {
+      "description": "Central control center for users to manage their activities, projects and analytics."
+    },
+
+    "community": {
+      "description": "Professional and social community where users share knowledge, content and collaboration."
+    },
+
+    "marketplace": {
+      "description": "Organized digital marketplace connecting users, products, services and businesses."
+    },
+
+    "learning": {
+      "description": "Educational platform providing courses, training and technical knowledge."
+    },
+
+    "hosting": {
+      "description": "Cloud hosting services for websites, applications and digital projects."
+    },
+
+    "analytics": {
+      "description": "Analytics system providing reports, insights and performance monitoring."
+    },
+
+    "profile": {
+      "description": "User identity and profile management system."
+    },
+
+    "ide": {
+      "description": "Cloud development environment allowing developers to write, test and manage code online."
+    },
+
+    "freelance": {
+      "description": "Platform connecting clients with developers and digital professionals."
+    }
+  },
+
+  "technology": {
+    "qce": {
+      "name": "Quavron Content Engine",
+      "description": "Content intelligence system for collecting, organizing and ranking digital content."
+    },
+
+    "cloud": {
+      "description": "Cloud infrastructure supporting Quavron services."
+    }
+  }
+}

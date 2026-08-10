@@ -1,0 +1,1429 @@
+import json
+import re
+import urllib.parse
+import urllib.request
+import urllib.error
+from pathlib import Path
+from html.parser import HTMLParser
+
+
+# =========================================================
+# HTML TEXT EXTRACTOR
+# =========================================================
+
+class HTMLTextExtractor(HTMLParser):
+    BLOCK_TAGS = {
+        "p",
+        "div",
+        "article",
+        "section",
+        "main",
+        "header",
+        "footer",
+        "li",
+        "ul",
+        "ol",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "br",
+        "tr",
+    }
+
+    IGNORE_TAGS = {
+        "script",
+        "style",
+        "noscript",
+        "svg",
+        "canvas",
+        "template",
+        "iframe",
+    }
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.parts = []
+        self.ignore_depth = 0
+        self.title_parts = []
+        self.in_title = False
+
+    def handle_starttag(self, tag, attrs):
+        tag = tag.lower()
+
+        if tag in self.IGNORE_TAGS:
+            self.ignore_depth += 1
+            return
+
+        if tag == "title":
+            self.in_title = True
+
+        if self.ignore_depth == 0 and tag in self.BLOCK_TAGS:
+            self.parts.append("\n")
+
+    def handle_endtag(self, tag):
+        tag = tag.lower()
+
+        if tag in self.IGNORE_TAGS:
+            if self.ignore_depth > 0:
+                self.ignore_depth -= 1
+            return
+
+        if tag == "title":
+            self.in_title = False
+
+        if self.ignore_depth == 0 and tag in self.BLOCK_TAGS:
+            self.parts.append("\n")
+
+    def handle_data(self, data):
+        if self.ignore_depth > 0:
+            return
+
+        text = str(data or "").strip()
+
+        if not text:
+            return
+
+        if self.in_title:
+            self.title_parts.append(text)
+
+        self.parts.append(text)
+
+    def text(self):
+        value = " ".join(self.parts)
+        value = re.sub(r"\s+", " ", value).strip()
+        return value
+
+    def title(self):
+        value = " ".join(self.title_parts)
+        return re.sub(r"\s+", " ", value).strip()
+
+
+# =========================================================
+# KNOWLEDGE + WEB RESEARCH ENGINE
+# =========================================================
+
+class KnowledgeSearch:
+
+    USER_AGENT = (
+        "Mozilla/5.0 "
+        "(Linux; Android 13) "
+        "AppleWebKit/537.36 "
+        "(KHTML, like Gecko) "
+        "Chrome/131.0 Mobile Safari/537.36 "
+        "Quavron-QAI-Research/1.0"
+    )
+
+    SOURCE_TIMEOUT = 12
+    MAX_PAGE_CHARS = 12000
+    MAX_WEB_RESULTS = 6
+
+    SOURCE_PRIORITY = {
+        "knowledge": 300,
+        "web": 250,
+    }
+
+    def __init__(self):
+        self.knowledge = {}
+        self.path = Path(
+            "knowledge/store/quavron_knowledge.json"
+        )
+        self.load()
+
+    # =====================================================
+    # LOCAL KNOWLEDGE
+    # =====================================================
+
+    def load(self):
+        if not self.path.exists():
+            return
+
+        try:
+            with open(
+                self.path,
+                "r",
+                encoding="utf-8",
+            ) as file:
+                self.knowledge = json.load(file)
+
+        except Exception as e:
+            print(
+                "[KnowledgeSearch] Load error:",
+                type(e).__name__,
+                str(e),
+            )
+
+    # =====================================================
+    # NORMALIZATION
+    # =====================================================
+
+    def normalize(self, text):
+        text = str(text or "").lower()
+
+        replacements = {
+            "أ": "ا",
+            "إ": "ا",
+            "آ": "ا",
+            "ى": "ي",
+            "ة": "ه",
+        }
+
+        for a, b in replacements.items():
+            text = text.replace(a, b)
+
+        return text
+
+    # =====================================================
+    # KEYWORDS
+    # =====================================================
+
+    def extract_keywords(self, text):
+
+        text = self.normalize(text)
+
+        stop_words = {
+            "ما",
+            "هو",
+            "هي",
+            "هل",
+            "من",
+            "عن",
+            "كيف",
+            "لماذا",
+            "ماذا",
+            "اشرح",
+            "اخبرني",
+            "لي",
+            "اريد",
+            "اريد ان",
+            "the",
+            "what",
+            "is",
+            "about",
+            "tell",
+            "me",
+            "how",
+            "why",
+            "can",
+            "do",
+            "please",
+        }
+
+        words = re.findall(
+            r"[\w\u0600-\u06ff.-]+",
+            text,
+            flags=re.UNICODE,
+        )
+
+        return [
+            word
+            for word in words
+            if word
+            and word not in stop_words
+            and len(word) >= 2
+        ]
+
+    # =====================================================
+    # MULTILINGUAL TEXT
+    # =====================================================
+
+    def multilingual_text(self, value):
+
+        if isinstance(value, str):
+            return value
+
+        if isinstance(value, dict):
+
+            parts = []
+
+            for language in ("ar", "en", "fr"):
+
+                if value.get(language):
+                    parts.append(
+                        str(value[language])
+                    )
+
+            return " ".join(parts)
+
+        return ""
+
+    # =====================================================
+    # LOCAL SEARCH
+    # =====================================================
+
+    def _local_search(self, keyword):
+
+        keywords = self.extract_keywords(
+            keyword
+        )
+
+        if not keywords:
+            return []
+
+        results = []
+
+        def score_text(text):
+            normalized = self.normalize(
+                text
+            )
+
+            score = 0
+
+            for word in keywords:
+
+                if word in normalized:
+                    score += 10
+
+            return score
+
+        def add_result(
+            question,
+            answer,
+            score,
+            category=None,
+        ):
+
+            if not answer:
+                return
+
+            answer_text = self.multilingual_text(
+                answer
+            ).strip()
+
+            question_text = self.multilingual_text(
+                question
+            ).strip()
+
+            if not answer_text:
+                return
+
+            question_score = score_text(
+                question_text
+            )
+
+            answer_score = score_text(
+                answer_text
+            )
+
+            total = (
+                score
+                + question_score * 5
+                + answer_score
+            )
+
+            if total <= 0:
+                return
+
+            results.append({
+                "key": "faq",
+
+                "value": {
+                    "content": answer,
+                },
+
+                "question": question,
+                "category": category,
+
+                "score": total,
+                "relevance": min(
+                    total,
+                    100,
+                ),
+
+                "final_score": total,
+
+                "source": "knowledge",
+                "title": question_text,
+                "url": None,
+
+                "content": answer_text,
+                "text": answer_text,
+
+                "approved": True,
+                "confidence": 1.0,
+                "teacher": "knowledge",
+
+                "external": False,
+            })
+
+        def add_content_result(
+            key,
+            data,
+            score,
+        ):
+
+            content = data.get(
+                "content",
+            )
+
+            text = self.multilingual_text(
+                content
+            ).strip()
+
+            if not text:
+                return
+
+            results.append({
+                "key": key,
+
+                "value": data,
+
+                "question": data.get(
+                    "question",
+                    "",
+                ),
+
+                "category": data.get(
+                    "category",
+                ),
+
+                "score": score + 50,
+
+                "relevance": min(
+                    score + 50,
+                    100,
+                ),
+
+                "final_score": score + 50,
+
+                "source": "knowledge",
+
+                "title": (
+                    self.multilingual_text(
+                        data.get("title", "")
+                    ).strip()
+                    or str(key)
+                ),
+
+                "url": data.get(
+                    "url"
+                ),
+
+                "content": text,
+                "text": text,
+
+                "approved": True,
+                "confidence": 1.0,
+                "teacher": "knowledge",
+
+                "external": False,
+            })
+
+        def scan(
+            data,
+            parent=None,
+        ):
+
+            if isinstance(data, dict):
+
+                # -----------------------------------------
+                # FAQ / knowledge record
+                # -----------------------------------------
+
+                if (
+                    "question" in data
+                    and "answer" in data
+                ):
+
+                    add_result(
+                        data.get("question"),
+                        data.get("answer"),
+                        0,
+                        data.get("category"),
+                    )
+
+                    return
+
+                # -----------------------------------------
+                # Content record
+                # -----------------------------------------
+
+                if "content" in data:
+
+                    content = data.get(
+                        "content"
+                    )
+
+                    text_value = self.multilingual_text(
+                        content
+                    )
+
+                    score = score_text(
+                        text_value
+                    )
+
+                    if score:
+
+                        add_content_result(
+                            parent,
+                            data,
+                            score,
+                        )
+
+                    return
+
+                # -----------------------------------------
+                # Nested knowledge
+                # -----------------------------------------
+
+                for key, value in data.items():
+
+                    if key in {
+                        "ar",
+                        "en",
+                        "fr",
+                        "content",
+                        "keywords",
+                        "title",
+                    }:
+                        continue
+
+                    key_score = score_text(
+                        str(key)
+                    )
+
+                    if key_score:
+
+                        results.append({
+                            "key": key,
+                            "value": value,
+
+                            "score": key_score * 2,
+                            "relevance": key_score * 2,
+                            "final_score": key_score * 2,
+
+                            "source": "knowledge",
+
+                            "title": str(key),
+                            "url": None,
+
+                            "content": self.multilingual_text(
+                                value
+                            ).strip(),
+
+                            "text": self.multilingual_text(
+                                value
+                            ).strip(),
+
+                            "question": "",
+                            "category": None,
+
+                            "approved": True,
+                            "confidence": 1.0,
+                            "teacher": "knowledge",
+
+                            "external": False,
+                        })
+
+                    scan(
+                        value,
+                        key,
+                    )
+
+            elif isinstance(data, list):
+
+                for item in data:
+
+                    scan(
+                        item,
+                        parent,
+                    )
+
+        scan(
+            self.knowledge
+        )
+
+        # ---------------------------------------------
+        # Sort
+        # ---------------------------------------------
+
+        results.sort(
+            key=lambda x: (
+                float(
+                    x.get(
+                        "final_score",
+                        x.get(
+                            "score",
+                            0,
+                        ),
+                    )
+                    or 0
+                ),
+                float(
+                    x.get(
+                        "relevance",
+                        0,
+                    )
+                    or 0
+                ),
+            ),
+            reverse=True,
+        )
+
+        # ---------------------------------------------
+        # Remove duplicates
+        # ---------------------------------------------
+
+        cleaned = []
+        seen = set()
+
+        for item in results:
+
+            value = item.get(
+                "value"
+            )
+
+            fingerprint = str(
+                value
+            )[:500]
+
+            if fingerprint in seen:
+                continue
+
+            seen.add(
+                fingerprint
+            )
+
+            cleaned.append(
+                item
+            )
+
+        return cleaned[:8]
+
+
+    # =====================================================
+    # WEB HTTP
+    # =====================================================
+
+    def _encode_url(self, url):
+        """Encode Unicode characters in URL path/query for HTTP requests."""
+        try:
+            parts = urllib.parse.urlsplit(str(url))
+            path = urllib.parse.quote(
+                parts.path,
+                safe="/:@-._~!$&'()*+,;="
+            )
+            query = urllib.parse.quote(
+                parts.query,
+                safe="=&?/:@-._~!$'()*+,;[]"
+            )
+            return urllib.parse.urlunsplit((
+                parts.scheme,
+                parts.netloc,
+                path,
+                query,
+                parts.fragment,
+            ))
+        except Exception:
+            return str(url)
+
+    def _http_get(self, url):
+
+        request_url = self._encode_url(url)
+
+        request = urllib.request.Request(
+            request_url,
+            headers={
+                "User-Agent": self.USER_AGENT,
+                "Accept": (
+                    "text/html,"
+                    "application/xhtml+xml,"
+                    "application/xml;q=0.9,"
+                    "*/*;q=0.8"
+                ),
+                "Accept-Language": (
+                    "ar,en-US;q=0.9,en;q=0.8"
+                ),
+            },
+        )
+
+        try:
+
+            with urllib.request.urlopen(
+                request,
+                timeout=self.SOURCE_TIMEOUT,
+            ) as response:
+
+                content_type = (
+                    response.headers.get(
+                        "Content-Type",
+                        "",
+                    )
+                ).lower()
+
+                if (
+                    "text/html" not in content_type
+                    and "application/xhtml" not in content_type
+                ):
+                    return None
+
+                raw = response.read(
+                    2_000_000
+                )
+
+                # Empty/invalid responses are not research pages.
+                if not raw:
+                    return None
+
+                charset = (
+                    response.headers.get_content_charset()
+                    or "utf-8"
+                )
+
+                try:
+                    return raw.decode(
+                        charset,
+                        errors="replace",
+                    )
+
+                except LookupError:
+                    return raw.decode(
+                        "utf-8",
+                        errors="replace",
+                    )
+
+        except Exception as e:
+
+            print(
+                "[WebResearch] Fetch failed:",
+                url,
+                type(e).__name__,
+            )
+
+            return None
+
+    # =====================================================
+    # SEARCH DISCOVERY
+    # =====================================================
+
+    def _discover_urls(self, query):
+        """
+        Discover real external result URLs.
+
+        The search engine is only used to discover candidate URLs.
+        QAI itself fetches, extracts, scores and ranks the pages.
+        Search-engine homepages and internal navigation URLs are rejected.
+        """
+
+        query = str(query or "").strip()
+        if not query:
+            return []
+
+        encoded = urllib.parse.quote_plus(query)
+
+        # Prefer the HTML endpoint because it is designed for server-side
+        # consumption and does not require JavaScript.
+        search_urls = [
+            "https://html.duckduckgo.com/html/?q=" + encoded,
+            "https://lite.duckduckgo.com/lite/?q=" + encoded,
+        ]
+
+        html = None
+        used_url = None
+
+        for search_url in search_urls:
+            try:
+                html = self._http_get(search_url)
+                if html and len(html) > 500:
+                    used_url = search_url
+                    break
+            except Exception as e:
+                print(
+                    "[WebResearch] Discovery request failed:",
+                    search_url,
+                    type(e).__name__,
+                    str(e),
+                )
+
+        if not html:
+            return []
+
+        urls = []
+        seen = set()
+
+        def add_url(raw_url):
+            if not raw_url:
+                return
+
+            url = str(raw_url).strip()
+
+            # HTML entities.
+            url = url.replace("&amp;", "&")
+
+            # Decode percent encoding.
+            try:
+                url = urllib.parse.unquote(url)
+            except Exception:
+                pass
+
+            # DDG redirect URLs may contain the real URL in uddg.
+            try:
+                parsed = urllib.parse.urlparse(url)
+                params = urllib.parse.parse_qs(parsed.query)
+
+                if params.get("uddg"):
+                    url = params["uddg"][0]
+            except Exception:
+                pass
+
+            url = url.strip()
+
+            if not url.startswith(("http://", "https://")):
+                return
+
+            try:
+                parsed = urllib.parse.urlparse(url)
+            except Exception:
+                return
+
+            host = (parsed.netloc or "").lower().split(":")[0]
+
+            if not host:
+                return
+
+            # Never treat the search engine itself as research evidence.
+            blocked_hosts = {
+                "duckduckgo.com",
+                "www.duckduckgo.com",
+                "html.duckduckgo.com",
+                "lite.duckduckgo.com",
+            }
+
+            if host in blocked_hosts or host.endswith(".duckduckgo.com"):
+                return
+
+            # Remove fragments because they do not identify a different page.
+            clean_url = urllib.parse.urlunparse(
+                (
+                    parsed.scheme,
+                    parsed.netloc,
+                    parsed.path,
+                    parsed.params,
+                    parsed.query,
+                    "",
+                )
+            )
+
+            if clean_url in seen:
+                return
+
+            seen.add(clean_url)
+            urls.append(clean_url)
+
+        # ---------------------------------------------------------
+        # Parse actual result anchors.
+        # ---------------------------------------------------------
+        #
+        # DDG HTML has used several slightly different structures.
+        # Support the known result-anchor forms instead of collecting
+        # every href from the page.
+        #
+        result_patterns = [
+            r'<a[^>]+class=["\'][^"\']*result__a[^"\']*["\'][^>]+href=["\']([^"\']+)["\']',
+            r'<a[^>]+href=["\']([^"\']+)["\'][^>]+class=["\'][^"\']*result__a[^"\']*["\']',
+            r'<a[^>]+class=["\'][^"\']*result-link[^"\']*["\'][^>]+href=["\']([^"\']+)["\']',
+            r'<a[^>]+href=["\']([^"\']+)["\'][^>]+class=["\'][^"\']*result-link[^"\']*["\']',
+        ]
+
+        for pattern in result_patterns:
+            matches = re.findall(
+                pattern,
+                html,
+                flags=re.IGNORECASE,
+            )
+
+            for raw_url in matches:
+                add_url(raw_url)
+
+                if len(urls) >= self.MAX_WEB_RESULTS:
+                    return urls
+
+        # ---------------------------------------------------------
+        # Fallback:
+        # Extract only obvious external HTTP links, but reject
+        # DuckDuckGo and internal navigation.
+        # ---------------------------------------------------------
+        if not urls:
+            generic_pattern = r'href=["\'](https?://[^"\']+)["\']'
+
+            for raw_url in re.findall(
+                generic_pattern,
+                html,
+                flags=re.IGNORECASE,
+            ):
+                add_url(raw_url)
+
+                if len(urls) >= self.MAX_WEB_RESULTS:
+                    return urls
+
+        if not urls:
+            print(
+                "[WebResearch] No external result URLs discovered.",
+                "engine=", used_url,
+            )
+
+        return urls[:self.MAX_WEB_RESULTS]
+
+    # =====================================================
+    # PAGE EXTRACTION
+    # =====================================================
+
+    def _extract_page(self, url, html):
+
+        parser = HTMLTextExtractor()
+
+        try:
+            parser.feed(html)
+            parser.close()
+
+        except Exception as e:
+
+            print(
+                "[WebResearch] HTML parse error:",
+                type(e).__name__,
+            )
+
+        text = parser.text()
+        title = parser.title()
+
+        if not text:
+            return None
+
+        # Remove excessive boilerplate.
+        text = re.sub(
+            r"\s+",
+            " ",
+            text,
+        ).strip()
+
+        if len(text) < 80:
+            return None
+
+        return {
+            "title": title or url,
+            "url": url,
+            "content": text[
+                :self.MAX_PAGE_CHARS
+            ],
+        }
+
+    # =====================================================
+    # WEB SEARCH
+    # =====================================================
+
+    def web_search(
+        self,
+        query,
+        limit=None,
+    ):
+
+        query = str(
+            query or ""
+        ).strip()
+
+        if not query:
+            return []
+
+        if limit is None:
+            limit = self.MAX_WEB_RESULTS
+
+        urls = self._discover_urls(
+            query
+        )
+
+        results = []
+
+        for url in urls[:limit]:
+
+            html = self._http_get(
+                url
+            )
+
+            if not html:
+                continue
+
+            page = self._extract_page(
+                url,
+                html,
+            )
+
+            if not page:
+                continue
+
+            page["source"] = "web"
+            page["score"] = self._web_relevance(
+                query,
+                page,
+            )
+            page["relevance"] = page["score"]
+            page["confidence"] = 0.0
+            page["approved"] = False
+            page["teacher"] = None
+            page["question"] = query
+            page["external"] = True
+
+            results.append(page)
+
+        results.sort(
+            key=lambda x: (
+                x.get(
+                    "relevance",
+                    0,
+                ),
+                x.get(
+                    "score",
+                    0,
+                ),
+            ),
+            reverse=True,
+        )
+
+        return results[:limit]
+
+    # =====================================================
+    # WEB RELEVANCE
+    # =====================================================
+
+    def _web_relevance(
+        self,
+        query,
+        page,
+    ):
+        """
+        Rank web pages by semantic/query relevance.
+
+        Ranking signals:
+        - exact query phrase
+        - title match
+        - keyword coverage
+        - early-content matches
+        - question-style intent
+        - penalties for weak/unrelated pages
+        """
+
+        query = str(query or "").strip()
+
+        if not query:
+            return 0
+
+        keywords = self.extract_keywords(query)
+
+        if not keywords:
+            return 0
+
+        title = str(
+            page.get("title", "")
+        ).strip()
+
+        content = str(
+            page.get("content", "")
+        ).strip()
+
+        normalized_query = self.normalize(query)
+        normalized_title = self.normalize(title)
+        normalized_content = self.normalize(content)
+
+        if not normalized_title and not normalized_content:
+            return 0
+
+        score = 0
+
+        # -------------------------------------------------
+        # 1. Exact query phrase
+        # -------------------------------------------------
+
+        if normalized_query:
+            if normalized_query in normalized_title:
+                score += 55
+            elif normalized_query in normalized_content[:5000]:
+                score += 35
+            elif normalized_query in (
+                normalized_title + " " + normalized_content
+            ):
+                score += 20
+
+        # -------------------------------------------------
+        # 2. Keyword coverage
+        # -------------------------------------------------
+
+        title_matches = 0
+        content_matches = 0
+
+        for word in keywords:
+
+            if word in normalized_title:
+                title_matches += 1
+
+            if word in normalized_content:
+                content_matches += 1
+
+        coverage = (
+            content_matches
+            / max(len(keywords), 1)
+        )
+
+        title_coverage = (
+            title_matches
+            / max(len(keywords), 1)
+        )
+
+        # -------------------------------------------------
+        # 3. Title relevance
+        # -------------------------------------------------
+
+        score += title_matches * 25
+        score += int(title_coverage * 30)
+
+        # -------------------------------------------------
+        # 4. Content coverage
+        # -------------------------------------------------
+
+        score += int(coverage * 35)
+
+        # -------------------------------------------------
+        # 5. Early-content relevance
+        # -------------------------------------------------
+
+        early_content = normalized_content[:4000]
+
+        early_matches = 0
+
+        for word in keywords:
+
+            if word in early_content:
+                early_matches += 1
+
+        if keywords:
+            early_coverage = (
+                early_matches
+                / max(len(keywords), 1)
+            )
+
+            score += int(
+                early_coverage * 20
+            )
+
+        # -------------------------------------------------
+        # 6. Question-intent boost
+        # -------------------------------------------------
+
+        question_markers = (
+            "ما هو",
+            "ما هي",
+            "من هو",
+            "من هي",
+            "كيف",
+            "لماذا",
+            "ما معنى",
+            "what is",
+            "what are",
+            "who is",
+            "how",
+            "why",
+        )
+
+        normalized_question_markers = [
+            self.normalize(marker)
+            for marker in question_markers
+        ]
+
+        is_question = any(
+            marker in normalized_query
+            for marker in normalized_question_markers
+        )
+
+        if is_question:
+
+            # Pages whose title looks like an answer to the
+            # question receive a moderate boost.
+            if any(
+                marker in normalized_title
+                for marker in normalized_question_markers
+            ):
+                score += 12
+
+        # -------------------------------------------------
+        # 7. Weak coverage penalties
+        # -------------------------------------------------
+
+        if coverage == 0:
+            return 0
+
+        if coverage < 0.34:
+            score = int(score * 0.25)
+
+        elif coverage < 0.50:
+            score = int(score * 0.50)
+
+        elif coverage < 0.67:
+            score = int(score * 0.75)
+
+        # -------------------------------------------------
+        # 8. Title mismatch penalty
+        # -------------------------------------------------
+
+        if title_matches == 0 and coverage < 0.67:
+            score = int(score * 0.70)
+
+        # -------------------------------------------------
+        # 9. Very weak generic pages
+        # -------------------------------------------------
+
+        generic_titles = {
+            "google",
+            "home",
+            "homepage",
+            "calculator",
+            "math calculator",
+            "search",
+        }
+
+        if normalized_title in {
+            self.normalize(value)
+            for value in generic_titles
+        }:
+            score = int(score * 0.20)
+
+        # -------------------------------------------------
+        # 10. Final cap
+        # -------------------------------------------------
+
+        return max(
+            0,
+            min(score, 100),
+        )
+
+    # =====================================================
+    # UNIFIED SEARCH
+    # =====================================================
+
+    def search(
+        self,
+        keyword,
+        external=True,
+        local=True,
+    ):
+
+        keyword = str(
+            keyword or ""
+        ).strip()
+
+        if not keyword:
+            return []
+
+        results = []
+
+        # -------------------------------------------------
+        # 1. Official local knowledge
+        # -------------------------------------------------
+
+        if local:
+
+            results.extend(
+                self._local_search(
+                    keyword
+                )
+            )
+
+        # -------------------------------------------------
+        # 2. External Web Research
+        # -------------------------------------------------
+
+        if external:
+
+            try:
+
+                results.extend(
+                    self.web_search(
+                        keyword
+                    )
+                )
+
+            except Exception as e:
+
+                print(
+                    "[WebResearch] Search error:",
+                    type(e).__name__,
+                    str(e),
+                )
+
+        # -------------------------------------------------
+        # Ranking
+        # -------------------------------------------------
+
+        for item in results:
+
+            source = str(
+                item.get("source", "")
+                or ""
+            ).strip().lower()
+
+            relevance = float(
+                item.get(
+                    "relevance",
+                    item.get("score", 0),
+                )
+                or 0
+            )
+
+            raw_score = float(
+                item.get(
+                    "score",
+                    0,
+                )
+                or 0
+            )
+
+            confidence = float(
+                item.get(
+                    "confidence",
+                    0,
+                )
+                or 0
+            )
+
+            approved = bool(
+                item.get(
+                    "approved",
+                    False,
+                )
+            )
+
+            external_item = bool(
+                item.get(
+                    "external",
+                    source == "web",
+                )
+            )
+
+            # -------------------------------------------------
+            # Source trust
+            # -------------------------------------------------
+
+            if source == "knowledge" and approved:
+                source_bonus = 600
+
+            elif source == "knowledge":
+                source_bonus = 400
+
+            elif source == "web":
+                source_bonus = 100
+
+            else:
+                source_bonus = self.SOURCE_PRIORITY.get(
+                    source,
+                    0,
+                )
+
+            # -------------------------------------------------
+            # Knowledge confidence
+            # -------------------------------------------------
+
+            if source == "knowledge":
+
+                confidence_bonus = int(
+                    max(0.0, min(confidence, 1.0))
+                    * 200
+                )
+
+                if approved:
+                    confidence_bonus += 100
+
+            else:
+                confidence_bonus = 0
+
+            # -------------------------------------------------
+            # External penalty
+            # -------------------------------------------------
+
+            external_penalty = 0
+
+            if external_item and source == "web":
+
+                # Web pages are research evidence,
+                # not trusted internal knowledge.
+                external_penalty = 50
+
+                # Very weak web relevance should be strongly
+                # suppressed.
+                if relevance < 30:
+                    external_penalty += 150
+
+                elif relevance < 50:
+                    external_penalty += 75
+
+            # -------------------------------------------------
+            # Final score
+            # -------------------------------------------------
+
+            item["final_score"] = (
+                source_bonus
+                + int(relevance * 8)
+                + int(raw_score * 0.5)
+                + confidence_bonus
+                - external_penalty
+            )
+
+            # Keep ranking metadata explicit.
+            item["ranking_source"] = source
+            item["ranking_relevance"] = relevance
+            item["ranking_confidence"] = confidence
+            item["ranking_approved"] = approved
+
+        results.sort(
+            key=lambda x: (
+                float(
+                    x.get(
+                        "final_score",
+                        0,
+                    )
+                    or 0
+                ),
+                float(
+                    x.get(
+                        "relevance",
+                        0,
+                    )
+                    or 0
+                ),
+            ),
+            reverse=True,
+        )
+
+        # -------------------------------------------------
+        # Deduplicate
+        # -------------------------------------------------
+
+        cleaned = []
+        seen = set()
+
+        for item in results:
+
+            fingerprint = (
+                item.get(
+                    "url",
+                    ""
+                )
+                or str(
+                    item.get(
+                        "text",
+                        item.get(
+                            "value",
+                            "",
+                        ),
+                    )
+                )[:500]
+            )
+
+            if fingerprint in seen:
+                continue
+
+            seen.add(fingerprint)
+            cleaned.append(item)
+
+        return cleaned[:12]
+
+
+search_engine = KnowledgeSearch()

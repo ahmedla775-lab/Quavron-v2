@@ -1,0 +1,55 @@
+from intent.router import router
+from rag.engine import engine
+from llm.router import router as llm_router
+from llm.gateway import gateway
+
+
+class Brain:
+    def __init__(self):
+        self.intent_router = router
+        self.rag_engine = engine
+
+    def think(self, question):
+        # =====================================================
+        # 1. Detect intent
+        # =====================================================
+        intent_result = self.intent_router.detect(question)
+
+        intent = intent_result.get("intent", "general")
+        domain = intent_result.get("domain", "general")
+
+        # =====================================================
+        # 2. Retrieve local knowledge
+        # =====================================================
+        rag_result = self.rag_engine.prepare(question)
+
+        documents = rag_result.get("documents", [])
+        context = rag_result.get("context", "")
+
+        # =====================================================
+        # 3. Select provider
+        # =====================================================
+        provider = llm_router.select(question)
+
+        # =====================================================
+        # 4. Ask provider WITH RAG CONTEXT
+        # =====================================================
+        llm_result = gateway.ask(
+            provider,
+            question,
+            context,
+        )
+
+        # =====================================================
+        # 5. Return unified brain result
+        # =====================================================
+        return {
+            "intent": intent,
+            "domain": domain,
+            "provider": provider,
+            "documents": len(documents),
+            "llm": llm_result,
+        }
+
+
+brain = Brain()

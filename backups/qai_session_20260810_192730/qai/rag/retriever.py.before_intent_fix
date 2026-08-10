@@ -1,0 +1,1350 @@
+from vector_memory.search import search
+from knowledge.search.search import search_engine
+from learning.datasets.retriever import learning_retriever
+
+
+SOURCE_PRIORITY = {
+    "qai_learning": 300,
+    "knowledge": 200,
+    "vector": 100,
+}
+
+
+class Retriever:
+
+    # =========================================================
+    # NORMALIZATION
+    # =========================================================
+
+    def normalize(self, text):
+        text = str(text or "").lower()
+
+        replacements = {
+            "أ": "ا",
+            "إ": "ا",
+            "آ": "ا",
+            "ى": "ي",
+            "ة": "ه",
+        }
+
+        for a, b in replacements.items():
+            text = text.replace(a, b)
+
+        return " ".join(text.split())
+
+    # =========================================================
+    # TOKENIZATION
+    # =========================================================
+
+    def meaningful_words(self, text):
+        text = self.normalize(text)
+
+        stop_words = {
+            "ما", "هو", "هي", "هل", "من",
+            "كيف", "ماذا", "لماذا", "متى",
+            "اين", "أين", "في", "من",
+            "على", "الى", "إلى", "عن",
+            "مع", "و", "او", "أو",
+            "لي", "ني", "انا", "أنا",
+            "يمكن", "يستطيع",
+
+            "the", "what", "is", "how",
+            "why", "who", "when", "where",
+            "can", "does", "do", "a", "an",
+
+            "فيه", "به", "هذه", "هذا",
+            "ذلك", "تلك", "بين",
+        }
+
+        return [
+            word
+            for word in text.split()
+            if word not in stop_words
+            and len(word) >= 2
+        ]
+
+    # =========================================================
+    # RELEVANCE
+    # =========================================================
+
+    def relevance(self, query, text):
+        """
+        Semantic-ish lexical relevance.
+
+        Important:
+        - Shared generic words such as "Quavron" alone are weak evidence.
+        - Exact question matches remain strongest.
+        - Important topic words such as مجانية/مدفوعة/سعر/منصة
+          receive additional weight.
+        - Unrelated learned knowledge must not become relevant merely
+          because it belongs to the same domain.
+        """
+
+        q = self.normalize(query)
+        t = self.normalize(text)
+
+        if not q or not t:
+            return 0
+
+        q_words = self.meaningful_words(q)
+        t_words = self.meaningful_words(t)
+
+        if not q_words or not t_words:
+            return 0
+
+        qset = set(q_words)
+        tset = set(t_words)
+
+        # -----------------------------------------------------
+        # Exact full text
+        # -----------------------------------------------------
+
+        if q == t:
+            return 100
+
+        # -----------------------------------------------------
+        # Semantic/topic groups
+        # -----------------------------------------------------
+
+        topic_groups = {
+            "platform": {
+                "منصه", "منصة", "منصات",
+                "quavron",
+            },
+            "pricing": {
+                "مجاني", "مجانيه", "مجانية",
+                "مدفوع", "مدفوعة", "مدفوعه",
+                "سعر", "اسعار", "أسعار",
+                "اشتراك", "اشتراكات",
+                "خطه", "خطة", "خطط",
+                "تكلفه", "تكلفة",
+                "رسوم",
+            },
+            "ai": {
+                "ذكاء", "ذكاء اصطناعي",
+                "qai", "مساعد", "مساعد ذكي",
+            },
+            "learning": {
+                "تعلم", "تعليم", "دوره", "دورة",
+                "اختبار", "معرفه", "معرفة",
+                "تعلمية", "تعلميه",
+            },
+        }
+
+        query_topics = set()
+
+        for topic, words in topic_groups.items():
+            normalized_words = {
+                self.normalize(word)
+                for word in words
+            }
+
+            if any(word in qset for word in normalized_words):
+                query_topics.add(topic)
+
+        text_topics = set()
+
+        for topic, words in topic_groups.items():
+            normalized_words = {
+                self.normalize(word)
+                for word in words
+            }
+
+            if any(word in tset for word in normalized_words):
+                text_topics.add(topic)
+
+        # -----------------------------------------------------
+        # Exact meaningful word matching
+        # -----------------------------------------------------
+
+        score = 0
+        matched = 0
+
+        for word in qset:
+            if word in tset:
+                matched += 1
+
+                # Domain word alone is weak.
+                if word in {
+                    "quavron",
+                    "منصه",
+                    "منصة",
+                }:
+                    score += 8
+
+                elif len(word) >= 5:
+                    score += 30
+
+                else:
+                    score += 15
+
+        # -----------------------------------------------------
+        # Topic alignment
+        # -----------------------------------------------------
+
+        shared_topics = query_topics & text_topics
+
+        for topic in shared_topics:
+            if topic == "pricing":
+                score += 35
+            elif topic == "learning":
+                score += 30
+            elif topic == "ai":
+                score += 20
+            elif topic == "platform":
+                score += 10
+
+        # -----------------------------------------------------
+        # Partial matching
+        # -----------------------------------------------------
+
+        for qword in qset:
+
+            if len(qword) < 5:
+                continue
+
+            for tword in tset:
+
+                if len(tword) < 5:
+                    continue
+
+                if qword == tword:
+                    continue
+
+                if qword in tword or tword in qword:
+                    score += 5
+
+        # -----------------------------------------------------
+        # Coverage
+        # -----------------------------------------------------
+
+        coverage = matched / max(len(qset), 1)
+
+        if len(qset) >= 4 and coverage < 0.30:
+            score = min(score, 20)
+
+        elif len(qset) >= 3 and coverage < 0.50:
+            score = min(score, 35)
+
+        elif len(qset) >= 2 and coverage < 0.50:
+            score = min(score, 40)
+
+        # -----------------------------------------------------
+        # Strong protection against cross-topic contamination
+        # -----------------------------------------------------
+
+        if query_topics and text_topics:
+            if not shared_topics:
+                return 0
+
+        # If the query contains a pricing topic, a document that
+        # only talks about the platform is not enough.
+        if "pricing" in query_topics and "pricing" not in text_topics:
+            score = min(score, 35)
+
+        # If the query is specifically about learning/testing,
+        # unrelated platform knowledge must not score highly.
+        if "learning" in query_topics and "learning" not in text_topics:
+            score = min(score, 25)
+
+        return min(score, 100)
+
+    # =========================================================
+    # COMPOUND QUERY DETECTION
+    # =========================================================
+
+    def is_compound_query(self, query):
+
+        text = self.normalize(query)
+
+        compound_words = [
+            "قارن",
+            "مقارنة",
+            "الفرق",
+            "ما الفرق",
+            "ما هو الفرق",
+            "أيهما",
+            "افضل من",
+            "مقابل",
+
+            "compare",
+            "comparison",
+            "difference",
+            "differences",
+            "versus",
+            "vs",
+        ]
+
+        return any(
+            word in text
+            for word in compound_words
+        )
+
+    # =========================================================
+    # EXTRACT IMPORTANT CONCEPTS
+    # =========================================================
+
+    def extract_concepts(self, query):
+
+        text = self.normalize(query)
+
+        concepts = []
+
+        # -----------------------------------------------------
+        # Known Quavron concepts
+        #
+        # These are deliberately explicit. Later this can
+        # become a dynamic concept/entity extractor.
+        # -----------------------------------------------------
+
+        known_concepts = [
+            "qai",
+            "quavron",
+            "cloud ide",
+            "marketplace",
+            "cloud",
+            "ide",
+            "community",
+            "dashboard",
+            "hosting",
+            "courses",
+            "freelance",
+            "analytics",
+            "social hub",
+            "cloud ide",
+            "api",
+        ]
+
+        for concept in known_concepts:
+
+            if concept in text:
+                concepts.append(concept)
+
+        # -----------------------------------------------------
+        # Remove duplicates while preserving order
+        # -----------------------------------------------------
+
+        cleaned = []
+        seen = set()
+
+        for concept in concepts:
+
+            key = self.normalize(concept)
+
+            if key in seen:
+                continue
+
+            seen.add(key)
+            cleaned.append(concept)
+
+        return cleaned
+
+    def _learning_relevance(self, query, stored_question, answer=""):
+        """
+        Relevance for supervisor-approved learning.
+
+        Design:
+        - Exact questions => 100.
+        - Strong paraphrases remain retrievable.
+        - Generic words do not create relevance.
+        - Official/local/course/platform topics remain separated.
+        - Supervisor intent alone never creates relevance.
+        - Answer words only reinforce an already valid match.
+        """
+
+        import re
+
+        query = str(query or "").strip()
+        stored_question = str(stored_question or "").strip()
+        answer = str(answer or "").strip()
+
+        if not query or not stored_question:
+            return 0
+
+        def normalize_learning(value):
+            value = self.normalize(value)
+
+            value = re.sub(
+                r"""[؟?!.,،؛:;"'`()\[\]{}<>«»/\\|+*=#@%&^~`_-]+""",
+                " ",
+                value,
+            )
+
+            prefixes = (
+                "وال",
+                "بال",
+                "كال",
+                "فال",
+                "لل",
+                "ال",
+                "و",
+                "ف",
+                "ب",
+                "ك",
+                "ل",
+            )
+
+            words = []
+
+            for word in value.split():
+                word = word.strip()
+
+                if not word:
+                    continue
+
+                for prefix in prefixes:
+                    if (
+                        word.startswith(prefix)
+                        and len(word) > len(prefix) + 2
+                    ):
+                        word = word[len(prefix):]
+                        break
+
+                if len(word) >= 2:
+                    words.append(word)
+
+            return set(words)
+
+        q = normalize_learning(query)
+        s = normalize_learning(stored_question)
+
+        if not q or not s:
+            return 0
+
+        # ---------------------------------------------------------
+        # 1. Exact normalized question
+        # ---------------------------------------------------------
+
+        if q == s:
+            return 100
+
+        # ---------------------------------------------------------
+        # 2. Generic words
+        # ---------------------------------------------------------
+
+        generic = {
+            "qai",
+            "quavron",
+            "تعلم",
+            "تعليم",
+            "دوره",
+            "اختبار",
+            "معرفه",
+            "مساعد",
+        }
+
+        q_specific = q - generic
+        s_specific = s - generic
+
+        # ---------------------------------------------------------
+        # 3. Intent / topic identity
+        # ---------------------------------------------------------
+
+        intent_groups = {
+            "test": {
+                "اختبار",
+                "اختبارات",
+                "امتحان",
+            },
+
+            "definition": {
+                "تعريف",
+                "تعريفه",
+                "تعريفها",
+            },
+
+            "official": {
+                "رسمي",
+                "رسميه",
+                "اعتماد",
+                "معتمد",
+                "معتمده",
+            },
+
+            "local": {
+                "محلي",
+                "محليه",
+                "محليا",
+                "محلياً",
+            },
+
+            "course": {
+                "دوره",
+                "مسار",
+                "منهج",
+                "مسيره",
+            },
+
+            "platform": {
+                "منصه",
+                "quavron",
+                "platform",
+            },
+
+            "learning": {
+                "تعلم",
+                "تعليم",
+                "تعلميه",
+                "تعليميه",
+            },
+
+            "supervisor": {
+                "مشرف",
+                "مشرفه",
+            },
+        }
+
+        def detect_intents(words):
+            found = set()
+
+            for intent, terms in intent_groups.items():
+                if words & terms:
+                    found.add(intent)
+
+            return found
+
+        query_intents = detect_intents(q)
+        stored_intents = detect_intents(s)
+
+        # ---------------------------------------------------------
+        # 3B. Precise question signatures
+        # ---------------------------------------------------------
+
+        query_test = "test" in query_intents
+        stored_test = "test" in stored_intents
+
+        query_definition = "definition" in query_intents
+        stored_definition = "definition" in stored_intents
+
+        query_course = "course" in query_intents
+        stored_course = "course" in stored_intents
+
+        query_platform = "platform" in query_intents
+        stored_platform = "platform" in stored_intents
+
+        query_official = "official" in query_intents
+        stored_official = "official" in stored_intents
+
+        query_local = "local" in query_intents
+        stored_local = "local" in stored_intents
+
+        query_course_test = (
+            query_test
+            and query_course
+        )
+
+        stored_course_test = (
+            stored_test
+            and stored_course
+        )
+
+        query_platform_test = (
+            query_test
+            and query_platform
+        )
+
+        stored_platform_test = (
+            stored_test
+            and stored_platform
+        )
+
+        query_platform_definition = (
+            query_platform
+            and query_definition
+        )
+
+        stored_platform_definition = (
+            stored_platform
+            and stored_definition
+        )
+
+        # ---------------------------------------------------------
+        # 4. Hard topic contradiction protection
+        # ---------------------------------------------------------
+
+        # A test query must not retrieve a non-test record.
+        if query_test and not stored_test:
+            return 0
+
+        # A definition query must not retrieve a test record.
+        if query_definition and stored_test:
+            return 0
+
+        # A test record must not answer a definition query.
+        if stored_test and query_definition:
+            return 0
+
+        # Course tests remain course-specific.
+        if query_course_test and not stored_course:
+            return 0
+
+        # Platform tests remain platform-specific.
+        if query_platform_test and not stored_platform:
+            return 0
+
+        # Explicit official platform tests require an official record.
+        if (
+            query_platform_test
+            and query_official
+            and not stored_official
+        ):
+            return 0
+
+        # Official and local are mutually exclusive.
+        if (
+            "official" in query_intents
+            and "local" in stored_intents
+        ):
+            return 0
+
+        if (
+            "local" in query_intents
+            and "official" in stored_intents
+        ):
+            return 0
+
+        # Platform and course are different domains.
+        if (
+            "platform" in query_intents
+            and "course" in stored_intents
+        ):
+            return 0
+
+        if (
+            "course" in query_intents
+            and "platform" in stored_intents
+        ):
+            return 0
+
+        # Course-specific query requires course identity.
+        if (
+            "course" in query_intents
+            and "course" not in stored_intents
+        ):
+            return 0
+
+        # Platform-specific query requires platform identity.
+        if (
+            "platform" in query_intents
+            and "platform" not in stored_intents
+        ):
+            return 0
+
+        # Local-specific query must not match official.
+        if (
+            "local" in query_intents
+            and "official" in stored_intents
+        ):
+            return 0
+
+        # Official-specific query must not match local.
+        if (
+            "official" in query_intents
+            and "local" in stored_intents
+        ):
+            return 0
+
+        # ---------------------------------------------------------
+        # Explicit official/local distinction
+        # ---------------------------------------------------------
+
+        if query_local and stored_official:
+            return 0
+
+        if query_official and stored_local:
+            return 0
+
+        # ---------------------------------------------------------
+        # 5. Specific-word overlap
+        # ---------------------------------------------------------
+
+        shared_specific = q_specific & s_specific
+
+        score = 0
+
+        if q_specific:
+            coverage = len(shared_specific) / len(q_specific)
+
+            if coverage >= 0.75:
+                score = 75
+
+            elif coverage >= 0.50:
+                score = 55
+
+            elif coverage > 0:
+                score = 30
+
+        else:
+            shared = q & s
+            coverage = len(shared) / max(len(q), 1)
+
+            if coverage >= 0.75:
+                score = 60
+
+            elif coverage >= 0.50:
+                score = 40
+
+        # ---------------------------------------------------------
+        # 6. Intent compatibility
+        # ---------------------------------------------------------
+
+        shared_intents = query_intents & stored_intents
+
+        # ---------------------------------------------------------
+        # 6A. Strong topic signatures
+        # ---------------------------------------------------------
+        #
+        # A paraphrase may use completely different wording while
+        # still referring to the same conceptual topic.
+        #
+        # Example:
+        #   "اشرح لي اختبار دورة تعلم QAI"
+        #   "ما هو الاختبار الرسمي لدورة تعلم QAI؟"
+        #
+        # Both are clearly about the QAI course test.
+        #
+        # We therefore allow a course-test signature to match even
+        # when there is no specific-word overlap.
+
+        query_has_test = "اختبار" in q
+        stored_has_test = "اختبار" in s
+
+        query_course_test = (
+            query_has_test
+            and "course" in query_intents
+        )
+
+        stored_course_test = (
+            stored_has_test
+            and "course" in stored_intents
+        )
+
+        # A course-learning question may not mention "test".
+        #
+        # Example:
+        #   "كيف تعمل دورة تعلم QAI؟"
+        #
+        # This is still the same course-learning domain as:
+        #   "ما هو الاختبار الرسمي لدورة تعلم QAI؟"
+        query_course_learning = (
+            "course" in query_intents
+            and "learning" in query_intents
+        )
+
+        stored_course_learning = (
+            "course" in stored_intents
+            and "learning" in stored_intents
+        )
+
+        if query_course_test and stored_course_test:
+            score = max(score, 72)
+
+        if query_course_learning and stored_course_learning:
+            score = max(score, 68)
+
+        # ---------------------------------------------------------
+        # 6B. Learning/course compatibility
+        # ---------------------------------------------------------
+
+        # Course intent is useful when both records are explicitly
+        # course-related. Concrete overlap is preferred, but the
+        # course-test signature above may already establish relevance.
+        if (
+            "course" in shared_intents
+            and (
+                shared_specific
+                or query_course_test and stored_course_test
+            )
+        ):
+            score = max(score, 70)
+
+        # Learning intent alone is weak.
+        if (
+            "learning" in shared_intents
+            and shared_specific
+        ):
+            score = max(score, 65)
+
+        # Supervisor intent alone is NOT enough.
+        if (
+            "supervisor" in shared_intents
+            and shared_specific
+        ):
+            score = max(score, 60)
+
+        # ---------------------------------------------------------
+        # 6C. Official / local / platform reinforcement
+        # ---------------------------------------------------------
+
+        if (
+            "official" in shared_intents
+            and shared_specific
+        ):
+            score = max(score, 65)
+
+        if (
+            "local" in shared_intents
+            and shared_specific
+        ):
+            score = max(score, 65)
+
+        if (
+            "platform" in shared_intents
+            and shared_specific
+        ):
+            score = max(score, 65)
+
+        # ---------------------------------------------------------
+        # 6D. Explicit topic identity
+        # ---------------------------------------------------------
+
+        # If the user explicitly asks for an OFFICIAL record,
+        # the stored record must itself be official.
+        if (
+            "official" in query_intents
+            and "official" not in stored_intents
+        ):
+            return 0
+
+        # If the user explicitly asks for a LOCAL record,
+        # the stored record must itself be local.
+        if (
+            "local" in query_intents
+            and "local" not in stored_intents
+        ):
+            return 0
+
+        # If the user explicitly asks for a PLATFORM record,
+        # the stored record must itself be platform-specific.
+        if (
+            "platform" in query_intents
+            and "platform" not in stored_intents
+        ):
+            return 0
+
+        # ---------------------------------------------------------
+        # 6E. Explicit official/local distinction
+        # ---------------------------------------------------------
+
+        if (
+            "official" in query_intents
+            and "local" in stored_intents
+        ):
+            return 0
+
+        if (
+            "local" in query_intents
+            and "official" in stored_intents
+        ):
+            return 0
+
+        # ---------------------------------------------------------
+        # 6F. Answer reinforcement
+        # ---------------------------------------------------------
+
+        # Answer words can reinforce an already valid match.
+        # They must never create relevance on their own.
+
+        # ---------------------------------------------------------
+        # 7. Strong course-context matching
+        # ---------------------------------------------------------
+
+        # A course question should match another course record only
+        # when there is concrete topic overlap.
+        if (
+            "course" in query_intents
+            and "course" in stored_intents
+            and shared_specific
+        ):
+            score = max(score, 75)
+
+        # ---------------------------------------------------------
+        # 8. Prevent generic-only matches
+        # ---------------------------------------------------------
+
+        # A topic signature may establish relevance even when the
+        # paraphrase has no shared concrete words.
+        #
+        # Example:
+        #   "اشرح لي اختبار دورة تعلم QAI"
+        #   "ما هو الاختبار الرسمي لدورة تعلم QAI؟"
+        #
+        # Both represent the same course-test topic.
+        topic_signature_match = (
+            (query_course_test and stored_course_test)
+            or
+            (query_course_learning and stored_course_learning)
+        )
+
+        # Without concrete overlap, only an explicit topic signature
+        # is allowed to keep the record alive.
+        if not shared_specific and not topic_signature_match:
+            return 0
+
+        # ---------------------------------------------------------
+        # 9. Answer reinforcement
+        # ---------------------------------------------------------
+
+        # The answer may strengthen an already valid match, but can
+        # never create relevance by itself.
+        if score > 0 and answer:
+            answer_words = normalize_learning(answer)
+            answer_shared = q_specific & answer_words
+
+            if answer_shared:
+                score = min(90, score + 10)
+
+        return min(score, 100)
+
+    # =========================================================
+    # SINGLE SOURCE SEARCH
+    # =========================================================
+
+    def _search_one(self, query, limit=8):
+
+        results = []
+
+        # =====================================================
+        # 1. LEARNED KNOWLEDGE
+        # =====================================================
+
+        try:
+
+            learned_results = learning_retriever.search(
+                query,
+                limit=limit
+            )
+
+            for item in learned_results:
+
+                text = item.get("answer", "")
+
+                if not text:
+                    continue
+
+                question = item.get("question")
+
+                if isinstance(question, dict):
+                    question_values = [
+                        str(value)
+                        for value in question.values()
+                        if value
+                    ]
+                    stored_question = " | ".join(question_values)
+                else:
+                    stored_question = str(question or "")
+
+                # Supervisor learning:
+                # use the stored question as the primary relevance signal.
+                rel = self._learning_relevance(
+                    query,
+                    stored_question,
+                    text
+                )
+
+                results.append({
+                    "text": text,
+                    "score": (
+                        SOURCE_PRIORITY["qai_learning"]
+                        + item.get("score", 0)
+                    ),
+                    "relevance": rel,
+                    "source": "qai_learning",
+                    "teacher": item.get("teacher"),
+                    "confidence": item.get(
+                        "confidence",
+                        0
+                    ),
+                    "approved": item.get(
+                        "approved",
+                        False
+                    ),
+                    "question": question,
+                })
+
+        except Exception as e:
+
+            print(
+                "learning retrieval error:",
+                e
+            )
+
+        # =====================================================
+        # 2. OFFICIAL KNOWLEDGE
+        # =====================================================
+
+        try:
+
+            knowledge_results = search_engine.search(
+                query
+            )
+
+            for item in knowledge_results:
+
+                value = item.get("value")
+
+                text = ""
+
+                if isinstance(value, dict):
+
+                    content = value.get("content")
+
+                    if isinstance(content, dict):
+
+                        text = (
+                            content.get("ar")
+                            or content.get("en")
+                            or content.get("fr")
+                            or ""
+                        )
+
+                    elif content:
+
+                        text = str(content)
+
+                    else:
+
+                        title = value.get("title")
+
+                        if isinstance(title, dict):
+
+                            text = (
+                                title.get("ar")
+                                or title.get("en")
+                                or title.get("fr")
+                                or ""
+                            )
+
+                        elif title:
+
+                            text = str(title)
+
+                elif value:
+
+                    text = str(value)
+
+                if not text:
+                    continue
+
+                rel = self.relevance(
+                    query,
+                    text
+                )
+
+                item_question = item.get(
+                    "question"
+                )
+
+                if isinstance(item_question, dict):
+
+                    for value in item_question.values():
+
+                        rel = max(
+                            rel,
+                            self.relevance(
+                                query,
+                                value
+                            )
+                        )
+
+                results.append({
+                    "text": text,
+                    "score": (
+                        SOURCE_PRIORITY["knowledge"]
+                        + item.get("score", 0)
+                    ),
+                    "relevance": rel,
+                    "source": "knowledge",
+                    "confidence": item.get(
+                        "confidence",
+                        0
+                    ),
+                })
+
+        except Exception as e:
+
+            print(
+                "knowledge error:",
+                e
+            )
+
+        # =====================================================
+        # 3. VECTOR MEMORY
+        # =====================================================
+
+        try:
+
+            vector_results = search.search(
+                query
+            )
+
+            for item in vector_results:
+
+                text = item.get(
+                    "text",
+                    ""
+                )
+
+                if not text:
+                    continue
+
+                rel = self.relevance(
+                    query,
+                    text
+                )
+
+                results.append({
+                    "text": text,
+                    "score": (
+                        SOURCE_PRIORITY["vector"]
+                        + item.get("score", 0)
+                    ),
+                    "relevance": rel,
+                    "source": "vector",
+                })
+
+        except Exception as e:
+
+            print(
+                "vector retrieval error:",
+                e
+            )
+
+        return results
+
+    # =========================================================
+    # FILTER + RANK
+    # =========================================================
+
+    def _rank_and_clean(self, results):
+
+        filtered = []
+
+        for item in results:
+
+            relevance = float(
+                item.get(
+                    "relevance",
+                    0
+                ) or 0
+            )
+
+            # Strong result
+            if relevance >= 40:
+
+                filtered.append(item)
+                continue
+
+            # -----------------------------------------------------
+            # Approved supervisor learning
+            # -----------------------------------------------------
+            if (
+                item.get("source") == "qai_learning"
+                and item.get("approved", False) is True
+                and float(item.get("confidence", 0) or 0) >= 1.0
+                and relevance >= 20
+            ):
+                filtered.append(item)
+                continue
+
+            # Medium result allowed for trusted knowledge
+            if (
+                relevance >= 20
+                and item.get("source") in {
+                    "qai_learning",
+                    "knowledge",
+                }
+            ):
+
+                filtered.append(item)
+
+        # -----------------------------------------------------
+        # Calculate final score
+        # -----------------------------------------------------
+
+        for item in filtered:
+
+            relevance = float(
+                item.get(
+                    "relevance",
+                    0
+                ) or 0
+            )
+
+            item["final_score"] = (
+                relevance * 20
+                + item.get("score", 0)
+            )
+
+        # -----------------------------------------------------
+        # Ranking
+        # -----------------------------------------------------
+
+        filtered.sort(
+            key=lambda x: (
+                x.get("relevance", 0),
+                x.get("final_score", 0),
+                x.get("score", 0)
+            ),
+            reverse=True
+        )
+
+        # -----------------------------------------------------
+        # Deduplication
+        # -----------------------------------------------------
+
+        cleaned = []
+        seen = set()
+
+        for item in filtered:
+
+            text = item.get(
+                "text",
+                ""
+            ).strip()
+
+            if not text:
+                continue
+
+            fingerprint = self.normalize(
+                text
+            )
+
+            if fingerprint in seen:
+                continue
+
+            seen.add(fingerprint)
+
+            cleaned.append(item)
+
+        return cleaned
+
+    # =========================================================
+    # MAIN RETRIEVAL
+    # =========================================================
+
+    def retrieve(self, query, limit=8):
+
+        query = str(query or "").strip()
+
+        if not query:
+            return []
+
+        # =====================================================
+        # 1. NORMAL DIRECT SEARCH
+        # =====================================================
+
+        direct_results = self._search_one(
+            query,
+            limit=limit
+        )
+
+        # =====================================================
+        # 2. COMPOUND QUERY SEARCH
+        #
+        # Example:
+        #
+        # "قارن بين Cloud IDE و Marketplace"
+        #
+        # Search independently for:
+        #
+        # Cloud IDE
+        # Marketplace
+        # Quavron
+        # =====================================================
+
+        if self.is_compound_query(query):
+
+            concepts = self.extract_concepts(
+                query
+            )
+
+            for concept in concepts:
+
+                concept_results = self._search_one(
+                    concept,
+                    limit=limit
+                )
+
+                for item in concept_results:
+
+                    # Mark that this came from
+                    # concept-level retrieval.
+                    item["retrieval_query"] = concept
+
+                    direct_results.append(item)
+
+        # =====================================================
+        # 3. RANK
+        # =====================================================
+
+        cleaned = self._rank_and_clean(
+            direct_results
+        )
+
+        # =====================================================
+        # 4. COMPOUND QUERY BALANCING
+        #
+        # Do not allow one concept to completely dominate
+        # the context.
+        # =====================================================
+
+        if self.is_compound_query(query):
+
+            concepts = self.extract_concepts(
+                query
+            )
+
+            balanced = []
+
+            # First collect the best result for each
+            # detected concept.
+            for concept in concepts:
+
+                concept_norm = self.normalize(
+                    concept
+                )
+
+                candidates = [
+                    item
+                    for item in cleaned
+                    if concept_norm in self.normalize(
+                        item.get("text", "")
+                    )
+                    or item.get(
+                        "retrieval_query"
+                    ) == concept
+                ]
+
+                if candidates:
+
+                    balanced.append(
+                        candidates[0]
+                    )
+
+            # Then add remaining best results.
+            used = {
+                self.normalize(
+                    item.get("text", "")
+                )
+                for item in balanced
+            }
+
+            for item in cleaned:
+
+                fingerprint = self.normalize(
+                    item.get("text", "")
+                )
+
+                if fingerprint in used:
+                    continue
+
+                balanced.append(item)
+                used.add(fingerprint)
+
+            cleaned = balanced
+
+        return cleaned[:limit]
+
+
+retriever = Retriever()

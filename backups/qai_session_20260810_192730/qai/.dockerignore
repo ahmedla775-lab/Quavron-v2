@@ -1,0 +1,9 @@
+.venv
+__pycache__
+*.pyc
+.env
+.git
+logs
+memory/storage/*.json
+users/storage/*.json
+events/storage/*.json

@@ -262,230 +262,13 @@ class KnowledgeSearch:
 
         results = []
 
-        # -------------------------------------------------
-        # Query intent + exact subject extraction
-        # -------------------------------------------------
-
-        query_normalized = self.normalize(keyword)
-
-        # -------------------------------------------------
-        # Detect query type
-        # -------------------------------------------------
-        is_definition_query = any(
-            phrase in query_normalized
-            for phrase in (
-                "ما هو",
-                "ما هي",
-                "ما معنى",
-                "ما المقصود",
-                "what is",
-                "what are",
-                "who is",
-                "qu est ce que",
-                "qu est-ce que",
-            )
-        )
-
-        is_yes_no_query = any(
-            phrase in query_normalized
-            for phrase in (
-                "هل ",
-                "هل",
-                "can ",
-                "do ",
-                "does ",
-                "is ",
-                "are ",
-                "est-ce",
-                "est ce",
-            )
-        )
-
-        # -------------------------------------------------
-        # Extract subject from the query
-        # -------------------------------------------------
-        def extract_subject(value):
-            value = self.normalize(value)
-
-            prefixes = (
-                "ما هو ",
-                "ما هي ",
-                "ما معنى ",
-                "ما المقصود ب",
-                "what is ",
-                "what are ",
-                "who is ",
-                "qu est ce que ",
-                "qu est-ce que ",
-            "qu’est ce que ",
-            "qu’est-ce que ",
-            )
-
-            for prefix in prefixes:
-                if value.startswith(prefix):
-                    value = value[len(prefix):]
-                    break
-
-            # Remove common Arabic structural words.
-            value = re.sub(
-                r"^(منصة|المنصة|في|عن)\s+",
-                "",
-                value,
-            ).strip()
-
-            return value
-
-        query_subject = extract_subject(query_normalized)
-
-        # Subject tokens are used only when necessary.
-        subject_words = [
-            word
-            for word in re.findall(
-                r"[\w\u0600-\u06ff.-]+",
-                query_subject,
-                flags=re.UNICODE,
-            )
-            if len(word) >= 2
-        ]
-
-        subject_words = list(dict.fromkeys(subject_words))
-
-        # -------------------------------------------------
-        # Score text
-        # -------------------------------------------------
-        def score_text(text, title="", question=""):
+        def score_text(text):
             normalized = self.normalize(text)
-            title_text = self.normalize(title)
-            question_text = self.normalize(question)
-
-            # -------------------------------------------------
-            # Subject guard for definition queries
-            # -------------------------------------------------
-            # Prevent unrelated knowledge records from winning
-            # merely because they contain generic query words.
-            if is_definition_query and query_subject:
-                subject_present = (
-                    query_subject in normalized
-                    or query_subject in title_text
-                    or query_subject in question_text
-                )
-
-                if not subject_present:
-                    return 0
-
             score = 0
 
-            # -------------------------------------------------
-            # Basic keyword matching
-            # -------------------------------------------------
             for word in keywords:
                 if word in normalized:
                     score += 10
-
-            # -------------------------------------------------
-            # Exact query match
-            # -------------------------------------------------
-            if query_normalized:
-                if query_normalized == question_text:
-                    score += 1200
-                elif query_normalized in question_text:
-                    score += 700
-
-                if query_normalized == title_text:
-                    score += 1000
-                elif query_normalized in title_text:
-                    score += 500
-
-            # -------------------------------------------------
-            # Exact subject matching
-            # -------------------------------------------------
-            subject_exact_question = (
-                bool(query_subject)
-                and query_subject == extract_subject(question_text)
-            )
-
-            subject_exact_title = (
-                bool(query_subject)
-                and query_subject == extract_subject(title_text)
-            )
-
-            if subject_exact_question:
-                score += 900
-
-            if subject_exact_title:
-                score += 750
-
-            # -------------------------------------------------
-            # Subject token matching
-            # -------------------------------------------------
-            matched_question = 0
-            matched_title = 0
-            matched_content = 0
-
-            for word in subject_words:
-                if word in question_text:
-                    matched_question += 1
-
-                if word in title_text:
-                    matched_title += 1
-
-                if word in normalized:
-                    matched_content += 1
-
-            score += matched_question * 100
-            score += matched_title * 70
-            score += matched_content * 10
-
-            # -------------------------------------------------
-            # Definition intent
-            # -------------------------------------------------
-            if is_definition_query:
-                # A definition result must actually answer the
-                # requested subject, not merely mention it.
-                if subject_exact_question:
-                    score += 1400
-                elif subject_exact_title:
-                    score += 1100
-                elif matched_question:
-                    score += matched_question * 30
-
-                # Strongly prefer question/title matches over
-                # generic knowledge leaves.
-                if question_text:
-                    score += 250
-
-            # -------------------------------------------------
-            # Yes / No intent
-            # -------------------------------------------------
-            elif is_yes_no_query:
-                if matched_question:
-                    score += matched_question * 120
-
-                # A question-form knowledge record is preferable
-                # to a generic concept when the query is yes/no.
-                if question_text:
-                    score += 100
-
-            # -------------------------------------------------
-            # Entity-aware exact subject protection
-            # -------------------------------------------------
-            # Prevent unrelated records containing the same entity
-            # (e.g. Quavron, QAI, AI) from outranking the exact FAQ.
-            if query_subject:
-                entity = self.normalize(query_subject)
-
-                if entity:
-                    if question_text:
-                        if extract_subject(question_text) == entity:
-                            score += 1200
-                        elif entity in question_text:
-                            score += 120
-
-                    if title_text:
-                        if extract_subject(title_text) == entity:
-                            score += 1000
-                        elif entity in title_text:
-                            score += 100
 
             return score
 
@@ -546,17 +329,8 @@ class KnowledgeSearch:
             if not answer_text:
                 return
 
-            question_score = score_text(
-                question_text,
-                title=question_text,
-                question=question_text,
-            )
-
-            answer_score = score_text(
-                answer_text,
-                title=question_text,
-                question=question_text,
-            )
+            question_score = score_text(question_text)
+            answer_score = score_text(answer_text)
 
             total = (
                 question_score * 5
@@ -684,15 +458,11 @@ class KnowledgeSearch:
                     ).strip()
 
                     text_score = score_text(
-                        multilingual_text,
-                        title=str(parent or ""),
-                        question=str(parent or ""),
+                        multilingual_text
                     )
 
                     key_score = score_text(
-                        str(parent or ""),
-                        title=str(parent or ""),
-                        question=str(parent or ""),
+                        str(parent or "")
                     )
 
                     if text_score or key_score:
@@ -909,68 +679,6 @@ class KnowledgeSearch:
                 if not raw:
                     return None
 
-                # -------------------------------------------------
-                # HTTP Content-Encoding
-                # -------------------------------------------------
-                # Some websites return compressed HTML.
-                # urllib does not automatically decompress all
-                # Content-Encoding responses.
-                content_encoding = (
-                    response.headers.get(
-                        "Content-Encoding",
-                        "",
-                    )
-                    or ""
-                ).lower().strip()
-
-                if content_encoding:
-                    encodings = [
-                        value.strip()
-                        for value in content_encoding.split(',')
-                        if value.strip()
-                    ]
-
-                    # Decompress in reverse order.
-                    for encoding in reversed(encodings):
-
-                        if encoding in {
-                            "identity",
-                            "",
-                        }:
-                            continue
-
-                        try:
-                            if encoding == "gzip":
-                                import gzip
-                                raw = gzip.decompress(raw)
-
-                            elif encoding == "deflate":
-                                import zlib
-                
-                                try:
-                                    raw = zlib.decompress(raw)
-                                except zlib.error:
-                                    raw = zlib.decompress(
-                                        raw,
-                                        -zlib.MAX_WBITS,
-                                    )
-
-                            else:
-                                print(
-                                    "[WebResearch] Unsupported "
-                                    "Content-Encoding:",
-                                    encoding,
-                                )
-                                return None
-
-                        except Exception as e:
-                            print(
-                                "[WebResearch] Decompression failed:",
-                                encoding,
-                                type(e).__name__,
-                            )
-                            return None
-
                 charset = (
                     response.headers.get_content_charset()
                     or "utf-8"
@@ -1004,22 +712,45 @@ class KnowledgeSearch:
 
     def _discover_urls(self, query):
         """
-        Discover external research URLs.
+        Discover real external result URLs.
 
-        DuckDuckGo is intentionally not used here because its HTML endpoint
-        may return an anti-bot challenge. Google HTML search is used only
-        for URL discovery. QAI itself still fetches, extracts, scores and
-        ranks the discovered pages.
+        The search engine is only used to discover candidate URLs.
+        QAI itself fetches, extracts, scores and ranks the pages.
+        Search-engine homepages and internal navigation URLs are rejected.
         """
+
         query = str(query or "").strip()
         if not query:
             return []
 
         encoded = urllib.parse.quote_plus(query)
 
+        # Prefer the HTML endpoint because it is designed for server-side
+        # consumption and does not require JavaScript.
         search_urls = [
-            "https://www.google.com/search?q=" + encoded,
+            "https://html.duckduckgo.com/html/?q=" + encoded,
+            "https://lite.duckduckgo.com/lite/?q=" + encoded,
         ]
+
+        html = None
+        used_url = None
+
+        for search_url in search_urls:
+            try:
+                html = self._http_get(search_url)
+                if html and len(html) > 500:
+                    used_url = search_url
+                    break
+            except Exception as e:
+                print(
+                    "[WebResearch] Discovery request failed:",
+                    search_url,
+                    type(e).__name__,
+                    str(e),
+                )
+
+        if not html:
+            return []
 
         urls = []
         seen = set()
@@ -1028,12 +759,28 @@ class KnowledgeSearch:
             if not raw_url:
                 return
 
-            try:
-                url = urllib.parse.unquote(str(raw_url).strip())
-            except Exception:
-                url = str(raw_url).strip()
+            url = str(raw_url).strip()
 
-            url = url.replace("&amp;", "&").strip()
+            # HTML entities.
+            url = url.replace("&amp;", "&")
+
+            # Decode percent encoding.
+            try:
+                url = urllib.parse.unquote(url)
+            except Exception:
+                pass
+
+            # DDG redirect URLs may contain the real URL in uddg.
+            try:
+                parsed = urllib.parse.urlparse(url)
+                params = urllib.parse.parse_qs(parsed.query)
+
+                if params.get("uddg"):
+                    url = params["uddg"][0]
+            except Exception:
+                pass
+
+            url = url.strip()
 
             if not url.startswith(("http://", "https://")):
                 return
@@ -1048,16 +795,18 @@ class KnowledgeSearch:
             if not host:
                 return
 
+            # Never treat the search engine itself as research evidence.
             blocked_hosts = {
-                "google.com",
-                "www.google.com",
-                "accounts.google.com",
-                "support.google.com",
+                "duckduckgo.com",
+                "www.duckduckgo.com",
+                "html.duckduckgo.com",
+                "lite.duckduckgo.com",
             }
 
-            if host in blocked_hosts or host.endswith(".google.com"):
+            if host in blocked_hosts or host.endswith(".duckduckgo.com"):
                 return
 
+            # Remove fragments because they do not identify a different page.
             clean_url = urllib.parse.urlunparse(
                 (
                     parsed.scheme,
@@ -1075,67 +824,56 @@ class KnowledgeSearch:
             seen.add(clean_url)
             urls.append(clean_url)
 
-        for search_url in search_urls:
-            try:
-                html = self._http_get(search_url)
-            except Exception as e:
-                print(
-                    "[WebResearch] Google discovery failed:",
-                    type(e).__name__,
-                    str(e),
-                )
-                continue
+        # ---------------------------------------------------------
+        # Parse actual result anchors.
+        # ---------------------------------------------------------
+        #
+        # DDG HTML has used several slightly different structures.
+        # Support the known result-anchor forms instead of collecting
+        # every href from the page.
+        #
+        result_patterns = [
+            r'<a[^>]+class=["\'][^"\']*result__a[^"\']*["\'][^>]+href=["\']([^"\']+)["\']',
+            r'<a[^>]+href=["\']([^"\']+)["\'][^>]+class=["\'][^"\']*result__a[^"\']*["\']',
+            r'<a[^>]+class=["\'][^"\']*result-link[^"\']*["\'][^>]+href=["\']([^"\']+)["\']',
+            r'<a[^>]+href=["\']([^"\']+)["\'][^>]+class=["\'][^"\']*result-link[^"\']*["\']',
+        ]
 
-            if not html:
-                continue
+        for pattern in result_patterns:
+            matches = re.findall(
+                pattern,
+                html,
+                flags=re.IGNORECASE,
+            )
 
-            lower_html = html.lower()
+            for raw_url in matches:
+                add_url(raw_url)
 
-            # Google may return a consent/block page instead of results.
-            if (
-                "unusual traffic" in lower_html
-                or "not a robot" in lower_html
-                or "captcha" in lower_html
-            ):
-                print(
-                    "[WebResearch] Google search challenge detected:",
-                    search_url,
-                )
-                continue
+                if len(urls) >= self.MAX_WEB_RESULTS:
+                    return urls
 
-            # Google result links commonly appear as:
-            # <a href="https://example.com/...">
-            # We deliberately inspect only absolute HTTP(S) links.
-            absolute_pattern = r'<a[^>]+href=["\\\'](https?://[^"\\\']+)["\\\']'
+        # ---------------------------------------------------------
+        # Fallback:
+        # Extract only obvious external HTTP links, but reject
+        # DuckDuckGo and internal navigation.
+        # ---------------------------------------------------------
+        if not urls:
+            generic_pattern = r'href=["\'](https?://[^"\']+)["\']'
 
             for raw_url in re.findall(
-                absolute_pattern,
+                generic_pattern,
                 html,
                 flags=re.IGNORECASE,
             ):
                 add_url(raw_url)
 
                 if len(urls) >= self.MAX_WEB_RESULTS:
-                    return urls[:self.MAX_WEB_RESULTS]
-
-            # Additional fallback for links encoded inside Google HTML.
-            href_pattern = r'href=["\\\']([^"\\\']+)["\\\']'
-
-            for raw_url in re.findall(
-                href_pattern,
-                html,
-                flags=re.IGNORECASE,
-            ):
-                if raw_url.startswith(("http://", "https://")):
-                    add_url(raw_url)
-
-                if len(urls) >= self.MAX_WEB_RESULTS:
-                    return urls[:self.MAX_WEB_RESULTS]
+                    return urls
 
         if not urls:
             print(
                 "[WebResearch] No external result URLs discovered.",
-                "engine=google",
+                "engine=", used_url,
             )
 
         return urls[:self.MAX_WEB_RESULTS]
@@ -1183,163 +921,6 @@ class KnowledgeSearch:
             ],
         }
 
-    def _discover_wikipedia_urls(self, query):
-        """Discover direct Wikipedia articles for common multilingual subjects."""
-        query = str(query or "").strip()
-
-        if not query:
-            return []
-
-        normalized = self.normalize(query)
-
-        # Remove common question prefixes.
-        prefixes = (
-            "ما هو ",
-            "ما هي ",
-            "ما معنى ",
-            "ما المقصود ب",
-            "what is ",
-            "what are ",
-            "who is ",
-            "qu est ce que ",
-            "qu est-ce que ",
-            "qu'est-ce que ",
-            "qui est ",
-            "quelle est ",
-            "quel est ",
-            "qu'est ce que ",
-        )
-
-        subject = normalized
-
-        for prefix in prefixes:
-            if subject.startswith(prefix):
-                subject = subject[len(prefix):].strip()
-                break
-
-        # Remove question marks.
-        subject = subject.replace("؟", "").replace("?", "").strip()
-
-        # Normalize common article wording.
-        subject = re.sub(
-            r"^(لغة|اللغة)\s+",
-            "",
-            subject,
-        ).strip()
-
-        # Normalize common aliases.
-        subject_aliases = {
-            "لغه python": "python",
-            "لغة python": "python",
-            "اللغة python": "python",
-            "python language": "python",
-            "python programming": "python",
-            "بايثون": "python",
-            "لغة بايثون": "python",
-            "اللغة بايثون": "python",
-            "intelligence artificielle": "artificial intelligence",
-            "intelligence artificielle ia": "artificial intelligence",
-            "ia": "artificial intelligence",
-            "l intelligence artificielle": "artificial intelligence",
-            "l'intelligence artificielle": "artificial intelligence",
-
-            "qai": "qai",
-            "quavron ai": "quavron ai",
-            "كوافرون ai": "quavron ai",
-            "كوافرون الذكاء الاصطناعي": "quavron ai",
-        }
-
-        subject = subject_aliases.get(subject, subject)
-
-        # QAI is an internal Quavron entity.
-        # It must be answered from QAI knowledge, not Wikipedia.
-        if subject in {
-            "qai",
-            "quavron ai",
-        }:
-            return []
-
-        # Known high-value concepts/entities.
-        wikipedia_map = {
-            "python": (
-                "https://ar.wikipedia.org/wiki/بايثون_(لغة_برمجة)",
-                "https://en.wikipedia.org/wiki/Python_(programming_language)",
-                        ),
-
-            "python programming language": (
-                "https://ar.wikipedia.org/wiki/بايثون_(لغة_برمجة)",
-                "https://en.wikipedia.org/wiki/Python_(programming_language)",
-            ),
-
-            "بايثون": (
-                "https://ar.wikipedia.org/wiki/بايثون_(لغة_برمجة)",
-                "https://en.wikipedia.org/wiki/Python_(programming_language)",
-            ),
-
-            "الذكاء الاصطناعي": (
-                "https://ar.wikipedia.org/wiki/ذكاء_اصطناعي",
-                "https://en.wikipedia.org/wiki/Artificial_intelligence",
-            ),
-
-            "ذكاء اصطناعي": (
-                "https://ar.wikipedia.org/wiki/ذكاء_اصطناعي",
-                "https://en.wikipedia.org/wiki/Artificial_intelligence",
-            ),
-
-            "artificial intelligence": (
-                "https://ar.wikipedia.org/wiki/ذكاء_اصطناعي",
-                "https://en.wikipedia.org/wiki/Artificial_intelligence",
-            ),
-
-            "intelligence artificielle": (
-                "https://ar.wikipedia.org/wiki/ذكاء_اصطناعي",
-                "https://en.wikipedia.org/wiki/Artificial_intelligence",
-            ),
-            "ia": (
-                "https://ar.wikipedia.org/wiki/ذكاء_اصطناعي",
-                "https://en.wikipedia.org/wiki/Artificial_intelligence",
-            ),
-            "ai": (
-                "https://ar.wikipedia.org/wiki/ذكاء_اصطناعي",
-                "https://en.wikipedia.org/wiki/Artificial_intelligence",
-            ),
-
-            "machine learning": (
-                "https://ar.wikipedia.org/wiki/تعلم_آلي",
-                "https://en.wikipedia.org/wiki/Machine_learning",
-            ),
-
-            "تعلم الي": (
-                "https://ar.wikipedia.org/wiki/تعلم_آلي",
-                "https://en.wikipedia.org/wiki/Machine_learning",
-            ),
-        }
-
-        candidates = wikipedia_map.get(subject)
-
-        if candidates:
-            return list(candidates)[:self.MAX_WEB_RESULTS]
-
-        # Conservative generic fallback.
-        clean_subject = re.sub(
-            r"\s+",
-            " ",
-            subject,
-        ).strip()
-
-        if not clean_subject:
-            return []
-
-        encoded = urllib.parse.quote(
-            clean_subject.replace(" ", "_"),
-            safe="()_,-.",
-        )
-
-        return [
-            "https://ar.wikipedia.org/wiki/" + encoded,
-            "https://en.wikipedia.org/wiki/" + encoded,
-        ][:self.MAX_WEB_RESULTS]
-
     # =====================================================
     # WEB SEARCH
     # =====================================================
@@ -1360,20 +941,9 @@ class KnowledgeSearch:
         if limit is None:
             limit = self.MAX_WEB_RESULTS
 
-        # Discover normal web results first.
         urls = self._discover_urls(
             query
         )
-
-        # Add direct Wikipedia candidates as a trusted research source.
-        # This works even when a search engine challenge returns no URLs.
-        wikipedia_urls = self._discover_wikipedia_urls(query)
-
-        for wikipedia_url in wikipedia_urls:
-            if wikipedia_url not in urls:
-                urls.append(wikipedia_url)
-
-        urls = urls[:self.MAX_WEB_RESULTS]
 
         results = []
 
@@ -1467,85 +1037,10 @@ class KnowledgeSearch:
         normalized_title = self.normalize(title)
         normalized_content = self.normalize(content)
 
-        # -------------------------------------------------
-        # MULTILINGUAL CONCEPT MATCHING
-        # -------------------------------------------------
-        # Allow Arabic queries to match English sources and
-        # English queries to match Arabic sources.
-        concept_aliases = {
-            "python": (
-                "python",
-                "بايثون",
-                "لغة بايثون",
-                "لغة python",
-                "python programming language",
-                "بايثون لغة برمجة",
-        "langage python",
-        "langage de programmation python",
-        "python langage de programmation",
-            ),
-            "artificial_intelligence": (
-                "ai",
-                "artificial intelligence",
-                "الذكاء الاصطناعي",
-                "ذكاء اصطناعي",
-                "الذكاء الصناعي",
-            "intelligence artificielle",
-            "intelligence artificielle ia",
-            "ia",
-            ),
-            "machine_learning": (
-                "machine learning",
-                "تعلم آلي",
-                "التعلم الآلي",
-                "تعلم الي",
-            "apprentissage automatique",
-            "apprentissage machine",
-            ),
-        }
-
-        query_concepts = set()
-
-        for concept, aliases in concept_aliases.items():
-            for alias in aliases:
-                alias_normalized = self.normalize(alias)
-                if (
-                    alias_normalized
-                    and alias_normalized in normalized_query
-                ):
-                    query_concepts.add(concept)
-                    break
-
-        page_concepts = set()
-
-        page_text = (
-            normalized_title
-            + " "
-            + normalized_content[:12000]
-        )
-
-        for concept, aliases in concept_aliases.items():
-            for alias in aliases:
-                alias_normalized = self.normalize(alias)
-                if (
-                    alias_normalized
-                    and alias_normalized in page_text
-                ):
-                    page_concepts.add(concept)
-                    break
-
-
         if not normalized_title and not normalized_content:
             return 0
 
         score = 0
-
-        # Strong semantic match across Arabic / English aliases.
-        concept_matches = query_concepts & page_concepts
-
-        if concept_matches:
-            score += 45 * len(concept_matches)
-
 
         # -------------------------------------------------
         # 1. Exact query phrase
@@ -1666,19 +1161,14 @@ class KnowledgeSearch:
         # -------------------------------------------------
 
         if coverage == 0:
-            # Cross-language semantic matches are valid even when
-            # literal keyword coverage is zero.
-            if not concept_matches:
-                return 0
-            score += 30
+            return 0
 
-        if not concept_matches:
-            if coverage < 0.34:
-                score = int(score * 0.25)
-            elif coverage < 0.50:
-                score = int(score * 0.50)
-            elif coverage < 0.67:
-                score = int(score * 0.75)
+        if coverage < 0.34:
+            score = int(score * 0.25)
+
+        elif coverage < 0.50:
+            score = int(score * 0.50)
+
         elif coverage < 0.67:
             score = int(score * 0.75)
 
@@ -1686,13 +1176,7 @@ class KnowledgeSearch:
         # 8. Title mismatch penalty
         # -------------------------------------------------
 
-        # Do not penalize a page whose title matches the same
-        # multilingual concept as the query.
-        if (
-            title_matches == 0
-            and coverage < 0.67
-            and not concept_matches
-        ):
+        if title_matches == 0 and coverage < 0.67:
             score = int(score * 0.70)
 
         # -------------------------------------------------
