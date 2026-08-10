@@ -1,10 +1,10 @@
-from teachers.openai_teacher import teacher as openai_teacher
+from teachers.local_teacher import teacher as local_teacher
 
 
 class TeacherManager:
     def __init__(self):
         self.teachers = {
-            "openai": openai_teacher
+            "local": local_teacher,
         }
 
     def available_teachers(self):
@@ -19,7 +19,10 @@ class TeacherManager:
 
         for name, teacher in self.teachers.items():
             if teacher.available():
-                result = teacher.teach(question, context)
+                result = teacher.teach(
+                    question,
+                    context,
+                )
                 results.append(result)
 
         return results

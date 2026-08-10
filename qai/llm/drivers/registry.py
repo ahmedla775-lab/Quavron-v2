@@ -1,5 +1,4 @@
 class DriverRegistry:
-
     def __init__(self):
         self.drivers = {}
 
@@ -29,32 +28,16 @@ registry = DriverRegistry()
 
 
 # ==========================================
-# LOCAL DRIVER
+# LOCAL DRIVER ONLY
 # ==========================================
+
 try:
     from llm.drivers.local import driver as local_driver
-
     registry.register(local_driver)
 
 except Exception as e:
     print(
         "[LLM Registry] Local driver error:",
-        type(e).__name__,
-        str(e)
-    )
-
-
-# ==========================================
-# OPENAI DRIVER
-# ==========================================
-try:
-    from llm.drivers.openai_driver import driver as openai_driver
-
-    registry.register(openai_driver)
-
-except Exception as e:
-    print(
-        "[LLM Registry] OpenAI driver error:",
         type(e).__name__,
         str(e)
     )

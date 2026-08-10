@@ -136,16 +136,16 @@ class LLMRouter:
 
         # Complex tasks should use the reasoning model.
         if self.is_comparison(task):
-            return "openai"
+            return "local"
 
         if self.is_vision_or_advanced_analysis(task):
-            return "openai"
+            return "local"
 
         if self.is_programming(task):
-            return "openai"
+            return "local"
 
         if self.is_reasoning(task):
-            return "openai"
+            return "local"
 
         # Local engine remains the default for known Quavron knowledge.
         return "local"
