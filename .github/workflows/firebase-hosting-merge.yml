@@ -17,6 +17,8 @@ jobs:
 
       - run: npm ci && npm run build
         working-directory: frontend
+        env:
+          VITE_AI_API: ${{ secrets.VITE_AI_API }}
 
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
