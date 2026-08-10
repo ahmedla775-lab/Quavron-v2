@@ -892,6 +892,68 @@ class KnowledgeSearch:
                 if not raw:
                     return None
 
+                # -------------------------------------------------
+                # HTTP Content-Encoding
+                # -------------------------------------------------
+                # Some websites return compressed HTML.
+                # urllib does not automatically decompress all
+                # Content-Encoding responses.
+                content_encoding = (
+                    response.headers.get(
+                        "Content-Encoding",
+                        "",
+                    )
+                    or ""
+                ).lower().strip()
+
+                if content_encoding:
+                    encodings = [
+                        value.strip()
+                        for value in content_encoding.split(',')
+                        if value.strip()
+                    ]
+
+                    # Decompress in reverse order.
+                    for encoding in reversed(encodings):
+
+                        if encoding in {
+                            "identity",
+                            "",
+                        }:
+                            continue
+
+                        try:
+                            if encoding == "gzip":
+                                import gzip
+                                raw = gzip.decompress(raw)
+
+                            elif encoding == "deflate":
+                                import zlib
+                
+                                try:
+                                    raw = zlib.decompress(raw)
+                                except zlib.error:
+                                    raw = zlib.decompress(
+                                        raw,
+                                        -zlib.MAX_WBITS,
+                                    )
+
+                            else:
+                                print(
+                                    "[WebResearch] Unsupported "
+                                    "Content-Encoding:",
+                                    encoding,
+                                )
+                                return None
+
+                        except Exception as e:
+                            print(
+                                "[WebResearch] Decompression failed:",
+                                encoding,
+                                type(e).__name__,
+                            )
+                            return None
+
                 charset = (
                     response.headers.get_content_charset()
                     or "utf-8"

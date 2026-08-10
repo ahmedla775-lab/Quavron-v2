@@ -31,7 +31,26 @@ class Retriever:
         for a, b in replacements.items():
             text = text.replace(a, b)
 
-        return " ".join(text.split())
+        # Remove Arabic and English punctuation so that:
+        # عصبيه؟ == عصبيه
+        # فلسطين؟ == فلسطين
+        # الذكاء الاصطناعي! == الذكاء الاصطناعي
+        punctuation = "؟،؛：:,.!?؛()[]{}«»“”‘’ـ-_" + "/" + chr(92)
+        for mark in punctuation:
+            text = text.replace(mark, " ")
+
+        # Arabic definite-article normalization.
+        # الشبكة -> شبكة
+        # العصبية -> عصبيه
+        # الذكاء -> ذكاء
+        words = []
+
+        for word in text.split():
+            if len(word) > 3 and word.startswith("ال"):
+                word = word[2:]
+            words.append(word)
+
+        return " ".join(words)
 
     # =========================================================
     # TOKENIZATION
