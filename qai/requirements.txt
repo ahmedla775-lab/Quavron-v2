@@ -3,3 +3,6 @@ uvicorn
 openai
 python-dotenv
 pydantic
+requests
+beautifulsoup4
+scrapy
