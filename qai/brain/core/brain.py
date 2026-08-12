@@ -5,6 +5,7 @@ from llm.gateway import gateway
 from memory.memory import memory
 from users.context.builder import context_builder
 from learning.bridge import learning_bridge
+from brain.core.research_bridge import research_bridge
 
 
 class Brain:
@@ -381,7 +382,108 @@ class Brain:
                 }
 
         # -------------------------------------------------
-        # 5. QAI INTELLIGENCE
+        # 5. QAI RESEARCH
+        # -------------------------------------------------
+        # Local knowledge is insufficient.
+        # Before returning "no answer", QAI may research
+        # the question through the independent research
+        # subsystem.
+        #
+        # Research is evidence discovery only.
+        # It does NOT automatically become trusted knowledge.
+
+        research_result = None
+
+        if not has_knowledge:
+
+            research_result = research_bridge.research(
+                question,
+                max_results=8,
+                max_pages=5,
+            )
+
+            if research_result.get("success"):
+
+                research_context = (
+                    research_result.get(
+                        "context",
+                        "",
+                    )
+                    or ""
+                ).strip()
+
+                if research_context:
+
+                    context = (
+                        f"{context}\n\n"
+                        if context
+                        else ""
+                    ) + (
+                        "=== QAI RESEARCH EVIDENCE ===\n"
+                        + research_context
+                    )
+
+        # -------------------------------------------------
+
+        # Research results are evidence, not trusted knowledge.
+        # They must nevertheless enter the same document pipeline
+        # so QAI can use fresh external information when local RAG
+        # does not contain the answer.
+        research_documents = []
+
+        if research_result and research_result.get("success"):
+            raw_documents = research_result.get("documents", []) or []
+
+            for research_doc in raw_documents:
+                if not isinstance(research_doc, dict):
+                    continue
+
+                research_doc = dict(research_doc)
+                research_doc["source"] = "qai_research"
+                research_doc["approved"] = False
+                research_doc["trusted"] = False
+                research_doc["confidence"] = 0.0
+
+                research_documents.append(research_doc)
+
+            documents = list(documents) + research_documents
+
+        # -------------------------------------------------
+        # Inject external research as untrusted evidence
+        # -------------------------------------------------
+        if research_result and research_result.get("success"):
+            research_documents = (
+                research_result.get("documents", [])
+                or []
+            )
+
+            if research_documents:
+                for research_doc in research_documents:
+                    research_doc["source"] = "qai_research"
+                    research_doc["approved"] = False
+                    research_doc["trusted"] = False
+                    research_doc["confidence"] = 0.0
+
+                documents = list(documents) + research_documents
+
+                # Rebuild context so the local driver can use
+                # external research evidence.
+                research_context = (
+                    research_result.get("context", "")
+                    or ""
+                ).strip()
+
+                if research_context:
+                    context = (
+                        f"{context}\n\n"
+                        if context
+                        else ""
+                    ) + (
+                        "=== QAI RESEARCH EVIDENCE ===\n"
+                        + research_context
+                    )
+
+        # 6. QAI INTELLIGENCE
         # -------------------------------------------------
         # OpenAI is not an answer fallback.
         # QAI handles unanswered requests through its own
@@ -390,7 +492,7 @@ class Brain:
         provider = "local"
 
         # -------------------------------------------------
-        # 6. ASK QAI
+        # 7. ASK QAI
         # -------------------------------------------------
 
         llm_result = gateway.ask(
@@ -398,6 +500,14 @@ class Brain:
             question,
             context,
         )
+
+        # Research is an evidence source, not an LLM provider.
+        if (
+            research_result
+            and research_result.get("success")
+            and llm_result.get("status") == "completed"
+        ):
+            llm_result["source"] = "research"
 
         fallback_from = None
 

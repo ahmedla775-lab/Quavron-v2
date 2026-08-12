@@ -45,110 +45,216 @@ class LocalDriver(BaseDriver):
     # =========================================================
 
     def _parse_documents(self, context):
+        """
+        Parse RAG context into normalized documents.
 
+        External research is normalized to source=qai_research so
+        LocalDriver.ask can never confuse web research with trusted
+        local knowledge.
+        """
         if not context:
             return []
 
         documents = []
-        lines = context.splitlines()
-        current = None
 
-        for line in lines:
+        # ---------------------------------------------------------
+        # Existing structured document support
+        # ---------------------------------------------------------
+        if isinstance(context, list):
+            raw_documents = context
+        else:
+            raw_documents = None
 
-            line = line.strip()
+            # Try JSON first.
+            try:
+                import json
 
-            if not line:
-                continue
+                parsed = json.loads(
+                    context
+                    if isinstance(context, str)
+                    else str(context)
+                )
 
-            match = re.match(
-                r"\[source=([^;\]]+)"
-                r"(?:;\s*score=([0-9.\-]+))?"
-                r"(?:;\s*relevance=([0-9.\-]+))?"
-                r"(?:;\s*final(?:_score)?=([0-9.\-]+))?"
-                r"(?:;\s*approved=(true|false))?"
-                r"(?:;\s*confidence=([0-9.\-]+))?"
-                r"(?:;\s*teacher=([^;\]]*))?"
-                r"(?:;\s*question=([^;\]]*))?"
-                r"\]\s*(.*)",
-                line,
-                re.IGNORECASE,
+                if isinstance(parsed, list):
+                    raw_documents = parsed
+
+                elif isinstance(parsed, dict):
+                    for key in (
+                        "documents",
+                        "results",
+                        "sources",
+                        "data",
+                    ):
+                        value = parsed.get(key)
+
+                        if isinstance(value, list):
+                            raw_documents = value
+                            break
+
+            except Exception:
+                raw_documents = None
+
+        if raw_documents is not None:
+            for item in raw_documents:
+                if isinstance(item, dict):
+                    doc = dict(item)
+
+                    source = str(
+                        doc.get("source", "")
+                        or doc.get("provider", "")
+                        or doc.get("type", "")
+                        or ""
+                    ).strip().lower()
+
+                    # Normalize all external research aliases.
+                    if source in {
+                        "research",
+                        "qai_research",
+                        "web_research",
+                        "external_research",
+                        "web",
+                        "search",
+                    }:
+                        doc["source"] = "qai_research"
+
+                        # Preserve useful research fields.
+                        if not doc.get("content"):
+                            for key in (
+                                "snippet",
+                                "text",
+                                "description",
+                                "answer",
+                            ):
+                                if doc.get(key):
+                                    doc["content"] = str(
+                                        doc[key]
+                                    ).strip()
+                                    break
+
+                    documents.append(doc)
+
+        # ---------------------------------------------------------
+        # Text context parser
+        # ---------------------------------------------------------
+        if not documents:
+            raw = (
+                context
+                if isinstance(context, str)
+                else str(context)
             )
 
-            if match:
+            import re
 
-                if current:
-                    documents.append(current)
+            # Research metadata blocks.
+            research_pattern = re.compile(
+                r"\[research_source=([^\]]+)\]"
+                r"(.*?)(?=\[research_source=|\Z)",
+                re.IGNORECASE | re.DOTALL,
+            )
 
-                source = match.group(1).strip()
-                score = float(match.group(2) or 0)
-                relevance = float(match.group(3) or 0)
-                final_score = float(match.group(4) or 0)
+            matches = list(
+                research_pattern.finditer(raw)
+            )
 
-                approved_raw = match.group(5)
-                approved = (
-                    str(approved_raw).lower() == "true"
-                    if approved_raw is not None
-                    else False
+            for match in matches:
+                source_value = (
+                    match.group(1)
+                    .strip()
                 )
 
-                confidence = float(match.group(6) or 0)
-
-                teacher = (
-                    match.group(7).strip()
-                    if match.group(7)
-                    else None
+                content = (
+                    match.group(2)
+                    .strip()
                 )
 
-                stored_question = (
-                    match.group(8).strip()
-                    if match.group(8)
-                    else ""
+                documents.append(
+                    {
+                        "source": "qai_research",
+                        "research_source": source_value,
+                        "content": content,
+                        "text": content,
+                    }
                 )
 
-                text = match.group(9).strip()
+            # Generic document blocks.
+            if not documents:
+                chunks = re.split(
+                    r"\n\s*\n+",
+                    raw,
+                )
 
-                current = {
-                    "source": source,
-                    "score": score,
-                    "relevance": relevance,
-                    "final_score": final_score,
-                    "approved": approved,
-                    "confidence": confidence,
-                    "teacher": teacher,
-                    "question": stored_question,
-                    "text": text,
-                }
+                for chunk in chunks:
+                    chunk = chunk.strip()
 
+                    if not chunk:
+                        continue
+
+                    source = "local"
+
+                    lower = chunk.lower()
+
+                    if any(
+                        marker in lower
+                        for marker in (
+                            "research_source=",
+                            "source=research",
+                            '"source":"research"',
+                            '"source": "research"',
+                            "source: research",
+                        )
+                    ):
+                        source = "qai_research"
+
+                    documents.append(
+                        {
+                            "source": source,
+                            "content": chunk,
+                            "text": chunk,
+                        }
+                    )
+
+        # ---------------------------------------------------------
+        # Final normalization
+        # ---------------------------------------------------------
+        normalized = []
+
+        for doc in documents:
+            if not isinstance(doc, dict):
                 continue
 
-            if current and not current.get("text"):
-                current["text"] = line
+            doc = dict(doc)
 
-        if current:
-            documents.append(current)
+            source = str(
+                doc.get("source", "")
+                or ""
+            ).strip().lower()
 
-        # Fallback for simple contexts
-        if not documents:
+            if source in {
+                "research",
+                "qai_research",
+                "web_research",
+                "external_research",
+                "web",
+                "search",
+            }:
+                doc["source"] = "qai_research"
 
-            for line in lines:
+            content = str(
+                doc.get("content")
+                or doc.get("text")
+                or doc.get("snippet")
+                or ""
+            ).strip()
 
-                line = line.strip()
+            if not content:
+                continue
 
-                if line and not line.startswith("==="):
+            doc["content"] = content
+            doc["text"] = content
 
-                    documents.append({
-                        "source": "knowledge",
-                        "score": 0,
-                        "relevance": 0,
-                        "final_score": 0,
-                        "text": line,
-                    })
+            normalized.append(doc)
 
-        return documents
-
-    # =========================================================
-    # Question echo
-    # =========================================================
+        return normalized
 
     def _is_question_echo(self, question, text):
 
@@ -967,11 +1073,11 @@ class LocalDriver(BaseDriver):
 
             is_platform_test = (
                 "quavron" in q
-                and any(marker in q for marker in [
+                and any(self._normalize(marker) in q for marker in [
                     "اختبار",
                     "الاختبار",
                 ])
-                and any(marker in q for marker in [
+                and any(self._normalize(marker) in q for marker in [
                     "منصة",
                     "منصه",
                 ])
@@ -979,11 +1085,11 @@ class LocalDriver(BaseDriver):
 
             is_qai_learning_test = (
                 "qai" in q
-                and any(marker in q for marker in [
+                and any(self._normalize(marker) in q for marker in [
                     "اختبار",
                     "الاختبار",
                 ])
-                and any(marker in q for marker in [
+                and any(self._normalize(marker) in q for marker in [
                     "دورة تعلم",
                     "دوره تعلم",
                     "دورة التعلم",
@@ -1114,100 +1220,127 @@ class LocalDriver(BaseDriver):
 
         return True
 
-    def _select_documents_for_question(
-        self,
-        question,
-        documents,
-    ):
+    def _select_documents_for_question(self, question, documents):
         """
-        Select only documents that actually answer the question.
+        Select documents that are genuinely usable for the current question.
 
-        Compound questions are handled independently:
-        each part gets its own best matching knowledge.
+        Local knowledge remains subject to the normal intent/relevance rules.
+        External research (qai_research) is accepted as fresh evidence, but
+        never becomes trusted/approved knowledge automatically.
         """
-
-        parts = self._split_question_parts(
-            question
-        )
-
-        if not parts:
-            return []
-
         selected = []
-        seen = set()
 
-        for part in parts:
+        if not documents:
+            return selected
 
-            candidates = []
+        for doc in documents:
+            if not isinstance(doc, dict):
+                continue
 
-            for doc in documents:
+            source = str(doc.get("source", "") or "").strip().lower()
 
-                text = str(
-                    doc.get("text", "")
-                ).strip()
+            relevance = float(
+                doc.get("relevance", 0) or 0
+            )
 
-                if not text:
-                    continue
+            score = float(
+                doc.get("score", 0) or 0
+            )
 
-                if not self._document_allowed_for_intent(
-                    part,
-                    doc,
-                ):
-                    continue
+            final_score = float(
+                doc.get("final_score", 0) or 0
+            )
 
-                fingerprint = self._normalize(
-                    text
+            # -------------------------------------------------
+            # External research
+            # -------------------------------------------------
+            # Research is evidence, not trusted knowledge.
+            # It must nevertheless be available to the local
+            # answer composer.
+            if source in {"qai_research", "research", "web_research", "external_research"}:
+                effective = max(
+                    relevance,
+                    final_score,
+                    score,
+                    50.0,
                 )
 
-                if fingerprint in seen:
-                    continue
+                doc["relevance"] = effective
 
-                score = self._document_match_score(
-                    part,
-                    doc,
-                )
-
-                if score <= 0:
-                    continue
-
-                candidates.append(
+                selected.append(
                     (
-                        score,
+                        effective,
+                        1.0,
                         doc,
                     )
                 )
 
-            if not candidates:
                 continue
 
-            candidates.sort(
-                key=lambda item: item[0],
-                reverse=True,
+            # -------------------------------------------------
+            # Supervisor-approved learned knowledge
+            # -------------------------------------------------
+            if source == "qai_learning":
+                approved = doc.get("approved", False) is True
+                confidence = float(
+                    doc.get("confidence", 0) or 0
+                )
+
+                if approved and confidence >= 1.0:
+                    match_score = self._document_match_score(
+                        question,
+                        doc,
+                    )
+
+                    if match_score >= 0:
+                        selected.append(
+                            (
+                                max(
+                                    relevance,
+                                    match_score,
+                                    20.0,
+                                ),
+                                1.0,
+                                doc,
+                            )
+                        )
+
+                continue
+
+            # -------------------------------------------------
+            # Normal local knowledge
+            # -------------------------------------------------
+            match_score = self._document_match_score(
+                question,
+                doc,
             )
 
-            best_score, best_doc = candidates[0]
+            if match_score < 0:
+                continue
+
+            effective = max(
+                relevance,
+                float(match_score or 0),
+            )
+
+            if effective < 20:
+                continue
 
             selected.append(
                 (
-                    part,
-                    best_score,
-                    best_doc,
+                    effective,
+                    1.0,
+                    doc,
                 )
             )
 
-            seen.add(
-                self._normalize(
-                    str(
-                        best_doc.get("text", "")
-                    )
-                )
-            )
+        # Highest relevance first.
+        selected.sort(
+            key=lambda item: item[0],
+            reverse=True,
+        )
 
         return selected
-
-    # =========================================================
-    # Semantic answer overlap
-    # =========================================================
 
     def _answer_overlap(self, first, second):
         """
@@ -1396,143 +1529,244 @@ class LocalDriver(BaseDriver):
     # Compose intent-aware answer
     # =========================================================
 
-    def _compose_intent_answer(
-        self,
-        question,
-        documents,
-    ):
+    def _compose_intent_answer(self, question, documents):
         """
-        Answer simple and compound questions without
-        blindly concatenating all RAG documents.
-        """
+        Build a useful answer from local knowledge or QAI research.
 
-        selected = self._select_documents_for_question(
-            question,
-            documents,
+        Research is evidence, not trusted knowledge. Search-result titles,
+        URLs and navigation text must never be returned as the answer.
+        """
+        if not documents:
+            return None
+
+        candidates = []
+
+        def clean_text(value):
+            value = str(value or "").strip()
+            if not value:
+                return ""
+
+            value = re.sub(
+                r"https?://\S+",
+                " ",
+                value,
+                flags=re.IGNORECASE,
+            )
+
+            value = re.sub(
+                r"\s+",
+                " ",
+                value,
+            ).strip(" -•|")
+
+            return value
+
+        def is_metadata_only(value):
+            normalized = self._normalize(value)
+
+            if not normalized:
+                return True
+
+            # Pure navigation/search-result labels.
+            metadata_markers = (
+                "الموقع الرسمي",
+                "على موقع imdb",
+                "على موقع الموسوعه البريطانيه",
+                "على موقع ان ان دي بي",
+                "على موقع wikipedia",
+                "على موقع ويكيبيديا",
+                "read more",
+                "learn more",
+                "more results",
+                "search results",
+            )
+
+            # A short result consisting mostly of titles is not knowledge.
+            marker_count = sum(
+                1 for marker in metadata_markers
+                if marker in normalized
+            )
+
+            if marker_count >= 1 and len(normalized.split()) < 45:
+                return True
+
+            # URL/title-only fragments.
+            if (
+                len(normalized.split()) < 15
+                and (
+                    "http" in normalized
+                    or normalized.startswith("www")
+                    or normalized.count("على موقع") >= 1
+                )
+            ):
+                return True
+
+            return False
+
+        for doc in documents:
+            if not isinstance(doc, dict):
+                continue
+
+            source = str(
+                doc.get("source", "") or ""
+            ).strip().lower()
+
+            relevance = float(
+                doc.get("relevance", 0) or 0
+            )
+
+            score = float(
+                doc.get("score", 0) or 0
+            )
+
+            is_research = source in {"qai_research", "research", "web_research", "external_research"}
+
+            if is_research:
+                relevance = max(relevance, score, 50)
+
+            # Research connectors may store useful material in different
+            # fields. Prefer content/snippet over title.
+            raw_values = []
+
+            for key in (
+                "content",
+                "text",
+                "snippet",
+                "description",
+                "body",
+                "summary",
+            ):
+                value = clean_text(doc.get(key, ""))
+                if value:
+                    raw_values.append(value)
+
+            # Deduplicate while preserving order.
+            seen = set()
+
+            for value in raw_values:
+                normalized = self._normalize(value)
+
+                if normalized in seen:
+                    continue
+
+                seen.add(normalized)
+
+                if is_research and is_metadata_only(value):
+                    continue
+
+                if len(value) < 25:
+                    continue
+
+                candidates.append(
+                    {
+                        "text": value,
+                        "source": source,
+                        "relevance": relevance,
+                        "research": is_research,
+                    }
+                )
+
+        if not candidates:
+            return None
+
+        candidates.sort(
+            key=lambda item: (
+                item["relevance"],
+                item["research"],
+                len(item["text"]),
+            ),
+            reverse=True,
         )
 
-        if not selected:
-            return None
+        # ---------------------------------------------------------
+        # Research evidence
+        # ---------------------------------------------------------
+        research_candidates = [
+            item
+            for item in candidates
+            if item["research"]
+        ]
 
-        parts = []
+        if research_candidates:
+            pieces = []
 
-        for part, score, doc in selected:
+            for item in research_candidates:
+                value = item["text"]
 
-            text = str(
-                doc.get("text", "")
-            ).strip()
-
-            if not text:
-                continue
-
-            # Avoid duplicate semantic answers.
-            normalized = self._normalize(text)
-
-            duplicate = False
-
-            for existing in parts:
-                existing_normalized = self._normalize(
-                    existing
+                sentences = re.split(
+                    r"(?<=[.!؟])\s+",
+                    value,
                 )
 
+                for sentence in sentences:
+                    sentence = sentence.strip(" -•|")
+
+                    if len(sentence) < 30:
+                        continue
+
+                    if is_metadata_only(sentence):
+                        continue
+
+                    normalized = self._normalize(sentence)
+
+                    # Reject repeated navigation/title fragments.
+                    if any(
+                        marker in normalized
+                        for marker in (
+                            "على موقع imdb",
+                            "على موقع الموسوعه البريطانيه",
+                            "على موقع ان ان دي بي",
+                            "read more",
+                            "learn more",
+                        )
+                    ):
+                        continue
+
+                    if normalized not in {
+                        self._normalize(x)
+                        for x in pieces
+                    }:
+                        pieces.append(sentence)
+
+            if pieces:
+                answer = " ".join(pieces[:8]).strip()
+
+                if len(answer) >= 60:
+                    return answer[:1800]
+
+            # If a connector supplied one real paragraph without
+            # punctuation, use it as evidence.
+            for item in research_candidates:
+                value = item["text"]
+
                 if (
-                    normalized == existing_normalized
-                    or normalized in existing_normalized
-                    or existing_normalized in normalized
-                    or self._answer_overlap(
-                        text,
-                        existing,
-                    ) >= 0.65
+                    len(value) >= 80
+                    and not is_metadata_only(value)
                 ):
-                    duplicate = True
-                    break
+                    return value[:1800].strip()
 
-            if duplicate:
-                continue
+        # ---------------------------------------------------------
+        # Local knowledge fallback
+        # ---------------------------------------------------------
+        local_candidates = [
+            item
+            for item in candidates
+            if not item["research"]
+        ]
 
-            parts.append(text)
+        if local_candidates:
+            value = max(
+                local_candidates,
+                key=lambda item: (
+                    item["relevance"],
+                    len(item["text"]),
+                ),
+            )["text"]
 
-        if not parts:
-            return None
+            if len(value) >= 30:
+                return value[:1800].strip()
 
-        # -----------------------------------------------------
-        # Semantic compression for closely related answers
-        # -----------------------------------------------------
-        #
-        # RAG may return two documents that answer the same
-        # concept with slightly different wording. Instead of
-        # blindly concatenating them, keep the most informative
-        # version and merge only genuinely complementary text.
-        #
-        # Example:
-        #   "QAI يساعد على التعلم وإنشاء المشاريع وحل المشاكل."
-        #   "QAI يساعد على التعلم والعمل وتطوير الأفكار والمشاريع."
-        #
-        # These should become one coherent answer.
-        compressed = []
-
-        for text in parts:
-            normalized = self._normalize(text)
-
-            if not compressed:
-                compressed.append(text)
-                continue
-
-            merged = False
-
-            for index, existing in enumerate(compressed):
-                existing_normalized = self._normalize(existing)
-
-                overlap = self._answer_overlap(
-                    text,
-                    existing,
-                )
-
-                # Answers with strong conceptual overlap should be
-                # merged rather than simply choosing one of them.
-                if overlap >= 0.40:
-                    merged_answer = self._merge_related_answers(
-                        existing,
-                        text,
-                    )
-
-                    if merged_answer:
-                        compressed[index] = merged_answer
-                        merged = True
-                        break
-
-                # One answer substantially contains the other.
-                if (
-                    normalized in existing_normalized
-                    or existing_normalized in normalized
-                ):
-                    if len(text) > len(existing):
-                        compressed[index] = text
-
-                    merged = True
-                    break
-
-            if not merged:
-                compressed.append(text)
-
-        # Final duplicate protection.
-        final_parts = []
-        seen = set()
-
-        for text in compressed:
-            normalized = self._normalize(text)
-
-            if not normalized or normalized in seen:
-                continue
-
-            seen.add(normalized)
-            final_parts.append(text)
-
-        return " ".join(final_parts)
-
-    # =========================================================
-    # Intent answer quality
-    # =========================================================
+        return None
 
     def _intent_answer_quality(self, question, documents):
         """
@@ -2369,9 +2603,7 @@ class LocalDriver(BaseDriver):
     # =========================================================
 
     def ask(self, prompt, context=""):
-        documents = self._parse_documents(
-            context
-        )
+        documents = self._parse_documents(context)
 
         print(
             f"[LocalDriver] RAG documents parsed: "
@@ -2382,10 +2614,6 @@ class LocalDriver(BaseDriver):
             prompt,
             documents,
         )
-
-        # -----------------------------------------------------
-        # No knowledge
-        # -----------------------------------------------------
 
         if not documents:
             return {
@@ -2398,10 +2626,267 @@ class LocalDriver(BaseDriver):
                 "message": None,
             }
 
-        # -----------------------------------------------------
-        # Comparison reasoning
-        # -----------------------------------------------------
+        # =========================================================
+        # RESEARCH-FIRST PATH
+        # =========================================================
+        research_documents = []
 
+        for doc in documents:
+            source = str(
+                doc.get("source", "")
+                or ""
+            ).strip().lower()
+
+            if source in {
+                "research",
+                "qai_research",
+                "web_research",
+                "external_research",
+            }:
+                research_documents.append(doc)
+
+        if research_documents:
+            print("[DEBUG RESEARCH] documents:", len(research_documents))
+            for i, _doc in enumerate(research_documents):
+                print(
+                    f"[DEBUG RESEARCH DOC {i}] "
+                    f"source={_doc.get("source")!r} "
+                    f"title={_doc.get("title")!r} "
+                    f"url={_doc.get("url")!r} "
+                    f"content={str(_doc.get("content", ""))[:300]!r} "
+                    f"text={str(_doc.get("text", ""))[:300]!r} "
+                    f"snippet={str(_doc.get("snippet", ""))[:300]!r}"
+                )
+
+
+            def extract_research_text(doc):
+                """
+                Extract only factual content from research evidence.
+                Never expose transport metadata such as:
+                title:, url:, content:, QAI RESEARCH EVIDENCE.
+                """
+                import re
+
+                candidates = [
+                    doc.get("content"),
+                    doc.get("text"),
+                    doc.get("snippet"),
+                    doc.get("description"),
+                    doc.get("answer"),
+                ]
+
+                raw = ""
+
+                for value in candidates:
+                    if not value:
+                        continue
+
+                    value = str(value).strip()
+
+                    # Research connectors may serialize metadata inside
+                    # the content field itself:
+                    # title: ...
+                    # url: ...
+                    # content: REAL FACTUAL CONTENT
+                    match = re.search(
+                        r'(?:^|\n)\s*content\s*:\s*(.*)',
+                        value,
+                        flags=re.IGNORECASE | re.DOTALL,
+                    )
+
+                    if match:
+                        extracted = match.group(1).strip()
+
+                        # Stop if another serialized metadata field follows.
+                        extracted = re.split(
+                            r'\n\s*(?:title|url|snippet|text|description|answer)\s*:\s*',
+                            extracted,
+                            maxsplit=1,
+                            flags=re.IGNORECASE,
+                        )[0].strip()
+
+                        if extracted:
+                            raw = extracted
+                            break
+
+                    # Normal non-serialized research content.
+                    if not re.search(
+                        r'(?:^|\n)\s*(?:title|url|content)\s*:',
+                        value,
+                        flags=re.IGNORECASE,
+                    ):
+                        raw = value
+                        if raw:
+                            break
+                if not raw:
+                    return ""
+
+                # Remove evidence headers.
+                raw = re.sub(
+                    r"={2,}\s*QAI\s+RESEARCH\s+EVIDENCE\s*={2,}",
+                    " ",
+                    raw,
+                    flags=re.IGNORECASE,
+                )
+
+                # Remove title/url/content metadata labels.
+                raw = re.sub(
+                    r"(?:^|\s)"
+                    r"(?:title|url|content|snippet|text|description|answer)"
+                    r"\s*:\s*",
+                    " ",
+                    raw,
+                    flags=re.IGNORECASE,
+                )
+
+                # Remove URLs.
+                raw = re.sub(
+                    r"https?://\S+",
+                    " ",
+                    raw,
+                    flags=re.IGNORECASE,
+                )
+
+                # Remove duplicated research wrappers.
+                raw = re.sub(
+                    r"QAI\s+RESEARCH\s+EVIDENCE",
+                    " ",
+                    raw,
+                    flags=re.IGNORECASE,
+                )
+
+                # Normalize whitespace.
+                raw = re.sub(
+                    r"\s+",
+                    " ",
+                    raw,
+                ).strip()
+
+                return raw
+
+            research_parts = []
+            seen = set()
+
+            for doc in research_documents:
+                content = extract_research_text(doc)
+
+                if not content:
+                    continue
+
+                # Remove navigation-only source listings.
+                normalized = self._normalize(content)
+
+                if (
+                    "على موقع imdb" in normalized
+                    and "على موقع الموسوعه البريطانيه" in normalized
+                    and "على موقع ان ان دي بي" in normalized
+                ):
+                    continue
+
+                # Remove trailing source-list text when it is attached
+                # to otherwise useful content.
+                markers = [
+                    " على موقع IMDb",
+                    " على موقع الموسوعة البريطانية",
+                    " على موقع إن إن دي بي",
+                ]
+
+                positions = []
+
+                for marker in markers:
+                    pos = content.lower().find(
+                        marker.lower()
+                    )
+
+                    if pos > 0:
+                        positions.append(pos)
+
+                if positions:
+                    content = content[:min(positions)].strip()
+
+                if len(content) < 20:
+                    continue
+
+                normalized = self._normalize(content)
+
+                if normalized in seen:
+                    continue
+
+                seen.add(normalized)
+                research_parts.append(content)
+
+            if research_parts:
+
+                # Combine unique research facts only.
+                answer = " ".join(
+                    research_parts
+                ).strip()
+
+                # Hard protection against transport metadata.
+                answer = re.sub(
+                    r"={2,}.*?={2,}",
+                    " ",
+                    answer,
+                )
+
+                answer = re.sub(
+                    r"\b(?:title|url|content|snippet|text)"
+                    r"\s*:\s*",
+                    " ",
+                    answer,
+                    flags=re.IGNORECASE,
+                )
+
+                answer = re.sub(
+                    r"https?://\S+",
+                    " ",
+                    answer,
+                )
+
+                answer = re.sub(
+                    r"\s+",
+                    " ",
+                    answer,
+                ).strip()
+
+                # Deduplicate accidental repeated full answer.
+                half = len(answer) // 2
+
+                if (
+                    half > 30
+                    and answer[:half].strip()
+                    == answer[half:].strip()
+                ):
+                    answer = answer[:half].strip()
+
+                # Research is external/untrusted.
+                confidence = 0.45
+
+                return {
+                    "provider": "local",
+                    "status": "completed",
+                    "source": "research",
+                    "confidence": confidence,
+                    "relevance": max(
+                        [
+                            float(
+                                d.get(
+                                    "relevance",
+                                    0,
+                                )
+                                or 0
+                            )
+                            for d in research_documents
+                        ]
+                        + [0]
+                    ),
+                    "answer": answer,
+                    "message": None,
+                }
+
+        # =========================================================
+        # COMPARISON
+        # =========================================================
         if self._is_comparison(prompt):
             comparison = self._build_comparison(
                 prompt,
@@ -2419,18 +2904,10 @@ class LocalDriver(BaseDriver):
                     "message": None,
                 }
 
-        # -----------------------------------------------------
-        # Multi-document reasoning
-        # -----------------------------------------------------
-
-        # First determine which documents are actually allowed
-        # for this question's intent.
-        #
-        # IMPORTANT:
-        # If the hard intent boundary rejects every document,
-        # NO legacy composer is allowed to resurrect a rejected
-        # document.
-        selected_for_intent = self._select_documents_for_question(
+        # =========================================================
+        # TRUSTED LOCAL KNOWLEDGE
+        # =========================================================
+        selected = self._select_documents_for_question(
             prompt,
             documents,
         )
@@ -2440,62 +2917,36 @@ class LocalDriver(BaseDriver):
             documents,
         )
 
-        # Fallback to the legacy composer ONLY when the intent-aware
-        # selector has already found at least one valid document.
-        #
-        # This prevents the legacy path from bypassing:
-        # - learning-test boundaries
-        # - learning-process boundaries
-        # - supervisor-learning boundaries
-        # - platform-test boundaries
-        if not answer and selected_for_intent:
-            legacy_answer = self._compose_multi_document_answer(
+        if not answer and selected:
+            answer = self._compose_multi_document_answer(
                 prompt,
                 documents,
             )
 
-            if legacy_answer:
-                legacy_documents = []
-
-                for doc in documents:
-                    if self._document_matches_question(
-                        prompt,
-                        doc,
-                    ):
-                        # The document must also belong to the
-                        # hard-intent-selected set.
-                        if any(
-                            selected_doc is doc
-                            for _, _, selected_doc in selected_for_intent
-                        ):
-                            legacy_documents.append(doc)
-
-                if legacy_documents:
-                    answer = legacy_answer
-
         if answer:
-            quality, avg_relevance, answered_parts, total_parts = (
-                self._intent_answer_quality(
-                    prompt,
-                    documents,
-                )
+            relevance = max(
+                [
+                    float(
+                        doc.get(
+                            "relevance",
+                            0,
+                        )
+                        or 0
+                    )
+                    for doc in documents
+                ]
+                + [0]
             )
 
-            # Report relevance as the effective relevance of the
-            # knowledge actually selected for the question.
-            relevance = round(
-                avg_relevance,
-                2,
-            )
-
-            # Approval alone must NEVER make an unrelated answer
-            # 100% confident. Approval is trusted only when the learned
-            # question actually matches the current question.
             approved_match = any(
                 doc.get("source") == "qai_learning"
                 and doc.get("approved", False) is True
                 and float(
-                    doc.get("confidence", 0) or 0
+                    doc.get(
+                        "confidence",
+                        0,
+                    )
+                    or 0
                 ) >= 1.0
                 and self._learning_question_match(
                     prompt,
@@ -2504,32 +2955,16 @@ class LocalDriver(BaseDriver):
                 for doc in documents
             )
 
-            if approved_match and answered_parts == total_parts:
+            if approved_match:
                 confidence = 1.0
-            elif answered_parts == total_parts and quality >= 0.82:
-                confidence = 0.95
-            elif answered_parts == total_parts and quality >= 0.68:
+            elif relevance >= 40:
                 confidence = 0.90
-            elif answered_parts == total_parts and quality >= 0.52:
+            elif relevance >= 25:
                 confidence = 0.80
-            elif answered_parts > 0 and quality >= 0.45:
-                confidence = 0.65
-            elif answered_parts > 0:
-                confidence = 0.45
+            elif relevance >= 15:
+                confidence = 0.70
             else:
-                confidence = 0.0
-
-            # Hard calibration against weak retrieval.
-            # High confidence requires genuinely strong RAG evidence.
-            if not approved_match:
-                if relevance < 40:
-                    confidence = min(confidence, 0.80)
-
-                if relevance < 25:
-                    confidence = min(confidence, 0.70)
-
-                if relevance < 15:
-                    confidence = min(confidence, 0.55)
+                confidence = 0.55
 
             return {
                 "provider": "local",
@@ -2537,17 +2972,16 @@ class LocalDriver(BaseDriver):
                 "source": (
                     "local_knowledge"
                     if len(documents) > 1
-                    else documents[0].get("source", "local")
+                    else documents[0].get(
+                        "source",
+                        "local",
+                    )
                 ),
                 "confidence": confidence,
                 "relevance": relevance,
                 "answer": answer,
                 "message": None,
             }
-
-        # -----------------------------------------------------
-        # No usable answer
-        # -----------------------------------------------------
 
         return {
             "provider": "local",
@@ -2559,8 +2993,9 @@ class LocalDriver(BaseDriver):
             "message": None,
         }
 
-# =========================================================
-# Module-level driver instance
-# =========================================================
+
+
+
+
 
 driver = LocalDriver()

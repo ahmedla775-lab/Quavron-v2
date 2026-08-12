@@ -70,10 +70,19 @@ class SearXNGSearchEngine(SearchEngine):
         if not query:
             return []
 
+        language = request.language or "auto"
+
+        if language == "auto":
+            if any(
+                "\u0600" <= char <= "\u06ff"
+                for char in query
+            ):
+                language = "ar"
+
         params = {
             "q": query,
             "format": "json",
-            "language": request.language or "auto",
+            "language": language,
             "safesearch": 1,
         }
 

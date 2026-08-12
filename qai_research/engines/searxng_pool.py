@@ -74,7 +74,10 @@ class SearXNGPool(SearchEngine):
 
     def discover(self) -> List[str]:
         """
-        اكتشاف SearXNG instances التي تدعم JSON.
+        اكتشاف SearXNG instances التي تعمل فعليًا.
+
+        Discovery يتحقق من الصحة التقنية فقط.
+        صلة النتائج تُترك للبحث الفعلي و RelevanceFilter.
         """
 
         working = self.discovery.find_working(
@@ -82,8 +85,9 @@ class SearXNGPool(SearchEngine):
         )
 
         return [
-            item["url"]
+            str(item.get("url", "")).rstrip("/")
             for item in working
+            if item.get("url")
         ]
 
     def refresh(self) -> int:

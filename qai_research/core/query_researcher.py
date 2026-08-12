@@ -12,6 +12,10 @@ from qai_research.engines.searxng_pool import (
     SearXNGPool,
 )
 
+from qai_research.engines.wikipedia import (
+    WikipediaSearchEngine,
+)
+
 
 class QueryResearcher:
     """
@@ -29,6 +33,8 @@ class QueryResearcher:
             search_engine
             or SearXNGPool()
         )
+
+        self.wikipedia_engine = WikipediaSearchEngine()
 
         self.strategy = (
             strategy
@@ -112,6 +118,41 @@ class QueryResearcher:
                 ] = variant.priority
 
                 collected.append(result)
+
+        # ---------------------------------------------------------
+        # WIKIPEDIA FALLBACK
+        #
+        # SearXNG may return zero or noisy results.
+        # Wikipedia is an independent knowledge-search source.
+        # Use it before final relevance filtering.
+        # ---------------------------------------------------------
+        if request.include_wikipedia:
+            try:
+                wikipedia_results = self.wikipedia_engine.search(
+                    request
+                )
+
+                for result in wikipedia_results:
+                    url = str(
+                        result.url or ""
+                    ).strip().lower().rstrip("/")
+
+                    if not url or url in seen:
+                        continue
+
+                    seen.add(url)
+
+                    result.metadata["query_variant"] = request.query
+                    result.metadata["query_purpose"] = "wikipedia"
+                    result.metadata["query_priority"] = 0
+
+                    collected.append(result)
+
+            except Exception as exc:
+                self.last_errors.append(
+                    f"wikipedia: "
+                    f"{type(exc).__name__}: {exc}"
+                )
 
         # ---------------------------------------------------------
         # FINAL RELEVANCE GATE
