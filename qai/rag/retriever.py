@@ -1105,38 +1105,56 @@ class Retriever:
                 ) or 0
             )
 
-            # Strong result
+            source = item.get("source")
+
+            # =====================================================
+            # SOURCE GUARD
+            #
+            # Supervisor learning is intentionally stricter than
+            # generic/vector knowledge.
+            #
+            # A qai_learning record must be:
+            #   - approved
+            #   - confidence >= 1.0
+            #   - relevance >= 20
+            #
+            # This check MUST happen before the generic
+            # "relevance >= 40" rule.
+            # =====================================================
+
+            if source == "qai_learning":
+
+                if (
+                    item.get("approved", False) is not True
+                    or float(item.get("confidence", 0) or 0) < 1.0
+                    or relevance < 20
+                ):
+                    continue
+
+                filtered.append(item)
+                continue
+
+            # =====================================================
+            # STRONG NORMAL RESULT
+            # =====================================================
+
             if relevance >= 40:
-
                 filtered.append(item)
                 continue
 
-            # -----------------------------------------------------
-            # Approved supervisor learning
-            # -----------------------------------------------------
-            if (
-                item.get("source") == "qai_learning"
-                and item.get("approved", False) is True
-                and float(item.get("confidence", 0) or 0) >= 1.0
-                and relevance >= 20
-            ):
-                filtered.append(item)
-                continue
+            # =====================================================
+            # MEDIUM TRUSTED KNOWLEDGE
+            # =====================================================
 
-            # Medium result allowed for trusted knowledge
             if (
                 relevance >= 20
-                and item.get("source") in {
-                    "qai_learning",
-                    "knowledge",
-                }
+                and source == "knowledge"
             ):
-
                 filtered.append(item)
 
-        # -----------------------------------------------------
-        # Calculate final score
-        # -----------------------------------------------------
+        # =========================================================
+        # FINAL SCORE
+        # =========================================================
 
         for item in filtered:
 
@@ -1152,9 +1170,9 @@ class Retriever:
                 + item.get("score", 0)
             )
 
-        # -----------------------------------------------------
-        # Ranking
-        # -----------------------------------------------------
+        # =========================================================
+        # RANKING
+        # =========================================================
 
         filtered.sort(
             key=lambda x: (
@@ -1165,9 +1183,9 @@ class Retriever:
             reverse=True
         )
 
-        # -----------------------------------------------------
-        # Deduplication
-        # -----------------------------------------------------
+        # =========================================================
+        # DEDUPLICATION
+        # =========================================================
 
         cleaned = []
         seen = set()
@@ -1182,23 +1200,17 @@ class Retriever:
             if not text:
                 continue
 
-            fingerprint = self.normalize(
-                text
-            )
+            fingerprint = self.normalize(text)
 
             if fingerprint in seen:
                 continue
 
             seen.add(fingerprint)
-
             cleaned.append(item)
 
         return cleaned
 
     # =========================================================
-    # MAIN RETRIEVAL
-    # =========================================================
-
     def retrieve(self, query, limit=8):
 
         query = str(query or "").strip()
