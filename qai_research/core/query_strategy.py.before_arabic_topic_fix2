@@ -1,0 +1,149 @@
+from dataclasses import dataclass
+from typing import List, Optional
+
+
+@dataclass
+class QueryVariant:
+    query: str
+    language: Optional[str] = None
+    purpose: str = "general"
+    priority: int = 100
+
+
+class QueryStrategy:
+    """
+    استراتيجية إنشاء صيغ بحث متعددة للاستعلام.
+
+    مستقلة عن QAI وعن أي محرك بحث محدد.
+    """
+
+    def build(
+        self,
+        query: str,
+        language: Optional[str] = None,
+    ) -> List[QueryVariant]:
+
+        query = str(query or "").strip()
+
+        if not query:
+            return []
+
+        variants: List[QueryVariant] = []
+
+        self._add(
+            variants,
+            query=query,
+            language=language,
+            purpose="exact",
+            priority=1,
+        )
+
+        self._add(
+            variants,
+            query=f'"{query}"',
+            language=language,
+            purpose="quoted",
+            priority=2,
+        )
+
+        if language:
+            self._add(
+                variants,
+                query=query,
+                language=language,
+                purpose="language_specific",
+                priority=3,
+            )
+
+        # العربية
+        if self._is_arabic(query):
+            self._add(
+                variants,
+                query=f"{query} معلومات",
+                language="ar",
+                purpose="arabic_information",
+                priority=10,
+            )
+
+            self._add(
+                variants,
+                query=f"{query} شرح",
+                language="ar",
+                purpose="arabic_explanation",
+                priority=11,
+            )
+
+        # Quavron / company-oriented queries
+        lowered = query.lower()
+
+        if "quavron" in lowered:
+            self._add(
+                variants,
+                query='"Quavron" SARL Algeria',
+                language="auto",
+                purpose="company_exact",
+                priority=5,
+            )
+
+            self._add(
+                variants,
+                query='"Quavron SARL" Algeria',
+                language="auto",
+                purpose="company_sarl",
+                priority=6,
+            )
+
+        variants.sort(
+            key=lambda item: item.priority
+        )
+
+        return variants
+
+    @staticmethod
+    def _add(
+        variants: List[QueryVariant],
+        query: str,
+        language: Optional[str],
+        purpose: str,
+        priority: int,
+    ):
+
+        query = str(query or "").strip()
+
+        if not query:
+            return
+
+        if any(
+            item.query == query
+            for item in variants
+        ):
+            return
+
+        variants.append(
+            QueryVariant(
+                query=query,
+                language=language,
+                purpose=purpose,
+                priority=priority,
+            )
+        )
+
+    @staticmethod
+    def _is_arabic(text: str) -> bool:
+        arabic = 0
+        letters = 0
+
+        for char in text:
+            if char.isalpha():
+                letters += 1
+
+                if "\u0600" <= char <= "\u06ff":
+                    arabic += 1
+
+        if letters == 0:
+            return False
+
+        return arabic / letters >= 0.30
+
+
+query_strategy = QueryStrategy()

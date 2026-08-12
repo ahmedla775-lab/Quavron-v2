@@ -1,0 +1,143 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict, List
+
+import requests
+
+
+INSTANCES_URL = "https://searx.space/data/instances.json"
+
+DEFAULT_TIMEOUT = 6
+
+
+class SearXNGInstanceDiscovery:
+    """
+    اكتشاف واختبار SearXNG instances العامة.
+
+    مستقل عن QAI.
+    """
+
+    def __init__(
+        self,
+        timeout: int = DEFAULT_TIMEOUT,
+        workers: int = 12,
+    ):
+        self.timeout = timeout
+        self.workers = workers
+
+    def discover(self) -> List[str]:
+
+        response = requests.get(
+            INSTANCES_URL,
+            headers={
+                "User-Agent": "Quavron-QAI-Research/1.0"
+            },
+            timeout=self.timeout,
+        )
+
+        response.raise_for_status()
+
+        payload = response.json()
+
+        instances = payload.get(
+            "instances",
+            {},
+        )
+
+        return [
+            str(url).rstrip("/")
+            for url in instances.keys()
+            if str(url).startswith("http")
+            and ".onion" not in str(url)
+        ]
+
+    def test(
+        self,
+        base_url: str,
+    ) -> Dict:
+
+        base_url = base_url.rstrip("/")
+
+        try:
+
+            response = requests.get(
+                f"{base_url}/search",
+                params={
+                    "q": "Quavron",
+                    "format": "json",
+                    "language": "auto",
+                },
+                headers={
+                    "User-Agent": "Quavron-QAI-Research/1.0"
+                },
+                timeout=self.timeout,
+                allow_redirects=True,
+            )
+
+            if not response.ok:
+                return {
+                    "url": base_url,
+                    "available": False,
+                    "status_code": response.status_code,
+                    "json": False,
+                }
+
+            try:
+                payload = response.json()
+                is_json = isinstance(payload, dict)
+            except ValueError:
+                is_json = False
+
+            return {
+                "url": base_url,
+                "available": True,
+                "status_code": response.status_code,
+                "json": is_json,
+            }
+
+        except requests.RequestException as exc:
+
+            return {
+                "url": base_url,
+                "available": False,
+                "json": False,
+                "error": str(exc),
+            }
+
+    def find_working(
+        self,
+        limit: int = 10,
+    ) -> List[Dict]:
+
+        instances = self.discover()
+
+        working = []
+
+        with ThreadPoolExecutor(
+            max_workers=self.workers
+        ) as executor:
+
+            futures = {
+                executor.submit(
+                    self.test,
+                    url,
+                ): url
+                for url in instances
+            }
+
+            for future in as_completed(futures):
+
+                try:
+                    result = future.result()
+                except Exception:
+                    continue
+
+                if (
+                    result.get("available")
+                    and result.get("json")
+                ):
+                    working.append(result)
+
+                    if len(working) >= limit:
+                        break
+
+        return working

@@ -1,0 +1,300 @@
+from typing import List
+from urllib.parse import urljoin, urlparse
+
+import scrapy
+from scrapy.crawler import CrawlerProcess
+from scrapy.http import Response
+
+from qai_research.core.crawler import ResearchCrawler
+from qai_research.core.models import PageDocument
+
+
+class _ResearchSpider(scrapy.Spider):
+    name = "qai_research_spider"
+
+    custom_settings = {
+        "LOG_ENABLED": False,
+        "ROBOTSTXT_OBEY": True,
+        "DOWNLOAD_TIMEOUT": 15,
+        "CONCURRENT_REQUESTS": 4,
+        "RETRY_TIMES": 2,
+        "USER_AGENT": (
+            "Quavron-QAI-Research/1.0 "
+            "(Research Crawler)"
+        ),
+    }
+
+    def __init__(
+        self,
+        start_urls,
+        max_pages,
+        max_depth,
+        documents,
+        allowed_domains,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+
+        self.start_urls = list(
+            start_urls
+        )
+
+        self.max_pages = int(
+            max_pages
+        )
+
+        self.max_depth = int(
+            max_depth
+        )
+
+        self.documents = documents
+
+        self.allowed_domains = set(
+            allowed_domains
+        )
+
+        self.visited = set()
+
+    def start_requests(self):
+        for url in self.start_urls:
+
+            if self._can_visit(url):
+                yield scrapy.Request(
+                    url=url,
+                    callback=self.parse,
+                    errback=self._error,
+                    meta={
+                        "depth": 0,
+                    },
+                )
+
+    def parse(
+        self,
+        response: Response,
+    ):
+        if len(self.documents) >= self.max_pages:
+            return
+
+        url = response.url
+
+        if url in self.visited:
+            return
+
+        self.visited.add(url)
+
+        content_type = (
+            response.headers.get(
+                b"Content-Type",
+                b"",
+            )
+            .decode(
+                "latin-1",
+                errors="ignore",
+            )
+            .lower()
+        )
+
+        if "text/html" not in content_type:
+            return
+
+        title = " ".join(
+            response.css(
+                "title::text"
+            ).getall()
+        ).strip()
+
+        paragraphs = response.css(
+            "body ::text"
+        ).getall()
+
+        content = " ".join(
+            text.strip()
+            for text in paragraphs
+            if text.strip()
+        )
+
+        if content:
+
+            self.documents.append(
+                PageDocument(
+                    url=url,
+                    title=title,
+                    content=content,
+                    language=None,
+                    source_engine="scrapy",
+                    fetched=True,
+                    status_code=response.status,
+                    content_type=content_type,
+                    metadata={
+                        "crawler": self.name,
+                        "depth": response.meta.get(
+                            "depth",
+                            0,
+                        ),
+                    },
+                )
+            )
+
+        current_depth = int(
+            response.meta.get(
+                "depth",
+                0,
+            )
+        )
+
+        if (
+            current_depth
+            >= self.max_depth
+        ):
+            return
+
+        if len(self.documents) >= self.max_pages:
+            return
+
+        for href in response.css(
+            "a::attr(href)"
+        ).getall():
+
+            next_url = urljoin(
+                response.url,
+                href,
+            )
+
+            if self._can_visit(
+                next_url
+            ):
+                yield scrapy.Request(
+                    url=next_url,
+                    callback=self.parse,
+                    errback=self._error,
+                    meta={
+                        "depth":
+                            current_depth + 1,
+                    },
+                )
+
+    def _can_visit(
+        self,
+        url: str,
+    ) -> bool:
+
+        parsed = urlparse(url)
+
+        if parsed.scheme not in {
+            "http",
+            "https",
+        }:
+            return False
+
+        if (
+            parsed.hostname
+            not in self.allowed_domains
+        ):
+            return False
+
+        if url in self.visited:
+            return False
+
+        return (
+            len(self.documents)
+            < self.max_pages
+        )
+
+    def _error(self, failure):
+        return
+
+
+class ScrapyResearchCrawler(
+    ResearchCrawler
+):
+    """
+    Scrapy crawler فعلي لمنظومة QAI Research.
+    """
+
+    name = "scrapy"
+
+    def crawl(
+        self,
+        urls: List[str],
+        max_pages: int = 10,
+        max_depth: int = 1,
+    ) -> List[PageDocument]:
+
+        if not urls:
+            return []
+
+        max_pages = max(
+            1,
+            int(max_pages),
+        )
+
+        max_depth = max(
+            0,
+            int(max_depth),
+        )
+
+        documents = []
+
+        allowed_domains = set()
+
+        valid_urls = []
+
+        for url in urls:
+
+            parsed = urlparse(
+                str(url)
+            )
+
+            if (
+                parsed.scheme
+                not in {"http", "https"}
+            ):
+                continue
+
+            if not parsed.hostname:
+                continue
+
+            valid_urls.append(
+                str(url)
+            )
+
+            allowed_domains.add(
+                parsed.hostname
+            )
+
+        if not valid_urls:
+            return []
+
+        process = CrawlerProcess(
+            settings={
+                "LOG_ENABLED": False,
+                "ROBOTSTXT_OBEY": True,
+                "DOWNLOAD_TIMEOUT": 15,
+                "CONCURRENT_REQUESTS": 4,
+                "RETRY_TIMES": 2,
+                "USER_AGENT": (
+                    "Quavron-QAI-Research/1.0 "
+                    "(Research Crawler)"
+                ),
+            }
+        )
+
+        process.crawl(
+            _ResearchSpider,
+            start_urls=valid_urls,
+            max_pages=max_pages,
+            max_depth=max_depth,
+            documents=documents,
+            allowed_domains=allowed_domains,
+        )
+
+        process.start()
+
+        return documents
+
+    def health(self):
+        return {
+            "name": self.name,
+            "available": True,
+        }

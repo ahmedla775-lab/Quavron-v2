@@ -1,0 +1,259 @@
+import re
+from typing import List
+
+from qai_research.core.models import SearchResult
+
+
+class RelevanceFilter:
+    """
+    بوابة تقييم صلة نتائج البحث بطلب المستخدم.
+
+    تعمل محليًا ولا تعتمد على score الخاص بمحرك البحث.
+    """
+
+    STOPWORDS = {
+        "the", "and", "for", "with", "from",
+        "this", "that", "what", "who", "where",
+        "how", "are", "was", "is",
+        "من", "في", "على", "عن", "إلى",
+        "ما", "هو", "هي", "هل", "كيف",
+        "لماذا", "أين", "ماذا",
+        "و", "أو", "الذي", "التي",
+        "de", "des", "les", "une", "dans",
+        "pour", "avec", "que", "qui",
+    }
+
+    def __init__(
+        self,
+        minimum_score: float = 0.30,
+    ):
+        self.minimum_score = minimum_score
+
+    def filter(
+        self,
+        query: str,
+        results: List[SearchResult],
+    ) -> List[SearchResult]:
+
+        accepted = []
+
+        query_tokens = self._tokens(query)
+        query_normalized = self._normalize(query)
+
+        if not query_tokens:
+            return []
+
+        for result in results:
+
+            score = self._score(
+                query_tokens,
+                query_normalized,
+                result,
+            )
+
+            # Store the locally computed relevance in both places:
+            # - metadata for diagnostics/backward compatibility
+            # - result.relevance for downstream ranking/consumers
+            result.metadata["relevance_score"] = score
+            result.relevance = score
+
+            if score >= self.minimum_score:
+                accepted.append(result)
+
+        accepted.sort(
+            key=lambda item: (
+                item.metadata.get(
+                    "relevance_score",
+                    0.0,
+                ),
+                item.score,
+            ),
+            reverse=True,
+        )
+
+        for rank, result in enumerate(
+            accepted,
+            1,
+        ):
+            result.rank = rank
+
+        return accepted
+
+    def _score(
+        self,
+        query_tokens,
+        query_normalized,
+        result: SearchResult,
+    ) -> float:
+
+        title = self._normalize(result.title)
+        snippet = self._normalize(result.snippet)
+        url = self._normalize(result.url)
+
+        if not query_tokens:
+            return 0.0
+
+        title_tokens = self._tokens(title)
+        snippet_tokens = self._tokens(snippet)
+        url_tokens = self._tokens(url)
+
+        total = len(query_tokens)
+
+        title_hits = len(query_tokens.intersection(title_tokens))
+        snippet_hits = len(query_tokens.intersection(snippet_tokens))
+        url_hits = len(query_tokens.intersection(url_tokens))
+
+        title_score = title_hits / total
+        snippet_score = snippet_hits / total
+        url_score = url_hits / total
+
+        # -----------------------------------------------------
+        # Exact phrase matching
+        # -----------------------------------------------------
+
+        exact_title = bool(
+            query_normalized
+            and query_normalized in title
+        )
+
+        exact_snippet = bool(
+            query_normalized
+            and query_normalized in snippet
+        )
+
+        # -----------------------------------------------------
+        # Strong title match
+        # -----------------------------------------------------
+
+        if exact_title:
+            return 1.0
+
+        # -----------------------------------------------------
+        # Weighted relevance
+        #
+        # Title > snippet > URL
+        # -----------------------------------------------------
+
+        score = (
+            title_score * 0.70
+            + snippet_score * 0.25
+            + url_score * 0.05
+        )
+
+        # -----------------------------------------------------
+        # If the title contains most/all important query tokens,
+        # strongly favor the result.
+        # -----------------------------------------------------
+
+        if total >= 2 and title_score >= 0.75:
+            score = max(score, 0.80)
+
+        elif total >= 2 and title_score >= 0.50:
+            score = max(score, 0.60)
+
+        # -----------------------------------------------------
+        # Exact phrase in snippet is useful, but weaker than
+        # an exact title match.
+        # -----------------------------------------------------
+
+        elif exact_snippet:
+            score = max(score, 0.55)
+
+        # -----------------------------------------------------
+        # Prevent URL-only matches from producing strong scores.
+        # -----------------------------------------------------
+
+        if title_hits == 0 and snippet_hits == 0:
+            score = min(score, 0.20)
+
+        return round(
+            min(score, 1.0),
+            4,
+        )
+
+    def _normalize(
+        self,
+        text: str,
+    ) -> str:
+        text = str(text or "").lower().strip()
+
+        # Remove URL scheme.
+        text = re.sub(
+            r"https?://",
+            " ",
+            text,
+        )
+
+        # Remove Arabic diacritics.
+        text = re.sub(
+            r"[\u064B-\u065F\u0670]",
+            "",
+            text,
+        )
+
+        # Normalize Arabic letter variants.
+        text = (
+            text
+            .replace("أ", "ا")
+            .replace("إ", "ا")
+            .replace("آ", "ا")
+            .replace("ى", "ي")
+            .replace("ؤ", "و")
+            .replace("ئ", "ي")
+        )
+
+        # Explicitly normalize punctuation/separators.
+        # This includes the Arabic question mark U+061F.
+        punctuation = (
+            "؟",
+            "?",
+            "!",
+            "،",
+            ",",
+            ";",
+            "؛",
+            ":",
+            ".",
+            "ـ",
+            "(",
+            ")",
+            "[",
+            "]",
+            "{",
+            "}",
+            '"',
+            "'",
+            "«",
+            "»",
+            "…",
+        )
+
+        for char in punctuation:
+            text = text.replace(char, " ")
+
+        # Remove any remaining non-word/non-Arabic characters.
+        text = re.sub(
+            r"[^\w\u0600-\u06ff\u00c0-\u024f]+",
+            " ",
+            text,
+        )
+
+        return re.sub(
+            r"\s+",
+            " ",
+            text,
+        ).strip()
+
+    def _tokens(
+        self,
+        text: str,
+    ):
+
+        normalized = self._normalize(text)
+
+        return {
+            token
+            for token in normalized.split()
+            if len(token) > 1
+            and token not in self.STOPWORDS
+        }
