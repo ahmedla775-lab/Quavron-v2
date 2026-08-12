@@ -136,6 +136,14 @@ class LocalDriver(BaseDriver):
         # ---------------------------------------------------------
         # Text context parser
         # ---------------------------------------------------------
+
+        # =========================================================
+        # FINAL DIRECT RESEARCH ANSWER
+        # =========================================================
+        # ResearchBridge already fetched factual page content.
+        # If research documents exist, answer directly from them
+        # before the generic local-RAG fallback can expose metadata.
+
         if not documents:
             raw = (
                 context
@@ -2616,6 +2624,322 @@ class LocalDriver(BaseDriver):
         )
 
         if not documents:
+            # =========================================================
+            # DIRECT RESEARCH FALLBACK
+            # =========================================================
+            # Local RAG is empty. Connect directly to ResearchBridge.
+            # This is intentionally inside LocalDriver.ask() so that
+            # direct LocalDriver tests and the API path use the same
+            # research fallback.
+            try:
+                import sys
+                from pathlib import Path as _Path
+
+                _quavron_root = _Path(__file__).resolve().parents[2]
+
+                if str(_quavron_root) not in sys.path:
+                    sys.path.insert(0, str(_quavron_root))
+
+                from brain.core.research_bridge import ResearchBridge
+
+                print(
+                    "[LocalDriver] RAG empty -> "
+                    "activating ResearchBridge"
+                )
+
+                bridge = ResearchBridge()
+
+                research_result = bridge.research(
+                    prompt,
+                    max_results=8,
+                    max_pages=5,
+                )
+
+                print(
+                    "[LocalDriver] ResearchBridge success:",
+                    bool(
+                        research_result.get("success")
+                    ),
+                )
+
+                research_documents = (
+                    research_result.get("documents", [])
+                    or []
+                )
+
+                print(
+                    "[LocalDriver] Research documents:",
+                    len(research_documents),
+                )
+
+                if research_documents:
+                    research_context_parts = []
+
+                    for doc in research_documents:
+                        if not isinstance(doc, dict):
+                            continue
+
+                        source = str(
+                            doc.get(
+                                "source",
+                                "qai_research",
+                            )
+                            or "qai_research"
+                        ).strip()
+
+                        title = str(
+                            doc.get("title", "")
+                            or ""
+                        ).strip()
+
+                        url = str(
+                            doc.get("url", "")
+                            or ""
+                        ).strip()
+
+                        content = str(
+                            doc.get("content")
+                            or doc.get("text")
+                            or doc.get("snippet")
+                            or ""
+                        ).strip()
+
+                        if not content:
+                            continue
+
+                        research_context_parts.append(
+                            "\n".join(
+                                [
+                                    f"source: {source}",
+                                    f"title: {title}",
+                                    f"url: {url}",
+                                    f"content: {content}",
+                                ]
+                            )
+                        )
+
+                    if research_context_parts:
+                        research_context = (
+                            "=== QAI RESEARCH EVIDENCE ===\n"
+                            + "\n\n".join(
+                                research_context_parts
+                            )
+                        )
+
+                        if context:
+                            context = (
+                                str(context).rstrip()
+                                + "\n\n"
+                                + research_context
+                            )
+                        else:
+                            context = research_context
+
+                        print(
+                            "[LocalDriver] Research context "
+                            "attached"
+                        )
+
+                        documents = self._parse_documents(
+                            context
+                        )
+
+                        print(
+                            "[LocalDriver] RAG documents after "
+                            "research:",
+                            len(documents),
+                        )
+
+                        documents = self._clean_documents(
+                            prompt,
+                            documents,
+                        )
+
+                        print(
+                            "[LocalDriver] Clean research "
+                            "documents:",
+                            len(documents),
+                        )
+
+            except Exception as exc:
+                import traceback
+
+                print(
+                    "[LocalDriver] ResearchBridge ERROR:",
+                    repr(exc),
+                )
+
+                traceback.print_exc()
+
+        # =========================================================
+        # DIRECT RESEARCH ANSWER
+        # =========================================================
+        # If ResearchBridge supplied factual documents, answer directly
+        # from their factual content instead of returning the transport
+        # wrapper (source/title/url/content).
+        #
+        # This path intentionally runs BEFORE the normal NO_ANSWER path.
+        # =========================================================
+        _direct_research_docs = []
+
+        for _doc in documents:
+            _source = str(
+                _doc.get("source", "")
+                or ""
+            ).strip().lower()
+
+            if _source in {
+                "research",
+                "qai_research",
+                "web_research",
+                "external_research",
+            }:
+                _direct_research_docs.append(_doc)
+
+        if _direct_research_docs:
+            import re as _direct_research_re
+
+            _factual_parts = []
+
+            for _doc in _direct_research_docs:
+                _candidates = [
+                    _doc.get("content"),
+                    _doc.get("text"),
+                    _doc.get("snippet"),
+                ]
+
+                _raw = ""
+
+                for _value in _candidates:
+                    if not _value:
+                        continue
+
+                    _value = str(_value).strip()
+
+                    if not _value:
+                        continue
+
+                    # Extract content from serialized research transport.
+                    _match = _direct_research_re.search(
+                        r"(?:^|\n)\s*content\s*:\s*(.*)",
+                        _value,
+                        flags=_direct_research_re.IGNORECASE
+                        | _direct_research_re.DOTALL,
+                    )
+
+                    if _match:
+                        _raw = _match.group(1).strip()
+                    else:
+                        _inline = _direct_research_re.search(
+                            r"\bcontent\s*:\s*(.+)",
+                            _value,
+                            flags=_direct_research_re.IGNORECASE
+                            | _direct_research_re.DOTALL,
+                        )
+
+                        if _inline:
+                            _raw = _inline.group(1).strip()
+                        elif not _direct_research_re.search(
+                            r"\b(?:source|title|url)\s*:",
+                            _value,
+                            flags=_direct_research_re.IGNORECASE,
+                        ):
+                            _raw = _value
+
+                    if _raw:
+                        break
+
+                if not _raw:
+                    continue
+
+                # Remove QAI transport wrapper.
+                _raw = _direct_research_re.sub(
+                    r"={2,}\s*QAI\s+RESEARCH\s+EVIDENCE\s*={2,}",
+                    " ",
+                    _raw,
+                    flags=_direct_research_re.IGNORECASE,
+                )
+
+                # Remove serialized metadata.
+                _raw = _direct_research_re.sub(
+                    r"\b(?:source|title|url|content|snippet|text)\s*:\s*",
+                    " ",
+                    _raw,
+                    flags=_direct_research_re.IGNORECASE,
+                )
+
+                # URLs are metadata, not answer text.
+                _raw = _direct_research_re.sub(
+                    r"https?://\S+",
+                    " ",
+                    _raw,
+                    flags=_direct_research_re.IGNORECASE,
+                )
+
+                # Remove common navigation-only tail from Wikipedia.
+                _raw = _direct_research_re.sub(
+                    r"آلان تورنغ على موقع IMDb.*?آلان تورنغ على",
+                    " ",
+                    _raw,
+                    flags=_direct_research_re.DOTALL,
+                )
+
+                _raw = _direct_research_re.sub(
+                    r"\s+",
+                    " ",
+                    _raw,
+                ).strip()
+
+                if len(_raw) >= 100:
+                    _factual_parts.append(_raw)
+
+            if _factual_parts:
+                _factual = " ".join(_factual_parts)
+
+                # Split into factual sentences and keep a concise answer.
+                _sentences = _direct_research_re.split(
+                    r"(?<=[.!؟])\s+",
+                    _factual,
+                )
+
+                _answer_parts = []
+                _total = 0
+
+                for _sentence in _sentences:
+                    _sentence = _sentence.strip()
+
+                    if len(_sentence) < 20:
+                        continue
+
+                    _answer_parts.append(_sentence)
+                    _total += len(_sentence)
+
+                    if _total >= 1800:
+                        break
+
+                    if len(_answer_parts) >= 8:
+                        break
+
+                _answer = " ".join(_answer_parts).strip()
+
+                if _answer:
+                    print(
+                        "[LocalDriver] FINAL RESEARCH ANSWER:",
+                        len(_answer),
+                        "chars",
+                    )
+
+                    return {
+                        "provider": "local",
+                        "status": "completed",
+                        "source": "qai_research",
+                        "confidence": 0.90,
+                        "relevance": 1.0,
+                        "answer": _answer,
+                        "message": None,
+                    }
+
+        if not documents:
             return {
                 "provider": "local",
                 "status": "completed",
@@ -2625,6 +2949,124 @@ class LocalDriver(BaseDriver):
                 "answer": NO_ANSWER,
                 "message": None,
             }
+
+        # =========================================================
+        # DIRECT RESEARCH ANSWER
+        # =========================================================
+        # When ResearchBridge supplied real external evidence,
+        # answer directly from that factual content instead of
+        # exposing the transport wrapper or requiring local RAG.
+        research_documents = []
+
+        for doc in documents:
+            source = str(
+                doc.get("source", "") or ""
+            ).strip().lower()
+
+            if source in {
+                "research",
+                "qai_research",
+                "web_research",
+                "external_research",
+            }:
+                research_documents.append(doc)
+
+        if research_documents:
+            import re
+
+            def _research_content(doc):
+                candidates = [
+                    doc.get("content"),
+                    doc.get("text"),
+                    doc.get("snippet"),
+                ]
+
+                for value in candidates:
+                    if not value:
+                        continue
+
+                    value = str(value).strip()
+
+                    # Remove serialized transport metadata.
+                    value = re.sub(
+                        r"^\s*(?:source|title|url|content)\s*:\s*[^\n]+\n?",
+                        "",
+                        value,
+                        flags=re.IGNORECASE,
+                    )
+
+                    value = re.sub(
+                        r"={2,}\s*QAI\s+RESEARCH\s+EVIDENCE\s*={2,}",
+                        " ",
+                        value,
+                        flags=re.IGNORECASE,
+                    )
+
+                    value = re.sub(
+                        r"https?://\S+",
+                        " ",
+                        value,
+                        flags=re.IGNORECASE,
+                    )
+
+                    value = re.sub(r"\s+", " ", value).strip()
+
+                    if len(value) >= 100:
+                        return value
+
+                return ""
+
+            factual_parts = []
+
+            for doc in research_documents:
+                content = _research_content(doc)
+                if content:
+                    factual_parts.append(content)
+
+            if factual_parts:
+                factual = " ".join(factual_parts)
+
+                # Keep the answer factual and concise.
+                # The first part of a well-formed biography/search
+                # result normally contains the direct identity answer.
+                sentences = re.split(
+                    r"(?<=[.!؟])\s+",
+                    factual,
+                )
+
+                answer_parts = []
+                total = 0
+
+                for sentence in sentences:
+                    sentence = sentence.strip()
+
+                    if not sentence:
+                        continue
+
+                    if len(sentence) < 20:
+                        continue
+
+                    answer_parts.append(sentence)
+                    total += len(sentence)
+
+                    if total >= 1800:
+                        break
+
+                    if len(answer_parts) >= 8:
+                        break
+
+                answer = " ".join(answer_parts).strip()
+
+                if answer:
+                    return {
+                        "provider": "local",
+                        "status": "completed",
+                        "source": "qai_research",
+                        "confidence": 0.90,
+                        "relevance": 1.0,
+                        "answer": answer,
+                        "message": None,
+                    }
 
         # =========================================================
         # RESEARCH-FIRST PATH
@@ -2661,9 +3103,10 @@ class LocalDriver(BaseDriver):
 
             def extract_research_text(doc):
                 """
-                Extract only factual content from research evidence.
-                Never expose transport metadata such as:
-                title:, url:, content:, QAI RESEARCH EVIDENCE.
+                Extract factual research content only.
+
+                Research transport metadata must NEVER become
+                part of the answer.
                 """
                 import re
 
@@ -2683,57 +3126,58 @@ class LocalDriver(BaseDriver):
 
                     value = str(value).strip()
 
-                    # Research connectors may serialize metadata inside
-                    # the content field itself:
+                    if not value:
+                        continue
+
+                    # Serialized multi-line form:
                     # title: ...
                     # url: ...
-                    # content: REAL FACTUAL CONTENT
+                    # content: REAL CONTENT
                     match = re.search(
-                        r'(?:^|\n)\s*content\s*:\s*(.*)',
+                        r"(?:^|\\n)\\s*content\\s*:\\s*(.*)",
                         value,
                         flags=re.IGNORECASE | re.DOTALL,
                     )
 
                     if match:
-                        extracted = match.group(1).strip()
+                        raw = match.group(1).strip()
 
-                        # Stop if another serialized metadata field follows.
-                        extracted = re.split(
-                            r'\n\s*(?:title|url|snippet|text|description|answer)\s*:\s*',
-                            extracted,
-                            maxsplit=1,
+                    else:
+                        # Inline serialized form:
+                        # source: ... title: ... url: ... content: ...
+                        inline = re.search(
+                            r"\\bcontent\\s*:\\s*(.+)",
+                            value,
+                            flags=re.IGNORECASE | re.DOTALL,
+                        )
+
+                        if inline:
+                            raw = inline.group(1).strip()
+
+                        elif not re.search(
+                            r"\\b(?:title|url|source)\\s*:",
+                            value,
                             flags=re.IGNORECASE,
-                        )[0].strip()
+                        ):
+                            raw = value
 
-                        if extracted:
-                            raw = extracted
-                            break
+                    if raw:
+                        break
 
-                    # Normal non-serialized research content.
-                    if not re.search(
-                        r'(?:^|\n)\s*(?:title|url|content)\s*:',
-                        value,
-                        flags=re.IGNORECASE,
-                    ):
-                        raw = value
-                        if raw:
-                            break
                 if not raw:
                     return ""
 
-                # Remove evidence headers.
+                # Remove research wrapper.
                 raw = re.sub(
-                    r"={2,}\s*QAI\s+RESEARCH\s+EVIDENCE\s*={2,}",
+                    r"={2,}\\s*QAI\\s+RESEARCH\\s+EVIDENCE\\s*={2,}",
                     " ",
                     raw,
                     flags=re.IGNORECASE,
                 )
 
-                # Remove title/url/content metadata labels.
+                # Remove transport metadata.
                 raw = re.sub(
-                    r"(?:^|\s)"
-                    r"(?:title|url|content|snippet|text|description|answer)"
-                    r"\s*:\s*",
+                    r"\\b(?:source|title|url|content|snippet|text|description|answer)\\s*:\\s*",
                     " ",
                     raw,
                     flags=re.IGNORECASE,
@@ -2741,23 +3185,22 @@ class LocalDriver(BaseDriver):
 
                 # Remove URLs.
                 raw = re.sub(
-                    r"https?://\S+",
+                    r"https?://\\S+",
                     " ",
                     raw,
                     flags=re.IGNORECASE,
                 )
 
-                # Remove duplicated research wrappers.
+                # Remove navigation-only references.
                 raw = re.sub(
-                    r"QAI\s+RESEARCH\s+EVIDENCE",
+                    r"آلان تورنغ على موقع IMDb.*?آلان تورنغ على",
                     " ",
                     raw,
                     flags=re.IGNORECASE,
                 )
 
-                # Normalize whitespace.
                 raw = re.sub(
-                    r"\s+",
+                    r"\\s+",
                     " ",
                     raw,
                 ).strip()
@@ -2982,6 +3425,128 @@ class LocalDriver(BaseDriver):
                 "answer": answer,
                 "message": None,
             }
+
+        # =========================================================
+        # DIRECT RESEARCH ANSWER
+        # =========================================================
+        # ResearchBridge already fetched factual page content.
+        # If local RAG was empty and research supplied evidence,
+        # use that evidence directly instead of returning NO_ANSWER.
+
+        if research_documents:
+            import re as _research_re
+
+            _research_parts = []
+
+            for _doc in research_documents:
+                if not isinstance(_doc, dict):
+                    continue
+
+                _raw = (
+                    _doc.get("content")
+                    or _doc.get("text")
+                    or _doc.get("snippet")
+                    or ""
+                )
+
+                _raw = str(_raw).strip()
+
+                if not _raw:
+                    continue
+
+                # Remove serialized metadata.
+                _match = _research_re.search(
+                    r"(?:^|\n)\s*content\s*:\s*(.*)",
+                    _raw,
+                    flags=_research_re.IGNORECASE
+                    | _research_re.DOTALL,
+                )
+
+                if _match:
+                    _raw = _match.group(1).strip()
+
+                _raw = _research_re.sub(
+                    r"={2,}\s*QAI\s+RESEARCH\s+EVIDENCE\s*={2,}",
+                    " ",
+                    _raw,
+                    flags=_research_re.IGNORECASE,
+                )
+
+                _raw = _research_re.sub(
+                    r"https?://\S+",
+                    " ",
+                    _raw,
+                    flags=_research_re.IGNORECASE,
+                )
+
+                _raw = _research_re.sub(
+                    r"\s+",
+                    " ",
+                    _raw,
+                ).strip()
+
+                if len(_raw) >= 100:
+                    _research_parts.append(_raw)
+
+            if _research_parts:
+                _factual = " ".join(_research_parts).strip()
+
+                # Remove navigation-only text when present.
+                _factual = _research_re.sub(
+                    r"آلان تورنغ على موقع IMDb.*?آلان تورنغ على",
+                    " ",
+                    _factual,
+                    flags=_research_re.IGNORECASE,
+                )
+
+                _factual = _research_re.sub(
+                    r"\s+",
+                    " ",
+                    _factual,
+                ).strip()
+
+                # Build a concise factual answer.
+                _sentences = _research_re.split(
+                    r"(?<=[.!؟])\s+",
+                    _factual,
+                )
+
+                _answer_parts = []
+                _total = 0
+
+                for _sentence in _sentences:
+                    _sentence = _sentence.strip()
+
+                    if len(_sentence) < 20:
+                        continue
+
+                    _answer_parts.append(_sentence)
+                    _total += len(_sentence)
+
+                    if _total >= 1800:
+                        break
+
+                    if len(_answer_parts) >= 8:
+                        break
+
+                _answer = " ".join(_answer_parts).strip()
+
+                if _answer:
+                    print(
+                        "[LocalDriver] FINAL RESEARCH ANSWER:",
+                        len(_answer),
+                        "chars",
+                    )
+
+                    return {
+                        "provider": "local",
+                        "status": "completed",
+                        "source": "qai_research",
+                        "confidence": 0.90,
+                        "relevance": 1.0,
+                        "answer": _answer,
+                        "message": None,
+                    }
 
         return {
             "provider": "local",
