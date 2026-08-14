@@ -520,8 +520,52 @@ class Brain:
 
         llm = result.get("llm", {})
 
+        # -------------------------------------------------
+        # PUBLIC ANSWER CLEANUP
+        # -------------------------------------------------
+        # Internal research/RAG wrappers must NEVER be
+        # exposed to the user as part of the final answer.
+        # QAI Research Evidence is transport metadata only.
+        # -------------------------------------------------
+        import re as _public_answer_re
+
+        _public_answer = str(
+            llm.get("answer", "") or ""
+        ).strip()
+
+        _public_answer = _public_answer_re.sub(
+            r"={2,}\s*QAI\s+RESEARCH\s+EVIDENCE\s*={2,}",
+            " ",
+            _public_answer,
+            flags=_public_answer_re.IGNORECASE,
+        )
+
+        # Remove serialized research metadata if it leaked
+        # into the final answer.
+        _public_answer = _public_answer_re.sub(
+            r"\b(?:source|title|url|content|snippet|text)\s*:\s*",
+            " ",
+            _public_answer,
+            flags=_public_answer_re.IGNORECASE,
+        )
+
+        # Remove leaked URLs from research transport data.
+        _public_answer = _public_answer_re.sub(
+            r"https?://\S+",
+            " ",
+            _public_answer,
+            flags=_public_answer_re.IGNORECASE,
+        )
+
+        # Normalize whitespace.
+        _public_answer = _public_answer_re.sub(
+            r"\s+",
+            " ",
+            _public_answer,
+        ).strip()
+
         return {
-            "reply": llm.get("answer", ""),
+            "reply": _public_answer,
             "provider": result.get("provider"),
             "source": llm.get("source"),
             "confidence": llm.get("confidence", 0),
