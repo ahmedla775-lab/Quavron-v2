@@ -950,7 +950,6 @@ class Retriever:
         # =====================================================
 
         try:
-
             knowledge_results = search_engine.search(
                 query
             )
@@ -958,32 +957,54 @@ class Retriever:
             for item in knowledge_results:
 
                 value = item.get("value")
-
                 text = ""
 
                 if isinstance(value, dict):
 
-                    content = value.get("content")
+                    # Official knowledge records use:
+                    #
+                    # {
+                    #     "question": {...},
+                    #     "answer": {
+                    #         "ar": "...",
+                    #         "en": "...",
+                    #         "fr": "..."
+                    #     }
+                    # }
 
-                    if isinstance(content, dict):
+                    answer = value.get("answer")
 
+                    if isinstance(answer, dict):
                         text = (
-                            content.get("ar")
-                            or content.get("en")
-                            or content.get("fr")
+                            answer.get("ar")
+                            or answer.get("en")
+                            or answer.get("fr")
                             or ""
                         )
 
-                    elif content:
+                    elif answer:
+                        text = str(answer)
 
-                        text = str(content)
+                    # Backward compatibility with content records.
+                    if not text:
+                        content = value.get("content")
 
-                    else:
+                        if isinstance(content, dict):
+                            text = (
+                                content.get("ar")
+                                or content.get("en")
+                                or content.get("fr")
+                                or ""
+                            )
 
+                        elif content:
+                            text = str(content)
+
+                    # Backward compatibility with title records.
+                    if not text:
                         title = value.get("title")
 
                         if isinstance(title, dict):
-
                             text = (
                                 title.get("ar")
                                 or title.get("en")
@@ -992,11 +1013,9 @@ class Retriever:
                             )
 
                         elif title:
-
                             text = str(title)
 
                 elif value:
-
                     text = str(value)
 
                 if not text:
@@ -1012,14 +1031,12 @@ class Retriever:
                 )
 
                 if isinstance(item_question, dict):
-
-                    for value in item_question.values():
-
+                    for question_value in item_question.values():
                         rel = max(
                             rel,
                             self.relevance(
                                 query,
-                                value
+                                question_value
                             )
                         )
 
@@ -1035,16 +1052,19 @@ class Retriever:
                         "confidence",
                         0
                     ),
+                    "approved": item.get(
+                        "approved",
+                        False
+                    ),
+                    "question": item_question,
                 })
 
         except Exception as e:
-
             print(
                 "knowledge error:",
                 e
             )
 
-        # =====================================================
         # 3. VECTOR MEMORY
         # =====================================================
 

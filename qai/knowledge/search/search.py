@@ -127,8 +127,10 @@ class KnowledgeSearch:
 
     def __init__(self):
         self.knowledge = {}
-        self.path = Path(
-            "knowledge/store/quavron_knowledge.json"
+        self.path = (
+            Path(__file__).resolve().parents[1]
+            / "store"
+            / "quavron_knowledge.json"
         )
         self.load()
 

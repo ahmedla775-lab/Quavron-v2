@@ -425,63 +425,6 @@ class Brain:
 
         # -------------------------------------------------
 
-        # Research results are evidence, not trusted knowledge.
-        # They must nevertheless enter the same document pipeline
-        # so QAI can use fresh external information when local RAG
-        # does not contain the answer.
-        research_documents = []
-
-        if research_result and research_result.get("success"):
-            raw_documents = research_result.get("documents", []) or []
-
-            for research_doc in raw_documents:
-                if not isinstance(research_doc, dict):
-                    continue
-
-                research_doc = dict(research_doc)
-                research_doc["source"] = "qai_research"
-                research_doc["approved"] = False
-                research_doc["trusted"] = False
-                research_doc["confidence"] = 0.0
-
-                research_documents.append(research_doc)
-
-            documents = list(documents) + research_documents
-
-        # -------------------------------------------------
-        # Inject external research as untrusted evidence
-        # -------------------------------------------------
-        if research_result and research_result.get("success"):
-            research_documents = (
-                research_result.get("documents", [])
-                or []
-            )
-
-            if research_documents:
-                for research_doc in research_documents:
-                    research_doc["source"] = "qai_research"
-                    research_doc["approved"] = False
-                    research_doc["trusted"] = False
-                    research_doc["confidence"] = 0.0
-
-                documents = list(documents) + research_documents
-
-                # Rebuild context so the local driver can use
-                # external research evidence.
-                research_context = (
-                    research_result.get("context", "")
-                    or ""
-                ).strip()
-
-                if research_context:
-                    context = (
-                        f"{context}\n\n"
-                        if context
-                        else ""
-                    ) + (
-                        "=== QAI RESEARCH EVIDENCE ===\n"
-                        + research_context
-                    )
 
         # 6. QAI INTELLIGENCE
         # -------------------------------------------------

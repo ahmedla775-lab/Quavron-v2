@@ -128,25 +128,102 @@ class QueryResearcher:
         # ---------------------------------------------------------
         if request.include_wikipedia:
             try:
-                wikipedia_results = self.wikipedia_engine.search(
-                    request
-                )
+                # Wikipedia must participate in the same variant strategy
+                # used by the main search engine.
+                #
+                # This is critical for compound questions such as:
+                #
+                #   "من هو آلان تورنغ وما أهم مساهماته؟"
+                #
+                # The original question is useful for broad discovery,
+                # but the extracted entity "آلان تورنغ" is much better
+                # for locating the canonical Wikipedia page.
 
-                for result in wikipedia_results:
-                    url = str(
-                        result.url or ""
-                    ).strip().lower().rstrip("/")
+                wikipedia_variants = [
+                    request.query,
+                    *[
+                        variant.query
+                        for variant in variants
+                        if str(variant.query or "").strip()
+                    ],
+                ]
 
-                    if not url or url in seen:
+                wikipedia_seen_queries = set()
+
+                for wikipedia_query in wikipedia_variants:
+                    wikipedia_query = str(
+                        wikipedia_query or ""
+                    ).strip()
+
+                    if not wikipedia_query:
                         continue
 
-                    seen.add(url)
+                    normalized_query = wikipedia_query.lower()
 
-                    result.metadata["query_variant"] = request.query
-                    result.metadata["query_purpose"] = "wikipedia"
-                    result.metadata["query_priority"] = 0
+                    if normalized_query in wikipedia_seen_queries:
+                        continue
 
-                    collected.append(result)
+                    wikipedia_seen_queries.add(
+                        normalized_query
+                    )
+
+                    wikipedia_request = ResearchRequest(
+                        query=wikipedia_query,
+                        language=request.language,
+                        max_results=request.max_results,
+                        max_pages=request.max_pages,
+                        include_web=False,
+                        include_wikipedia=True,
+                        metadata={
+                            **request.metadata,
+                            "query_variant": wikipedia_query,
+                            "query_purpose": "wikipedia",
+                        },
+                    )
+
+                    wikipedia_results = (
+                        self.wikipedia_engine.search(
+                            wikipedia_request
+                        )
+                    )
+
+                    for result in wikipedia_results:
+                        url = str(
+                            result.url or ""
+                        ).strip().lower().rstrip("/")
+
+                        if not url or url in seen:
+                            continue
+
+                        seen.add(url)
+
+                        result.metadata[
+                            "query_variant"
+                        ] = wikipedia_query
+
+                        result.metadata[
+                            "query_purpose"
+                        ] = "wikipedia"
+
+                        # Preserve the priority of the variant that
+                        # discovered the Wikipedia result.
+                        matched_priority = 0
+
+                        for variant in variants:
+                            if (
+                                variant.query
+                                == wikipedia_query
+                            ):
+                                matched_priority = (
+                                    variant.priority
+                                )
+                                break
+
+                        result.metadata[
+                            "query_priority"
+                        ] = matched_priority
+
+                        collected.append(result)
 
             except Exception as exc:
                 self.last_errors.append(
@@ -157,11 +234,38 @@ class QueryResearcher:
         # ---------------------------------------------------------
         # FINAL RELEVANCE GATE
         # ---------------------------------------------------------
-        # Query variants are used only to improve discovery.
-        # The original user query remains the final relevance authority.
+        # Query variants are not only discovery metadata.
+        # They represent legitimate formulations of the same user intent.
+        #
+        # The original query remains the primary authority, but the
+        # relevance gate is also allowed to validate a result against
+        # the actual variant that discovered it.
+        #
+        # This is important for:
+        # - Arabic -> English entity discovery
+        # - quoted/entity searches
+        # - multilingual questions
+        # - general research queries
+        # - company/entity searches
+        #
+        # Example:
+        # "من هو آلان تورنغ؟"
+        # may discover:
+        # "Alan Turing"
+        #
+        # The result should not be rejected merely because its title
+        # is English while the original question is Arabic.
+
+        variant_queries = [
+            variant.query
+            for variant in variants
+            if str(variant.query or "").strip()
+        ]
+
         filtered = self.relevance_filter.filter(
             request.query,
             collected,
+            query_variants=variant_queries,
         )
 
         if not filtered:
@@ -176,14 +280,34 @@ class QueryResearcher:
         results: List[SearchResult],
     ) -> List[SearchResult]:
 
+        # Relevance is the primary authority.
+        #
+        # Query priority is only a discovery preference.
+        # It must never allow a weak result from the original query
+        # to outrank a highly relevant result discovered through
+        # an extracted entity/topic variant.
+        #
+        # Example:
+        #
+        #   "قائمة الحاصلين على جائزة تورنغ"
+        #       relevance = 0.78
+        #
+        #   "آلان تورنغ"
+        #       relevance = 1.00
+        #
+        # The canonical entity must win regardless of variant priority.
+
         results.sort(
             key=lambda result: (
-                result.metadata.get(
-                    "query_priority",
-                    9999,
+                -float(
+                    result.relevance or 0.0
                 ),
                 -float(
                     result.score or 0.0
+                ),
+                result.metadata.get(
+                    "query_priority",
+                    9999,
                 ),
             )
         )

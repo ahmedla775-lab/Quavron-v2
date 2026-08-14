@@ -115,25 +115,80 @@ class RelevanceFilter:
         self,
         query: str,
         results: List[SearchResult],
+        query_variants=None,
     ) -> List[SearchResult]:
 
         accepted = []
 
-        query_tokens = self._tokens(query)
-        query_normalized = self._normalize(query)
+        query = str(query or "").strip()
 
-        if not query_tokens:
+        # The original query is always the first and strongest authority.
+        candidate_queries = [query]
+
+        # Additional variants represent legitimate reformulations of the
+        # same intent. They may be multilingual, quoted, entity-focused,
+        # topic-focused, or company-specific.
+        for variant in (query_variants or []):
+            variant = str(variant or "").strip()
+
+            if not variant:
+                continue
+
+            if variant not in candidate_queries:
+                candidate_queries.append(variant)
+
+        if not self._tokens(query):
             return []
 
         for result in results:
 
-            score = self._score(
-                query_tokens,
-                query_normalized,
-                result,
-            )
+            best_score = 0.0
+            best_query = query
+
+            for candidate_query in candidate_queries:
+
+                candidate_tokens = self._tokens(candidate_query)
+                candidate_normalized = self._normalize(candidate_query)
+
+                if not candidate_tokens:
+                    continue
+
+                candidate_score = self._score(
+                    candidate_tokens,
+                    candidate_normalized,
+                    result,
+                )
+
+                if candidate_score > best_score:
+                    best_score = candidate_score
+                    best_query = candidate_query
+
+            # Keep the original user query as the primary identity signal
+            # whenever it has meaningful evidence. A variant may rescue
+            # multilingual/entity searches, but must not erase strong
+            # evidence from the original query.
+            original_tokens = self._tokens(query)
+
+            if original_tokens:
+                original_score = self._score(
+                    original_tokens,
+                    self._normalize(query),
+                    result,
+                )
+
+                if original_score >= 0.50:
+                    best_score = max(
+                        original_score,
+                        best_score,
+                    )
+                    if original_score >= best_score:
+                        best_query = query
+
+            score = best_score
 
             result.metadata["relevance_score"] = score
+            result.metadata["relevance_query"] = best_query
+
             result.relevance = score
 
             if score >= self.minimum_score:
@@ -182,25 +237,47 @@ class RelevanceFilter:
 
         total = len(query_tokens)
 
-        # -----------------------------------------------------
+        # ---------------------------------------------------------
+        # Metadata
+        # ---------------------------------------------------------
+
+        purpose = str(
+            result.metadata.get("purpose", "")
+        ).lower()
+
+        variant = str(
+            result.metadata.get("variant", "")
+        ).lower()
+
+        engine = str(
+            result.engine or ""
+        ).lower()
+
+        # ---------------------------------------------------------
         # Exact phrase
-        # -----------------------------------------------------
+        # ---------------------------------------------------------
 
-        if (
-            query_normalized
-            and query_normalized in title
-        ):
-            return 1.0
+        if query_normalized:
+            if query_normalized == title:
+                return 1.0
 
-        if (
-            query_normalized
-            and query_normalized in snippet
-        ):
-            return 0.80
+            if query_normalized in title:
+                # The requested entity appears inside a longer title.
+                # This is related evidence, not an exact entity match.
+                #
+                # Example:
+                #   query  = "ألبرت أينشتاين"
+                #   title  = "هانز ألبرت أينشتاين"
+                #
+                # Keep the result, but clearly below an exact entity page.
+                return 0.68
 
-        # -----------------------------------------------------
+            if query_normalized in snippet:
+                return 0.78
+
+        # ---------------------------------------------------------
         # Exact token overlap
-        # -----------------------------------------------------
+        # ---------------------------------------------------------
 
         title_hits = len(
             query_tokens & title_tokens
@@ -218,31 +295,67 @@ class RelevanceFilter:
         snippet_score = snippet_hits / total
         url_score = url_hits / total
 
-        # -----------------------------------------------------
-        # Strong identity/name matching
+        # ---------------------------------------------------------
+        # Strong identity matching
         #
-        # For questions like:
-        # من هو آلان تورنغ؟
+        # Example:
+        # query entity = "ألبرت أينشتاين"
         #
-        # We expect the important name tokens to appear.
-        # -----------------------------------------------------
+        # "ألبرت أينشتاين"                  -> exact entity
+        # "هانز ألبرت أينشتاين"             -> not exact entity
+        # "إدوارد ألبرت أينشتاين"           -> not exact entity
+        # ---------------------------------------------------------
 
         if total >= 2:
 
-            if title_score >= 0.75:
+            # Exact complete token set in title.
+            if (
+                title_tokens == query_tokens
+                and title_score == 1.0
+            ):
+                return 1.0
+
+            # Exact query phrase at the beginning of a longer title
+            # should remain strong, but below an exact entity page.
+            if (
+                title_score == 1.0
+                and query_normalized
+                and title.startswith(query_normalized)
+            ):
                 return 0.90
 
+            # If the title contains all query tokens but has
+            # additional identity words, penalize it.
+            if title_score == 1.0 and title_tokens != query_tokens:
+                return 0.72
+
+            # Strong but incomplete title match.
+            if title_score >= 0.75:
+                return 0.82
+
             if title_score >= 0.50:
-                return 0.75
+                return 0.68
 
-            # Two or more query tokens in snippet
-            # is meaningful evidence.
             if snippet_score >= 0.75:
-                return 0.70
+                return 0.64
 
-        # -----------------------------------------------------
+        # ---------------------------------------------------------
+        # Wikipedia identity protection
+        #
+        # When an entity variant was generated explicitly, an exact
+        # Wikipedia title should beat generic pages mentioning it.
+        # ---------------------------------------------------------
+
+        if (
+            purpose == "wikipedia"
+            and total >= 2
+            and title_tokens == query_tokens
+        ):
+            return 1.0
+
+        # ---------------------------------------------------------
         # Normal weighted score
-        # -----------------------------------------------------
+        # ---------------------------------------------------------
 
         score = (
             title_score * 0.65
@@ -250,14 +363,9 @@ class RelevanceFilter:
             + url_score * 0.05
         )
 
-        # -----------------------------------------------------
+        # ---------------------------------------------------------
         # Partial matching
-        #
-        # ONLY allow partial matching when there is already
-        # meaningful evidence in title/snippet.
-        #
-        # This prevents random words from becoming relevant.
-        # -----------------------------------------------------
+        # ---------------------------------------------------------
 
         partial_hits = 0
 
@@ -280,7 +388,6 @@ class RelevanceFilter:
                 if len(token) < 4:
                     continue
 
-                # Prefix/suffix matching only.
                 if (
                     token.startswith(qtoken)
                     or qtoken.startswith(token)
@@ -294,34 +401,44 @@ class RelevanceFilter:
                 partial_hits / total
             )
 
-            # Partial matching alone must never
-            # create a strong result.
             if title_hits or snippet_hits:
                 score = max(
                     score,
                     partial_score * 0.45,
                 )
 
-        # -----------------------------------------------------
+        # ---------------------------------------------------------
         # Critical anti-noise rule
-        #
-        # A result with ZERO exact query-token overlap
-        # cannot be accepted just because of URL/partial noise.
-        # -----------------------------------------------------
+        # ---------------------------------------------------------
 
         exact_hits = (
             title_hits
             + snippet_hits
         )
 
+        # Company/entity searches may legitimately have the entity
+        # only in the title or URL. Keep the exact-title case above.
         if exact_hits == 0:
+
+            # Allow explicit company variants when the company name
+            # appears in URL/title metadata.
+            if purpose.startswith("company_"):
+                company_terms = set(
+                    self._tokens(
+                        query_normalized
+                    )
+                )
+
+                if company_terms & (
+                    title_tokens | url_tokens
+                ):
+                    return 0.60
+
             return 0.0
 
-        # -----------------------------------------------------
-        # Query with multiple meaningful tokens
-        #
-        # Require at least some reasonable coverage.
-        # -----------------------------------------------------
+        # ---------------------------------------------------------
+        # Multiple-token coverage
+        # ---------------------------------------------------------
 
         if total >= 2:
 
@@ -330,33 +447,56 @@ class RelevanceFilter:
                 + snippet_hits
             ) / (2 * total)
 
-            # If only one tiny match exists in a long query,
-            # don't trust it.
+            # Only one tiny match in a long query is weak.
             if (
                 title_hits == 0
                 and snippet_hits == 1
                 and total >= 3
             ):
-                score = min(score, 0.20)
+                score = min(
+                    score,
+                    0.20,
+                )
 
-        # -----------------------------------------------------
+        # ---------------------------------------------------------
         # Single-token query
-        # -----------------------------------------------------
+        # ---------------------------------------------------------
 
         if total == 1:
 
-            token = next(iter(query_tokens))
+            token = next(
+                iter(query_tokens)
+            )
 
             if token in title_tokens:
-                score = max(score, 0.85)
+                score = max(
+                    score,
+                    0.85,
+                )
 
             elif token in snippet_tokens:
-                score = max(score, 0.55)
+                score = max(
+                    score,
+                    0.55,
+                )
+
+            elif (
+                token in url_tokens
+                and purpose.startswith("company_")
+            ):
+                score = max(
+                    score,
+                    0.60,
+                )
 
             else:
                 score = 0.0
 
         return round(
-            max(0.0, min(score, 1.0)),
+            max(
+                0.0,
+                min(score, 1.0),
+            ),
             4,
         )
+

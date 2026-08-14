@@ -21,6 +21,45 @@ from qai_research.storage.json_store import (
     JSONResearchStore,
 )
 
+from qai_research.ingestion.research_adapter import (
+    ResearchAdapter,
+)
+from qai_research.ingestion.raw_ingestor import (
+    RawIngestor,
+)
+
+from qai_research.processing.knowledge_processor import (
+    KnowledgeProcessor,
+)
+
+from qai_research.processing.deduplicator import (
+    KnowledgeDeduplicator,
+)
+
+from qai_research.knowledge.knowledge_ingestor import (
+    KnowledgeIngestor,
+)
+
+from qai_research.ingestion.research_adapter import (
+    ResearchAdapter,
+)
+
+from qai_research.ingestion.raw_ingestor import (
+    RawIngestor,
+)
+
+from qai_research.processing.knowledge_processor import (
+    KnowledgeProcessor,
+)
+
+from qai_research.knowledge.extractor import (
+    KnowledgeExtractor,
+)
+
+from qai_research.knowledge.knowledge_ingestor import (
+    KnowledgeIngestor,
+)
+
 
 class ResearchPipeline:
     """
@@ -73,6 +112,37 @@ class ResearchPipeline:
             store
             or JSONResearchStore()
         )
+
+        # ---------------------------------------------------------
+        # QAI KNOWLEDGE PIPELINE
+        # ---------------------------------------------------------
+        #
+        # ResearchResult
+        #       ↓
+        # ResearchAdapter
+        #       ↓
+        # RawKnowledge
+        #       ↓
+        # RawIngestor / RAW Store
+        #       ↓
+        # KnowledgeProcessor
+        #       ↓
+        # KnowledgeExtractor
+        #       ↓
+        # KnowledgeIngestor
+        #       ↓
+        # KnowledgeStore
+        #
+        # RAW remains untouched and is never filtered here.
+        # ---------------------------------------------------------
+
+        self.research_adapter = ResearchAdapter()
+        self.raw_ingestor = RawIngestor()
+
+        self.knowledge_processor = KnowledgeProcessor()
+        self.knowledge_extractor = KnowledgeExtractor()
+        self.knowledge_deduplicator = KnowledgeDeduplicator()
+        self.knowledge_ingestor = KnowledgeIngestor()
 
     def research(
         self,
@@ -261,6 +331,84 @@ class ResearchPipeline:
         result.success = bool(
             result.documents
         )
+
+        # -----------------------------------------------------
+        # KNOWLEDGE PIPELINE
+        #
+        # ResearchResult
+        #      ↓
+        # ResearchAdapter
+        #      ↓
+        # RawKnowledge
+        #      ↓
+        # KnowledgeProcessor
+        #      ↓
+        # Deduplication
+        #      ↓
+        # KnowledgeStore
+        # -----------------------------------------------------
+
+        try:
+            raw_knowledge = self.research_adapter.adapt_research(
+                result
+            )
+
+            # RAW محفوظ دائمًا قبل المعالجة.
+            raw_ingestion = self.raw_ingestor.ingest(
+                result.query,
+                raw_knowledge,
+            )
+
+            processed_knowledge = (
+                self.knowledge_processor.process_many(
+                    raw_knowledge
+                )
+            )
+
+            deduplicated_knowledge = (
+                self.knowledge_deduplicator.process_many(
+                    processed_knowledge
+                )
+            )
+
+            knowledge_saved = (
+                self.knowledge_ingestor.ingest_many(
+                    deduplicated_knowledge
+                )
+            )
+
+            result.metadata.update(
+                {
+                    "raw_knowledge_generated": len(raw_knowledge),
+                    "raw_knowledge_stored": raw_ingestion.get(
+                        "stored",
+                        0,
+                    ),
+                    "processed_knowledge_generated": len(
+                        processed_knowledge
+                    ),
+                    "knowledge_candidates": len(
+                        deduplicated_knowledge
+                    ),
+                    "knowledge_saved": knowledge_saved,
+                }
+            )
+
+        except Exception as exc:
+            result.errors.append(
+                "knowledge pipeline: "
+                f"{type(exc).__name__}: {exc}"
+            )
+
+            result.metadata.update(
+                {
+                    "raw_knowledge_generated": 0,
+                    "raw_knowledge_stored": 0,
+                    "processed_knowledge_generated": 0,
+                    "knowledge_candidates": 0,
+                    "knowledge_saved": 0,
+                }
+            )
 
         self.store.save_research(
             result

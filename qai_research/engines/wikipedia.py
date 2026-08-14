@@ -163,18 +163,45 @@ class WikipediaSearchEngine(SearchEngine):
         score = 0.0
 
         # -----------------------------------------------------
-        # Exact phrase
+        # Exact title identity
+        # -----------------------------------------------------
+        #
+        # The exact entity page must dominate related pages.
+        #
+        # Example:
+        #   ألبرت أينشتاين
+        #
+        # must rank above:
+        #   هانز ألبرت أينشتاين
+        #   جوائز ألبرت أينشتاين
+        #   مستشفى ... ألبرت أينشتاين
+        #
+        # Exact title receives the strongest identity bonus.
+        # A longer title containing the entity receives only
+        # a weaker bonus.
         # -----------------------------------------------------
 
         if normalized_query == normalized_title:
-            score += 100.0
+            score += 120.0
 
         elif (
             normalized_query
             and normalized_query
             in normalized_title
         ):
-            score += 60.0
+            title_terms = self._terms(normalized_title)
+
+            extra_terms = max(
+                0,
+                len(title_terms) - len(query_terms),
+            )
+
+            if extra_terms == 0:
+                score += 90.0
+            elif extra_terms == 1:
+                score += 35.0
+            else:
+                score += 15.0
 
         # -----------------------------------------------------
         # Title terms
