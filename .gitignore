@@ -43,3 +43,29 @@ eslint.config.mjs
 __pycache__/
 *.pyc
 .pytest_cache/
+llama.cpp/
+memory/
+users/
+backups/qai_patches/
+
+# Local runtime / generated data
+llama.cpp/
+memory/
+users/
+backups/qai_patches/
+
+# Local backup files
+*.before-*
+*.before_*
+*.broken_*
+*.backup*
+*.bak
+*~
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Local models / binaries
+*.gguf
+*.bin

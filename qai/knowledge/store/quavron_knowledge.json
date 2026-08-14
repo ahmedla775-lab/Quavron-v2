@@ -2082,6 +2082,32 @@
         "fr": "L'intelligence artificielle est un domaine de l'informatique qui vise à construire des systèmes capables de comprendre des informations, d'apprendre à partir des données, de raisonner, de résoudre des problèmes et d'effectuer des tâches qui nécessitent généralement des capacités humaines."
       },
       "category": "artificial_intelligence"
+    },
+    {
+      "question": {
+        "ar": "ما هي عاصمة الجزائر؟",
+        "en": "What is the capital of Algeria?",
+        "fr": "Quelle est la capitale de l'Algérie ?"
+      },
+      "answer": {
+        "ar": "الجزائر العاصمة هي عاصمة الجزائر.",
+        "en": "Algiers is the capital of Algeria.",
+        "fr": "Alger est la capitale de l'Algérie."
+      },
+      "category": "geography"
+    },
+    {
+      "question": {
+        "ar": "أين يقع نهر النيل؟",
+        "en": "Where is the Nile River located?",
+        "fr": "Où se trouve le Nil ?"
+      },
+      "answer": {
+        "ar": "يقع نهر النيل في شمال شرق أفريقيا، ويمتد عبر عدة دول من حوض النيل ويصب في البحر الأبيض المتوسط.",
+        "en": "The Nile River is located in northeastern Africa, flowing through several Nile Basin countries before reaching the Mediterranean Sea.",
+        "fr": "Le Nil se trouve en Afrique du Nord-Est, traverse plusieurs pays du bassin du Nil et se jette dans la mer Méditerranée."
+      },
+      "category": "geography"
     }
   ],
   "qai_personality": {
