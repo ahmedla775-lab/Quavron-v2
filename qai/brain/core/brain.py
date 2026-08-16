@@ -6,6 +6,7 @@ from memory.memory import memory
 from users.context.builder import context_builder
 from learning.bridge import learning_bridge
 from brain.core.research_bridge import research_bridge
+from understanding import parse_question
 
 
 class Brain:
@@ -290,9 +291,46 @@ class Brain:
                 user_context = {}
 
         # -------------------------------------------------
-        # 1. INTENT
+        # -------------------------------------------------
+        # 1. UNDERSTANDING
+        # -------------------------------------------------
+        # Structured analysis of the user's question.
+        # This is the central understanding layer for Brain.
+        # The existing Intent Router remains active for compatibility.
         # -------------------------------------------------
 
+        try:
+            understanding = parse_question(question)
+        except Exception as e:
+            print(
+                "[Brain] Understanding error:",
+                type(e).__name__,
+                str(e),
+            )
+            understanding = {
+                "original": question,
+                "normalized": str(question or "").strip(),
+                "language": "unknown",
+                "question_type": "general",
+                "intent": "general",
+                "intent_confidence": 0.0,
+                "entities": [],
+                "relations": [],
+                "temporal": [],
+                "numbers": [],
+                "locations": [],
+                "subject": None,
+                "target": None,
+                "keywords": [],
+                "confidence": 0.0,
+            }
+
+        # -------------------------------------------------
+        # 2. INTENT
+        # -------------------------------------------------
+
+        # Keep the existing Intent Router active for compatibility,
+        # but enrich its result with the structured Understanding layer.
         intent_result = self.intent_router.detect(
             question
         )
@@ -306,6 +344,65 @@ class Brain:
             "domain",
             "general"
         )
+
+        # -------------------------------------------------
+        # 2.1 UNDERSTANDING -> BRAIN SIGNALS
+        # -------------------------------------------------
+        # Understanding is authoritative for question structure.
+        # The legacy Intent Router remains authoritative for
+        # compatibility/domain routing unless a future router
+        # explicitly consumes these signals.
+
+        understanding_language = understanding.get(
+            "language",
+            "unknown"
+        )
+
+        understanding_type = understanding.get(
+            "question_type",
+            "general"
+        )
+
+        understanding_intent = understanding.get(
+            "intent",
+            "general"
+        )
+
+        understanding_confidence = float(
+            understanding.get(
+                "confidence",
+                0.0
+            ) or 0.0
+        )
+
+        understanding_intent_confidence = float(
+            understanding.get(
+                "intent_confidence",
+                0.0
+            ) or 0.0
+        )
+
+        # Preserve the legacy router decision while exposing
+        # structured understanding to every downstream stage.
+        understanding["router_intent"] = intent
+        understanding["router_domain"] = domain
+        understanding["router_confidence"] = intent_result.get(
+            "confidence",
+            intent_result.get(
+                "intent_confidence",
+                0.0
+            )
+        )
+
+        understanding["brain_signal"] = {
+            "language": understanding_language,
+            "question_type": understanding_type,
+            "intent": understanding_intent,
+            "intent_confidence": understanding_intent_confidence,
+            "confidence": understanding_confidence,
+            "router_intent": intent,
+            "router_domain": domain,
+        }
 
         # -------------------------------------------------
         # 2. LOCAL RAG
@@ -374,6 +471,7 @@ class Brain:
                 return {
                     "intent": intent,
                     "domain": domain,
+                    "understanding": understanding,
                     "provider": "local",
                     "documents": len(documents),
                     "fallback_from": None,
@@ -498,6 +596,7 @@ class Brain:
         return {
             "intent": intent,
             "domain": domain,
+            "understanding": understanding,
             "provider": provider,
             "documents": len(documents),
             "fallback_from": fallback_from,
@@ -573,6 +672,7 @@ class Brain:
             "fallback_from": result.get("fallback_from"),
             "intent": result.get("intent"),
             "domain": result.get("domain"),
+            "understanding": result.get("understanding"),
         }
 
 
