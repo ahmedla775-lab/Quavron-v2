@@ -6,9 +6,9 @@ COPY qai/requirements.txt ./requirements.txt
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY qai/ .
+COPY qai/ ./qai/
 COPY qai_research/ ./qai_research/
 
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "qai.main:app", "--host", "0.0.0.0", "--port", "8000"]
