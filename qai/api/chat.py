@@ -1,22 +1,20 @@
 from fastapi import APIRouter
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from brain.core.brain import brain
+from qai.services.ai_service import service
+
 
 router = APIRouter()
 
 
 class ChatRequest(BaseModel):
-    user_id: str
-    message: str
+    user_id: str = Field(min_length=1)
+    message: str = Field(min_length=1)
 
 
 @router.post("/chat")
-async def chat(req: ChatRequest):
-
-    result = brain.chat(
+def chat(req: ChatRequest):
+    return service.chat(
         user_id=req.user_id,
-        message=req.message
+        message=req.message,
     )
-
-    return result

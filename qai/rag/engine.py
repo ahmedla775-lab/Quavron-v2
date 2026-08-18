@@ -1,5 +1,5 @@
-from rag.retriever import retriever
-from rag.context import context
+from qai.rag.retriever import retriever
+from qai.rag.context import context
 
 
 class RAGEngine:

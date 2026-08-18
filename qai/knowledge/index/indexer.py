@@ -2,7 +2,7 @@ import json
 
 from pathlib import Path
 
-from vector_memory.store import store
+from qai.vector_memory.store import store
 
 
 class KnowledgeIndexer:

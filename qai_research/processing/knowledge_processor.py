@@ -331,31 +331,81 @@ class KnowledgeProcessor:
         query: str,
         title: str,
         text: str,
+        query_variants=None,
     ) -> float:
+        """
+        حساب صلة المادة البحثية بالسؤال الأصلي وصيغه المشروعة.
 
-        query_tokens = set(self.extract_terms(query))
+        السؤال الأصلي يبقى الإشارة الأساسية.
+        Query variants يمكن أن تكون:
+        - multilingual
+        - entity-focused
+        - quoted
+        - reformulated
+        - topic-focused
 
-        if not query_tokens:
-            return 0.0
+        لا يتم حذف المادة هنا.
+        هذه مجرد إشارة تستخدم لاحقًا في التصنيف.
+        """
 
-        title_tokens = set(self.extract_terms(title))
-        text_tokens = set(self.extract_terms(text))
+        candidate_queries = [
+            str(query or "").strip()
+        ]
 
-        title_hits = len(query_tokens & title_tokens)
-        text_hits = len(query_tokens & text_tokens)
+        for variant in (query_variants or []):
+            variant = str(variant or "").strip()
 
-        title_ratio = title_hits / len(query_tokens)
-        text_ratio = text_hits / len(query_tokens)
+            if variant and variant not in candidate_queries:
+                candidate_queries.append(variant)
 
-        score = (
-            title_ratio * 0.70
-            + text_ratio * 0.30
+        best_score = 0.0
+
+        title_tokens = set(
+            self.extract_terms(title)
         )
 
-        return round(
-            max(0.0, min(score, 1.0)),
-            4,
+        text_tokens = set(
+            self.extract_terms(text)
         )
+
+        for candidate_query in candidate_queries:
+            query_tokens = set(
+                self.extract_terms(candidate_query)
+            )
+
+            if not query_tokens:
+                continue
+
+            title_hits = len(
+                query_tokens & title_tokens
+            )
+
+            text_hits = len(
+                query_tokens & text_tokens
+            )
+
+            title_ratio = (
+                title_hits / len(query_tokens)
+            )
+
+            text_ratio = (
+                text_hits / len(query_tokens)
+            )
+
+            score = (
+                title_ratio * 0.70
+                + text_ratio * 0.30
+            )
+
+            score = round(
+                max(0.0, min(score, 1.0)),
+                4,
+            )
+
+            if score > best_score:
+                best_score = score
+
+        return best_score
 
     # ---------------------------------------------------------
     # Final classification
@@ -451,10 +501,19 @@ class KnowledgeProcessor:
             url,
         )
 
+        query_variants = metadata.get(
+            "query_variants",
+            [],
+        )
+
+        if isinstance(query_variants, str):
+            query_variants = [query_variants]
+
         relevance = self.relevance_score(
             query,
             title,
             text,
+            query_variants=query_variants,
         )
 
         usefulness = round(

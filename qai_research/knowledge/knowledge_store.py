@@ -30,11 +30,26 @@ class KnowledgeStore:
     def save(self, knowledge: Any) -> bool:
         payload = self._serialize(knowledge)
 
-        # لا نخزن المعرفة المكررة.
+        # ---------------------------------------------------------
+        # KNOWLEDGE PERSISTENCE GATE
+        # ---------------------------------------------------------
+        # RAW يبقى محفوظًا بشكل مستقل.
+        # هذا الـ Store يخزن فقط المعرفة التي أصبحت جاهزة.
+        #
+        # duplicate        -> لا تخزن
+        # knowledge_ready  -> يجب أن تكون True
+        # noise            -> لا تخزن
+        #
+        # Relevance ليست سلطة معرفية هنا.
+        # القرار النهائي لدخول knowledge store يعتمد على
+        # classification/processing وليس على relevance وحدها.
+
         if payload.get("duplicate") is True:
             return False
 
-        # لا نخزن العناصر المصنفة كضوضاء.
+        if payload.get("knowledge_ready") is not True:
+            return False
+
         if payload.get("status") == "noise":
             return False
 

@@ -1,6 +1,6 @@
-from vector_memory.search import search
-from knowledge.search.search import search_engine
-from learning.datasets.retriever import learning_retriever
+from qai.vector_memory.search import search
+from qai.knowledge.search.search import search_engine
+from qai.learning.datasets.retriever import learning_retriever
 
 
 SOURCE_PRIORITY = {
@@ -382,22 +382,21 @@ class Retriever:
         # -----------------------------------------------------
 
         known_concepts = [
-            "qai",
-            "quavron",
-            "cloud ide",
-            "marketplace",
-            "cloud",
-            "ide",
-            "community",
-            "dashboard",
-            "hosting",
-            "courses",
-            "freelance",
-            "analytics",
-            "social hub",
-            "cloud ide",
-            "api",
-        ]
+              "qai",
+              "quavron",
+              "cloud ide",
+              "marketplace",
+              "cloud",
+              "ide",
+              "community",
+              "dashboard",
+              "hosting",
+              "courses",
+              "freelance",
+              "analytics",
+              "social hub",
+              "api",
+]
 
         for concept in known_concepts:
 
@@ -636,24 +635,18 @@ class Retriever:
         answer_has_local = has_any(a_words, local_words)
         answer_has_supervisor = has_any(a_words, supervisor_words)
 
-        stored_is_official = (
-            stored_has_official
-            or answer_has_official
-        )
-
-        stored_is_local = (
-            stored_has_local
-            or answer_has_local
-        )
-
+        # Stored question defines the record identity.
+        # Answer text must not create official/local intent.
+        stored_is_official = stored_has_official
+        stored_is_local = stored_has_local
         stored_course_test = (
-            stored_has_course
-            and stored_has_test
+        stored_has_course
+        and stored_has_test
         )
 
         stored_course_process = (
-            stored_has_course
-            and not stored_has_test
+        stored_has_course
+        and not stored_has_test
         )
 
         stored_local_test = (

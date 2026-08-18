@@ -1,12 +1,12 @@
-from intent.router import router
-from rag.engine import engine
-from llm.router import router as llm_router
-from llm.gateway import gateway
-from memory.memory import memory
-from users.context.builder import context_builder
-from learning.bridge import learning_bridge
-from brain.core.research_bridge import research_bridge
-from understanding import parse_question
+from qai.intent.router import router
+from qai.rag.engine import engine
+from qai.llm.router import router as llm_router
+from qai.llm.gateway import gateway
+from qai.memory.memory import memory
+from qai.users.context.builder import context_builder
+from qai.learning.bridge import learning_bridge
+from qai.brain.core.research_bridge import research_bridge
+from qai.understanding import parse_question
 
 
 class Brain:
@@ -14,6 +14,215 @@ class Brain:
     def __init__(self):
         self.intent_router = router
         self.rag_engine = engine
+
+    # =====================================================
+    # UNDERSTANDING CONTRACT
+    # =====================================================
+
+    def _build_understanding_contract(
+        self,
+        question,
+        understanding,
+        legacy_intent_result=None,
+    ):
+        """
+        Normalize Understanding output into the stable Brain contract.
+
+        Understanding is authoritative for semantic understanding.
+        Legacy Intent Router remains a compatibility fallback.
+        Downstream Brain stages consume this contract only.
+        """
+
+        if not isinstance(understanding, dict):
+            understanding = {}
+
+        legacy = (
+            legacy_intent_result
+            if isinstance(legacy_intent_result, dict)
+            else {}
+        )
+
+        original = understanding.get(
+            "original",
+            question,
+        )
+
+        normalized = understanding.get(
+            "normalized",
+            str(question or "").strip(),
+        )
+
+        language = (
+            understanding.get("language", "unknown")
+            or "unknown"
+        )
+
+        question_type = (
+            understanding.get("question_type", "general")
+            or "general"
+        )
+
+        understanding_intent = (
+            understanding.get("intent", "general")
+            or "general"
+        )
+
+        understanding_intent_confidence = float(
+            understanding.get(
+                "intent_confidence",
+                0.0,
+            ) or 0.0
+        )
+
+        understanding_confidence = float(
+            understanding.get(
+                "confidence",
+                0.0,
+            ) or 0.0
+        )
+
+        # -------------------------------------------------
+        # INTENT AUTHORITY
+        # -------------------------------------------------
+
+        if (
+            understanding_intent
+            and understanding_intent != "general"
+            and understanding_intent_confidence > 0.0
+        ):
+            intent = understanding_intent
+            intent_source = "understanding"
+
+        elif (
+            legacy.get("intent")
+            and legacy.get("intent") != "general"
+        ):
+            intent = legacy.get("intent")
+            intent_source = "legacy_router_fallback"
+
+        else:
+            intent = "general"
+            intent_source = "default"
+
+        # -------------------------------------------------
+        # DOMAIN
+        # -------------------------------------------------
+
+        domain = (
+            understanding.get("domain")
+            or legacy.get("domain")
+            or "general"
+        )
+
+        router_confidence = float(
+            legacy.get(
+                "confidence",
+                legacy.get(
+                    "intent_confidence",
+                    0.0,
+                ),
+            ) or 0.0
+        )
+
+        contract = {
+            "original": original,
+            "normalized": normalized,
+
+            "language": language,
+            "question_type": question_type,
+
+            "intent": intent,
+            "intent_source": intent_source,
+
+            "intent_confidence": understanding_intent_confidence,
+            "confidence": understanding_confidence,
+
+            "domain": domain,
+
+            "entities": understanding.get(
+                "entities",
+                [],
+            ) or [],
+
+            "relations": understanding.get(
+                "relations",
+                [],
+            ) or [],
+
+            "temporal": understanding.get(
+                "temporal",
+                [],
+            ) or [],
+
+            "numbers": understanding.get(
+                "numbers",
+                [],
+            ) or [],
+
+            "locations": understanding.get(
+                "locations",
+                [],
+            ) or [],
+
+            "subject": understanding.get(
+                "subject",
+            ),
+
+            "target": understanding.get(
+                "target",
+            ),
+
+            "keywords": understanding.get(
+                "keywords",
+                [],
+            ) or [],
+
+            "is_question": bool(
+                understanding.get(
+                    "is_question",
+                    False,
+                )
+            ),
+
+            "question_markers": understanding.get(
+                "question_markers",
+                [],
+            ) or [],
+
+            "meta": understanding.get(
+                "meta",
+                {},
+            ) or {},
+
+            # Compatibility information is isolated.
+            "router_compatibility": {
+                "intent": legacy.get(
+                    "intent",
+                    "general",
+                ),
+                "domain": legacy.get(
+                    "domain",
+                    "general",
+                ),
+                "confidence": router_confidence,
+            },
+        }
+
+        # -------------------------------------------------
+        # STABLE BRAIN SIGNAL
+        # -------------------------------------------------
+
+        contract["brain_signal"] = {
+            "language": language,
+            "question_type": question_type,
+            "intent": intent,
+            "intent_confidence": understanding_intent_confidence,
+            "confidence": understanding_confidence,
+            "domain": domain,
+            "intent_source": intent_source,
+        }
+
+        return contract
 
     # =====================================================
     # LOCAL KNOWLEDGE EVIDENCE
@@ -123,6 +332,337 @@ class Brain:
     # =====================================================
     # COMPLEX TASK
     # =====================================================
+
+    # =====================================================
+    # ORCHESTRATOR
+    # =====================================================
+
+    def _build_decision(
+        self,
+        question,
+        understanding,
+    ):
+        """
+        Convert the Understanding Contract into a stable
+        high-level processing decision.
+
+        This is a routing decision only. It does not generate
+        answers and does not modify RAG, Research, Gateway,
+        LocalDriver, Learning or Memory.
+        """
+        understanding = (
+            understanding
+            if isinstance(understanding, dict)
+            else {}
+        )
+
+        intent = (
+            understanding.get("intent")
+            or "general"
+        )
+
+        question_type = (
+            understanding.get("question_type")
+            or "general"
+        )
+
+        language = (
+            understanding.get("language")
+            or "unknown"
+        )
+
+        confidence = float(
+            understanding.get("confidence", 0.0)
+            or 0.0
+        )
+
+        entities = understanding.get(
+            "entities",
+            [],
+        ) or []
+
+        temporal = understanding.get(
+            "temporal",
+            [],
+        ) or []
+
+        is_question = bool(
+            understanding.get(
+                "is_question",
+                False,
+            )
+        )
+
+        # -------------------------------------------------
+        # INTENT -> DECISION MODE
+        # -------------------------------------------------
+        # Understanding owns semantic intent.
+        # Decision Router converts it into an execution mode.
+        # It does not perform generation itself.
+        # -------------------------------------------------
+
+        if intent in {
+            "comparison",
+            "compare",
+        }:
+            mode = "comparison"
+
+        elif intent in {
+            "programming",
+            "code",
+            "coding",
+            "debugging",
+            "implementation",
+        }:
+            mode = "programming"
+
+        elif intent in {
+            "reasoning",
+            "analysis",
+            "logical_reasoning",
+        }:
+            mode = "reasoning"
+
+        elif intent in {
+            "research",
+            "search",
+            "information",
+            "lookup",
+            "fact_check",
+        }:
+            mode = "research"
+
+        elif intent in {
+            "definition",
+            "define",
+            "explanation",
+            "explain",
+        }:
+            mode = "knowledge"
+
+        elif intent in {
+            "calculation",
+            "calculate",
+            "math",
+            "numeric",
+        }:
+            mode = "calculation"
+
+        elif intent in {
+            "cause",
+            "why",
+            "causal",
+        }:
+            mode = "causal_reasoning"
+
+        elif intent in {
+            "how_to",
+            "procedure",
+            "instruction",
+            "tutorial",
+        }:
+            mode = "procedural"
+
+        elif intent in {
+            "summary",
+            "summarization",
+            "summarize",
+        }:
+            mode = "summarization"
+
+        elif intent in {
+            "translation",
+            "translate",
+        }:
+            mode = "translation"
+
+        elif intent in {
+            "classification",
+            "classify",
+        }:
+            mode = "classification"
+
+        elif intent in {
+            "conversation",
+            "chat",
+            "greeting",
+        }:
+            mode = "conversation"
+
+        elif question_type in {
+            "comparison",
+            "programming",
+            "reasoning",
+            "analysis",
+            "definition",
+            "calculation",
+            "cause",
+            "procedural",
+            "summary",
+            "translation",
+        }:
+            mode = question_type
+
+        elif is_question:
+            mode = "question"
+
+        else:
+            mode = "general"
+
+        return {
+            "mode": mode,
+            "intent": intent,
+            "question_type": question_type,
+            "language": language,
+            "confidence": confidence,
+            "is_question": is_question,
+            "entity_count": len(entities),
+            "has_temporal": bool(temporal),
+            "source": "understanding_contract",
+        }
+
+    def _build_orchestration_plan(
+        self,
+        question,
+        understanding,
+        intent,
+        domain,
+        has_knowledge,
+        documents,
+    ):
+        """
+        Central Brain orchestration decision.
+
+        Understanding Contract is the semantic source of truth.
+
+        The Orchestrator decides the processing path only.
+        Existing RAG, Research, Gateway, LocalDriver,
+        Learning and Memory remain unchanged.
+        """
+
+        # -------------------------------------------------
+        # UNDERSTANDING CONTRACT
+        # -------------------------------------------------
+        # All semantic decisions are read from the Contract.
+        # -------------------------------------------------
+
+        understanding = (
+            understanding
+            if isinstance(understanding, dict)
+            else {}
+        )
+
+        contract_intent = understanding.get(
+            "intent",
+            intent or "general",
+        )
+
+        contract_domain = understanding.get(
+            "domain",
+            domain or "general",
+        )
+
+        question_type = understanding.get(
+            "question_type",
+            "general",
+        ) or "general"
+
+        language = understanding.get(
+            "language",
+            "unknown",
+        ) or "unknown"
+
+        confidence = float(
+            understanding.get(
+                "confidence",
+                0.0,
+            ) or 0.0
+        )
+
+        intent_confidence = float(
+            understanding.get(
+                "intent_confidence",
+                0.0,
+            ) or 0.0
+        )
+
+        is_question = bool(
+            understanding.get(
+                "is_question",
+                False,
+            )
+        )
+
+        entities = understanding.get(
+            "entities",
+            [],
+        ) or []
+
+        temporal = understanding.get(
+            "temporal",
+            [],
+        ) or []
+
+        # -------------------------------------------------
+        # COMPLEXITY
+        # -------------------------------------------------
+        # Complexity detection remains a task-level concern.
+        # It may still use the original question because the
+        # existing LLM Router exposes task classifiers based
+        # on textual input.
+        # This does NOT replace Understanding semantics.
+        # -------------------------------------------------
+
+        complex_task = self._is_complex_task(question)
+
+        # -------------------------------------------------
+        # EVIDENCE / RESEARCH
+        # -------------------------------------------------
+
+        research_if_insufficient = not bool(
+            has_knowledge
+        )
+
+        generation_provider = "local"
+
+        if has_knowledge:
+            generation_source = "local_knowledge"
+        elif research_if_insufficient:
+            generation_source = "research"
+        else:
+            generation_source = "local"
+
+        # -------------------------------------------------
+        # FINAL ORCHESTRATION PLAN
+        # -------------------------------------------------
+
+        return {
+            "mode": "local_first",
+
+            # Understanding Contract
+            "intent": contract_intent,
+            "domain": contract_domain,
+            "question_type": question_type,
+            "language": language,
+            "confidence": confidence,
+            "intent_confidence": intent_confidence,
+            "is_question": is_question,
+            "entities": entities,
+            "temporal": temporal,
+
+            # Task / evidence state
+            "complex_task": complex_task,
+            "has_knowledge": bool(has_knowledge),
+            "documents": len(documents or []),
+            "research_if_insufficient": research_if_insufficient,
+
+            # Generation
+            "generation_provider": generation_provider,
+            "generation_source": generation_source,
+
+            # Contract traceability
+            "understanding_source": "understanding_contract",
+        }
 
     def _is_complex_task(self, question):
 
@@ -294,20 +834,21 @@ class Brain:
         # -------------------------------------------------
         # 1. UNDERSTANDING
         # -------------------------------------------------
-        # Structured analysis of the user's question.
-        # This is the central understanding layer for Brain.
-        # The existing Intent Router remains active for compatibility.
+        # Understanding is the semantic source of truth.
+        # Brain consumes the normalized Understanding Contract.
         # -------------------------------------------------
 
         try:
-            understanding = parse_question(question)
+            understanding_raw = parse_question(question)
+
         except Exception as e:
             print(
                 "[Brain] Understanding error:",
                 type(e).__name__,
                 str(e),
             )
-            understanding = {
+
+            understanding_raw = {
                 "original": question,
                 "normalized": str(question or "").strip(),
                 "language": "unknown",
@@ -323,86 +864,73 @@ class Brain:
                 "target": None,
                 "keywords": [],
                 "confidence": 0.0,
+                "is_question": False,
+                "question_markers": [],
+                "meta": {},
             }
 
         # -------------------------------------------------
-        # 2. INTENT
+        # 2. LEGACY INTENT ROUTER
+        # -------------------------------------------------
+        # Compatibility / fallback only.
+        # It must not override valid Understanding.
         # -------------------------------------------------
 
-        # Keep the existing Intent Router active for compatibility,
-        # but enrich its result with the structured Understanding layer.
-        intent_result = self.intent_router.detect(
-            question
-        )
+        try:
+            intent_result = self.intent_router.detect(question)
 
-        intent = intent_result.get(
-            "intent",
-            "general"
-        )
-
-        domain = intent_result.get(
-            "domain",
-            "general"
-        )
-
-        # -------------------------------------------------
-        # 2.1 UNDERSTANDING -> BRAIN SIGNALS
-        # -------------------------------------------------
-        # Understanding is authoritative for question structure.
-        # The legacy Intent Router remains authoritative for
-        # compatibility/domain routing unless a future router
-        # explicitly consumes these signals.
-
-        understanding_language = understanding.get(
-            "language",
-            "unknown"
-        )
-
-        understanding_type = understanding.get(
-            "question_type",
-            "general"
-        )
-
-        understanding_intent = understanding.get(
-            "intent",
-            "general"
-        )
-
-        understanding_confidence = float(
-            understanding.get(
-                "confidence",
-                0.0
-            ) or 0.0
-        )
-
-        understanding_intent_confidence = float(
-            understanding.get(
-                "intent_confidence",
-                0.0
-            ) or 0.0
-        )
-
-        # Preserve the legacy router decision while exposing
-        # structured understanding to every downstream stage.
-        understanding["router_intent"] = intent
-        understanding["router_domain"] = domain
-        understanding["router_confidence"] = intent_result.get(
-            "confidence",
-            intent_result.get(
-                "intent_confidence",
-                0.0
+        except Exception as e:
+            print(
+                "[Brain] Intent Router error:",
+                type(e).__name__,
+                str(e),
             )
+
+            intent_result = {
+                "intent": "general",
+                "domain": "general",
+                "confidence": 0.0,
+            }
+
+        # -------------------------------------------------
+        # 3. UNDERSTANDING CONTRACT
+        # -------------------------------------------------
+        # Single semantic contract consumed downstream.
+        # -------------------------------------------------
+
+        understanding = self._build_understanding_contract(
+            question=question,
+            understanding=understanding_raw,
+            legacy_intent_result=intent_result,
         )
 
-        understanding["brain_signal"] = {
-            "language": understanding_language,
-            "question_type": understanding_type,
-            "intent": understanding_intent,
-            "intent_confidence": understanding_intent_confidence,
-            "confidence": understanding_confidence,
-            "router_intent": intent,
-            "router_domain": domain,
-        }
+        # Brain decisions now consume the Contract.
+        intent = understanding["intent"]
+        domain = understanding["domain"]
+
+        # -------------------------------------------------
+        # 3. DECISION ROUTER
+        # -------------------------------------------------
+        # Understanding Contract is the semantic source of truth.
+        # Decision routing is derived from the contract and does
+        # not replace Understanding, RAG, Research, Gateway or
+        # LocalDriver.
+        try:
+            decision = self._build_decision(
+                question=question,
+                understanding=understanding,
+            )
+        except Exception as e:
+            print(
+                "[Brain] Decision Router error:",
+                type(e).__name__,
+                str(e),
+            )
+            decision = {
+                "mode": "general",
+                "reason": "decision_router_error",
+            }
+
 
         # -------------------------------------------------
         # 2. LOCAL RAG
@@ -430,6 +958,22 @@ class Brain:
             question,
             documents
         )
+
+        # -------------------------------------------------
+        # 3. ORCHESTRATION PLAN
+        # -------------------------------------------------
+
+        orchestration_plan = self._build_orchestration_plan(
+            question=question,
+            understanding=understanding,
+            intent=intent,
+            domain=domain,
+            has_knowledge=has_knowledge,
+            documents=documents,
+        )
+
+        orchestration_plan["decision"] = decision
+
 
         # -------------------------------------------------
         # 4. LOCAL COMPARISON
@@ -472,6 +1016,7 @@ class Brain:
                     "intent": intent,
                     "domain": domain,
                     "understanding": understanding,
+            "orchestration": orchestration_plan,
                     "provider": "local",
                     "documents": len(documents),
                     "fallback_from": None,
@@ -491,16 +1036,26 @@ class Brain:
         # It does NOT automatically become trusted knowledge.
 
         research_result = None
+        research_used = False
+        research_context = ""
+        research_evidence_count = 0
 
-        if not has_knowledge:
+
+        if orchestration_plan.get("research_if_insufficient", not has_knowledge):
 
             research_result = research_bridge.research(
                 question,
+                understanding=understanding,
                 max_results=8,
                 max_pages=5,
             )
 
             if research_result.get("success"):
+                research_used = True
+                research_evidence_count = int(
+                    research_result.get("evidence_count", 0) or 0
+                )
+
 
                 research_context = (
                     research_result.get(
@@ -530,25 +1085,144 @@ class Brain:
         # QAI handles unanswered requests through its own
         # intelligence/tools pipeline.
 
-        provider = "local"
-
         # -------------------------------------------------
+
         # 7. ASK QAI
+
         # -------------------------------------------------
 
-        llm_result = gateway.ask(
-            "local",
-            question,
-            context,
-        )
+        # Brain remains local-first.
 
-        # Research is an evidence source, not an LLM provider.
-        if (
-            research_result
-            and research_result.get("success")
-            and llm_result.get("status") == "completed"
-        ):
-            llm_result["source"] = "research"
+        # Gateway/LocalDriver is responsible for generation.
+
+        # -------------------------------------------------
+        # 7. LLM ROUTER
+        # -------------------------------------------------
+        # The Brain decides the task; the LLM Router decides
+        # which generation provider should handle it.
+
+        try:
+            provider = llm_router.select(question)
+        except Exception as e:
+            print(
+                "[Brain] LLM Router error:",
+                type(e).__name__,
+                str(e),
+            )
+            provider = "local"
+
+        orchestration_plan["generation_provider"] = provider
+        orchestration_plan["research_used"] = research_used
+        orchestration_plan["research_evidence_count"] = research_evidence_count
+
+
+        # -------------------------------------------------
+        # 8. GENERATION CONTEXT
+        # -------------------------------------------------
+        # Keep RAG + Research evidence and add user context
+        # without changing the existing memory/context system.
+
+        generation_context = context or ""
+
+        if user_context:
+            try:
+                import json
+
+                user_context_text = json.dumps(
+                    user_context,
+                    ensure_ascii=False,
+                    indent=2,
+                    default=str,
+                )
+
+                generation_context = (
+                    f"{generation_context}\n\n"
+                    if generation_context
+                    else ""
+                ) + (
+                    "=== USER CONTEXT ===\n"
+                    + user_context_text
+                )
+
+            except Exception as e:
+                print(
+                    "[Brain] User context serialization error:",
+                    type(e).__name__,
+                    str(e),
+                )
+
+        # -------------------------------------------------
+        # 9. ASK QAI
+        # -------------------------------------------------
+
+        try:
+            llm_result = gateway.ask(
+                provider,
+                question,
+                generation_context,
+            )
+
+        except Exception as e:
+
+            print(
+
+                "[Brain] Generation error:",
+
+                type(e).__name__,
+
+                str(e),
+
+            )
+
+
+            llm_result = {
+
+                "provider": provider,
+
+                "status": "error",
+
+                "source": "generation_error",
+
+                "confidence": 0,
+
+                "relevance": 0,
+
+                "answer": "",
+
+                "message": str(e),
+
+            }
+
+
+        if not isinstance(llm_result, dict):
+
+            llm_result = {
+
+                "provider": provider,
+
+                "status": "error",
+
+                "source": "invalid_generation_result",
+
+                "confidence": 0,
+
+                "relevance": 0,
+
+                "answer": "",
+
+                "message": "Invalid gateway response",
+
+            }
+
+
+        provider = llm_result.get(
+
+            "provider",
+
+            provider,
+
+        ) or provider
+
 
         fallback_from = None
 
@@ -597,8 +1271,12 @@ class Brain:
             "intent": intent,
             "domain": domain,
             "understanding": understanding,
+            "orchestration": orchestration_plan,
             "provider": provider,
             "documents": len(documents),
+            "research_used": research_used,
+            "research_evidence_count": research_evidence_count,
+            "research_context_chars": len(research_context),
             "fallback_from": fallback_from,
             "user_context": user_context,
             "learning_candidate": learning_candidate,
@@ -673,6 +1351,8 @@ class Brain:
             "intent": result.get("intent"),
             "domain": result.get("domain"),
             "understanding": result.get("understanding"),
+
+            "orchestration": result.get("orchestration"),
         }
 
 

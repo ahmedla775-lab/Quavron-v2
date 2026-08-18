@@ -51,9 +51,16 @@ class QueryResearcher:
 
         self.last_errors = []
 
+        research_context = (
+            request.metadata.get("research_context", {})
+            if isinstance(request.metadata, dict)
+            else {}
+        )
+
         variants = self.strategy.build(
             query=request.query,
             language=request.language,
+            context=research_context,
         )
 
         if not variants:
@@ -232,14 +239,14 @@ class QueryResearcher:
                 )
 
         # ---------------------------------------------------------
-        # FINAL RELEVANCE GATE
+        # FINAL RELEVANCE SCORING / RANKING
         # ---------------------------------------------------------
         # Query variants are not only discovery metadata.
         # They represent legitimate formulations of the same user intent.
         #
-        # The original query remains the primary authority, but the
-        # relevance gate is also allowed to validate a result against
-        # the actual variant that discovered it.
+        # The original query remains an important identity signal, but the
+        # relevance scoring is also allowed to score a result against
+        # the actual variant that discovered it. Results are preserved.
         #
         # This is important for:
         # - Arabic -> English entity discovery
@@ -253,8 +260,8 @@ class QueryResearcher:
         # may discover:
         # "Alan Turing"
         #
-        # The result should not be rejected merely because its title
-        # is English while the original question is Arabic.
+        # The result must not be rejected merely because its title
+        # is English while the original question is Arabic. It remains raw material.
 
         variant_queries = [
             variant.query
@@ -262,30 +269,33 @@ class QueryResearcher:
             if str(variant.query or "").strip()
         ]
 
-        filtered = self.relevance_filter.filter(
+        ranked = self.relevance_filter.filter(
             request.query,
             collected,
             query_variants=variant_queries,
         )
 
-        if not filtered:
+        if not ranked:
             self.last_errors.append(
-                "No relevant results after final relevance filtering."
+                "No research results were discovered."
             )
 
-        return self._rank(filtered)
+        return self._rank(ranked)
 
     @staticmethod
     def _rank(
         results: List[SearchResult],
     ) -> List[SearchResult]:
 
-        # Relevance is the primary authority.
+        # Relevance is a ranking signal, NOT a knowledge authority.
         #
-        # Query priority is only a discovery preference.
-        # It must never allow a weak result from the original query
-        # to outrank a highly relevant result discovered through
-        # an extracted entity/topic variant.
+        # Query priority is a discovery preference.
+        #
+        # The returned results are raw research material.
+        # QAI must evaluate evidence and correctness later.
+        #
+        # Ranking only determines processing order; it does not
+        # establish truth and must not be treated as validation.
         #
         # Example:
         #

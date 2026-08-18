@@ -1,4 +1,4 @@
-from teachers.local_teacher import teacher as local_teacher
+from qai.teachers.local_teacher import teacher as local_teacher
 
 
 class TeacherManager:

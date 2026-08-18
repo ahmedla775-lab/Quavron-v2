@@ -127,27 +127,37 @@ class LLMRouter:
         return self._contains_any(task, advanced_words)
 
     def select(self, task):
-        task = str(task).lower().strip()
+        task = str(task or "").lower().strip()
 
-        # OpenAI is optional.
-        # QAI must continue working without it.
-        if not self.openai_available():
-            return "local"
-
-        # Complex tasks should use the reasoning model.
-        if self.is_comparison(task):
-            return "local"
+        # =================================================
+        # QAI LOCAL-FIRST POLICY
+        # =================================================
+        # The Router owns provider selection.
+        # Local is the default generation provider.
+        #
+        # External providers may be enabled later without
+        # changing Brain or Gateway.
 
         if self.is_vision_or_advanced_analysis(task):
+            if self.openai_available():
+                return "openai"
             return "local"
 
         if self.is_programming(task):
+            if self.openai_available():
+                return "openai"
             return "local"
 
         if self.is_reasoning(task):
+            if self.openai_available():
+                return "openai"
             return "local"
 
-        # Local engine remains the default for known Quavron knowledge.
+        if self.is_comparison(task):
+            if self.openai_available():
+                return "openai"
+            return "local"
+
         return "local"
 
 

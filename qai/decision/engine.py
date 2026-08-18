@@ -1,8 +1,8 @@
-from rag.engine import engine as rag
+from qai.rag.engine import engine as rag
 
-from llm.gateway import gateway
+from qai.llm.gateway import gateway
 
-from llm.router import router
+from qai.llm.router import router
 
 
 class DecisionEngine:

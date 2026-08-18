@@ -1,4 +1,4 @@
-from llm.drivers.registry import registry
+from qai.llm.drivers.registry import registry
 
 
 class LLMGateway:

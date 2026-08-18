@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from users.profile import profile
+from qai.users.profile import profile
 
 
 class ActivityTracker:

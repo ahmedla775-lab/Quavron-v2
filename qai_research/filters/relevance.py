@@ -6,13 +6,22 @@ from qai_research.core.models import SearchResult
 
 class RelevanceFilter:
     """
-    بوابة الصلة النهائية لنتائج البحث.
+    حساب وترتيب صلة نتائج البحث.
 
-    Discovery مسؤول عن صحة محرك البحث.
-    هذا المكون مسؤول عن سؤال المستخدم نفسه.
+    Discovery مسؤول عن اكتشاف وجمع المادة الخام.
 
-    القاعدة المهمة:
-    لا نقبل نتيجة لمجرد وجود تطابق جزئي ضعيف.
+    هذا المكون يحسب إشارة الصلة والترتيب فقط.
+
+    القاعدة المعمارية المهمة:
+    Relevance لا تحكم على صحة المعرفة ولا تحذف المادة الخام.
+
+    QAI هو المسؤول لاحقًا عن:
+    - فهم المحتوى
+    - تقييم الأدلة
+    - المقارنة بين المصادر
+    - الاستدلال
+    - التحقق من الادعاءات
+    - تحديد المعرفة المناسبة للإجابة النهائية
     """
 
     STOPWORDS = {
@@ -107,6 +116,44 @@ class RelevanceFilter:
 
         return tokens
 
+    def score(
+        self,
+        query: str,
+        result: SearchResult,
+        query_variants=None,
+    ) -> float:
+        """Public scoring API for diagnostics and external callers."""
+
+        query = str(query or "").strip()
+
+        candidate_queries = [query]
+
+        for variant in (query_variants or []):
+            variant = str(variant or "").strip()
+
+            if variant and variant not in candidate_queries:
+                candidate_queries.append(variant)
+
+        best_score = 0.0
+
+        for candidate_query in candidate_queries:
+            candidate_tokens = self._tokens(candidate_query)
+            candidate_normalized = self._normalize(candidate_query)
+
+            if not candidate_tokens:
+                continue
+
+            candidate_score = self._score(
+                candidate_tokens,
+                candidate_normalized,
+                result,
+            )
+
+            if candidate_score > best_score:
+                best_score = candidate_score
+
+        return best_score
+
     # =========================================================
     # FILTER
     # =========================================================
@@ -191,8 +238,13 @@ class RelevanceFilter:
 
             result.relevance = score
 
-            if score >= self.minimum_score:
-                accepted.append(result)
+            # Relevance is a ranking signal only.
+            #
+            # Discovery collects raw external research material.
+            # Relevance must NOT delete weak results.
+            # QAI evaluates evidence, compares sources, reasons,
+            # verifies claims, and decides what belongs in the answer.
+            accepted.append(result)
 
         accepted.sort(
             key=lambda item: (

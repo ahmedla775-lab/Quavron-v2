@@ -1,8 +1,8 @@
-from users.profile import profile
+from qai.users.profile import profile
 
-from users.activity.tracker import tracker
+from qai.users.activity.tracker import tracker
 
-from memory.memory import memory
+from qai.memory.memory import memory
 
 
 class UserContextBuilder:

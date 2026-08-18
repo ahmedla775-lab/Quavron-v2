@@ -32,7 +32,7 @@ registry = DriverRegistry()
 # ==========================================
 
 try:
-    from llm.drivers.local import driver as local_driver
+    from qai.llm.drivers.local import driver as local_driver
     registry.register(local_driver)
 
 except Exception as e:

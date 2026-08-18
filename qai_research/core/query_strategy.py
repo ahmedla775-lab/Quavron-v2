@@ -21,9 +21,11 @@ class QueryStrategy:
         self,
         query: str,
         language: Optional[str] = None,
+        context: Optional[dict] = None,
     ) -> List[QueryVariant]:
 
         query = str(query or "").strip()
+        context = context if isinstance(context, dict) else {}
 
         if not query:
             return []
@@ -54,6 +56,139 @@ class QueryStrategy:
                 purpose="language_specific",
                 priority=3,
             )
+
+        # ---------------------------------------------------------
+        # Understanding semantic context
+        # ---------------------------------------------------------
+        # QueryStrategy remains independent from QAI.
+        #
+        # ResearchBridge adapts the Understanding Contract into
+        # this generic context dictionary.
+        #
+        # Existing query variants are preserved. These variants
+        # simply add semantic signals extracted upstream.
+        # ---------------------------------------------------------
+
+        context = (
+            context
+            if isinstance(context, dict)
+            else {}
+        )
+
+        def _context_values(key):
+            value = context.get(key, [])
+
+            if value is None:
+                return []
+
+            if isinstance(value, (list, tuple, set)):
+                values = list(value)
+            else:
+                values = [value]
+
+            result = []
+
+            for item in values:
+                if isinstance(item, dict):
+                    item = (
+                        item.get("name")
+                        or item.get("value")
+                        or item.get("text")
+                    )
+
+                item = str(item or "").strip()
+
+                if item and item not in result:
+                    result.append(item)
+
+            return result
+
+        subject = context.get("subject")
+        target = context.get("target")
+
+        subject = (
+            str(subject).strip()
+            if subject is not None
+            else ""
+        )
+
+        target = (
+            str(target).strip()
+            if target is not None
+            else ""
+        )
+
+        entities = _context_values("entities")
+        relations = _context_values("relations")
+        keywords = _context_values("keywords")
+        domains = _context_values("domain")
+
+        if subject and subject not in entities:
+            entities.insert(0, subject)
+
+        # Entity-focused discovery.
+        for entity in entities:
+            self._add(
+                variants,
+                query=entity,
+                language=language,
+                purpose="semantic_entity",
+                priority=2,
+            )
+
+        # Entity + relation discovery.
+        for entity in entities:
+            for relation in relations[:3]:
+                self._add(
+                    variants,
+                    query=f"{entity} {relation}",
+                    language=language,
+                    purpose="semantic_entity_relation",
+                    priority=3,
+                )
+
+        # Subject + target discovery.
+        if subject and target:
+            self._add(
+                variants,
+                query=f"{subject} {target}",
+                language=language,
+                purpose="semantic_subject_target",
+                priority=3,
+            )
+
+        # Subject + important keywords.
+        if subject and keywords:
+            semantic_keywords = " ".join(
+                keywords[:4]
+            )
+
+            self._add(
+                variants,
+                query=f"{subject} {semantic_keywords}",
+                language=language,
+                purpose="semantic_subject_keywords",
+                priority=4,
+            )
+
+        # Domain-focused discovery.
+        for domain in domains:
+            if subject:
+                self._add(
+                    variants,
+                    query=f"{subject} {domain}",
+                    language=language,
+                    purpose="semantic_domain",
+                    priority=4,
+                )
+            else:
+                self._add(
+                    variants,
+                    query=f"{query} {domain}",
+                    language=language,
+                    purpose="semantic_domain",
+                    priority=5,
+                )
 
         # العربية
         # لا نضيف كلمات عامة مثل "معلومات" و"شرح" لأنها
@@ -141,6 +276,155 @@ class QueryStrategy:
 
         # Quavron / company-oriented queries
         lowered = query.lower()
+
+        # ---------------------------------------------------------
+        # Technical / programming discovery
+        # ---------------------------------------------------------
+        # Do NOT translate Arabic technical questions word-by-word.
+        # Build semantic search queries instead.
+        #
+        # Example:
+        #   كيف أكتب دالة Python لحساب مجموع رقمين؟
+        #
+        # should become:
+        #   Python function add two numbers
+        #   Python add two numbers example
+        #   Python def add two numbers
+        #
+        # rather than:
+        #   function sum two numbers number how to write how
+        # ---------------------------------------------------------
+
+        technical_query = str(query or "").strip()
+        technical_lower = technical_query.lower()
+
+        technical_detected = any(
+            term in technical_query
+            for term in (
+                "python",
+                "دالة",
+                "دوال",
+                "مجموع",
+                "جمع",
+                "رقمين",
+                "رقم",
+                "كود",
+                "برمجة",
+                "برمجية",
+                "خطأ",
+                "مشكلة",
+                "كيف أكتب",
+                "كيفية",
+            )
+        )
+
+        if technical_detected:
+
+            # -----------------------------------------------------
+            # Python-specific semantic discovery
+            # -----------------------------------------------------
+
+            if "python" in technical_lower:
+
+                has_function = any(
+                    term in technical_query
+                    for term in ("دالة", "دوال", "function", "functions")
+                )
+
+                has_sum = any(
+                    term in technical_query
+                    for term in (
+                        "مجموع",
+                        "جمع",
+                        "sum",
+                        "addition",
+                        "add",
+                    )
+                )
+
+                has_two_numbers = any(
+                    term in technical_query
+                    for term in (
+                        "رقمين",
+                        "two numbers",
+                        "2 numbers",
+                    )
+                )
+
+                if has_function and has_sum and has_two_numbers:
+
+                    technical_variants = [
+                        (
+                            "Python function add two numbers",
+                            "technical_python_add",
+                            5,
+                        ),
+                        (
+                            "Python add two numbers example",
+                            "technical_python_add_example",
+                            6,
+                        ),
+                        (
+                            "Python def add two numbers",
+                            "technical_python_def_add",
+                            7,
+                        ),
+                        (
+                            "Python function sum two numbers example",
+                            "technical_python_sum_example",
+                            8,
+                        ),
+                    ]
+
+                    for (
+                        technical_query_variant,
+                        technical_purpose,
+                        technical_priority,
+                    ) in technical_variants:
+
+                        self._add(
+                            variants,
+                            query=technical_query_variant,
+                            language="en",
+                            purpose=technical_purpose,
+                            priority=technical_priority,
+                        )
+
+                else:
+
+                    self._add(
+                        variants,
+                        query="Python function example",
+                        language="en",
+                        purpose="technical_python_function",
+                        priority=5,
+                    )
+
+                    self._add(
+                        variants,
+                        query="Python programming example",
+                        language="en",
+                        purpose="technical_python_programming",
+                        priority=6,
+                    )
+
+            else:
+                # Generic programming fallback.
+                self._add(
+                    variants,
+                    query="programming code example",
+                    language="en",
+                    purpose="technical_programming",
+                    priority=5,
+                )
+
+                self._add(
+                    variants,
+                    query="programming tutorial example",
+                    language="en",
+                    purpose="technical_programming_example",
+                    priority=6,
+                )
 
         if "quavron" in lowered:
             self._add(

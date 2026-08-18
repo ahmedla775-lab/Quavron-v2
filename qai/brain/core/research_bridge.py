@@ -813,11 +813,108 @@ class ResearchBridge:
     def _research_result_to_evidence(self, result):
         return _result_to_evidence(result)
 
+
+    def research_documents(
+        self,
+        question,
+        language="ar",
+        max_results=8,
+        include_wikipedia=True,
+    ):
+        """
+        Unified research entry point for QAI.
+
+        Returns normalized document-like dictionaries so RAG can consume
+        QAI Research evidence without depending on the legacy WebResearch
+        implementation.
+        """
+        try:
+            result = self.research(
+                question=question,
+                language=language,
+                max_results=max_results,
+                include_wikipedia=include_wikipedia,
+            )
+        except TypeError:
+            # Compatibility with older research() signatures.
+            result = self.research(question)
+
+        if result is None:
+            return []
+
+        if isinstance(result, dict):
+            candidates = (
+                result.get("documents")
+                or result.get("results")
+                or result.get("search_results")
+                or []
+            )
+        elif isinstance(result, (list, tuple)):
+            candidates = result
+        else:
+            candidates = []
+
+        documents = []
+
+        for item in candidates:
+            if isinstance(item, dict):
+                data = dict(item)
+            else:
+                data = {
+                    key: getattr(item, key, None)
+                    for key in (
+                        "title",
+                        "url",
+                        "snippet",
+                        "content",
+                        "text",
+                        "source",
+                        "engine",
+                        "rank",
+                    )
+                }
+
+            text_value = (
+                data.get("content")
+                or data.get("text")
+                or data.get("snippet")
+                or ""
+            )
+
+            url = str(data.get("url") or "").strip()
+
+            if not text_value and not url:
+                continue
+
+            documents.append(
+                {
+                    **data,
+                    "text": str(text_value),
+                    "content": str(text_value),
+                    "url": url,
+                    "source": (
+                        data.get("source")
+                        or data.get("engine")
+                        or "qai_research"
+                    ),
+                    "research_source": "qai_research",
+                }
+            )
+
+        print(
+            "[ResearchBridge] normalized research documents:",
+            len(documents),
+        )
+
+        return documents
+
+
     def research(
         self,
         question: str,
         max_results: int = 8,
         max_pages: int = 5,
+        understanding=None,
     ) -> Dict[str, Any]:
 
         question = str(
@@ -838,13 +935,122 @@ class ResearchBridge:
         )
 
         try:
+            # -------------------------------------------------
+            # Understanding → Research adapter
+            # -------------------------------------------------
+            # Research receives only the semantic information
+            # useful for evidence discovery. The complete
+            # Understanding Contract stays inside QAI Brain.
+            #
+            # The original question remains the fallback query.
+            # When a valid normalized form exists, it becomes
+            # the canonical research query.
+            # -------------------------------------------------
+
+            understanding_data = (
+                understanding
+                if isinstance(understanding, dict)
+                else {}
+            )
+
+            normalized_query = str(
+                understanding_data.get("normalized")
+                or question
+                or ""
+            ).strip()
+
+            research_language = (
+                understanding_data.get("language")
+                or "ar"
+            )
+
+            research_context = {
+                "intent": understanding_data.get("intent"),
+                "domain": understanding_data.get("domain"),
+                "entities": understanding_data.get(
+                    "entities",
+                    [],
+                ),
+                "relations": understanding_data.get(
+                    "relations",
+                    [],
+                ),
+                "temporal": understanding_data.get(
+                    "temporal",
+                    [],
+                ),
+                "numbers": understanding_data.get(
+                    "numbers",
+                    [],
+                ),
+                "locations": understanding_data.get(
+                    "locations",
+                    [],
+                ),
+                "subject": understanding_data.get("subject"),
+                "target": understanding_data.get("target"),
+                "keywords": understanding_data.get(
+                    "keywords",
+                    [],
+                ),
+            }
+
             request = ResearchRequest(
-                query=question,
+                query=normalized_query,
+                language=research_language,
                 max_results=max_results,
                 max_pages=max_pages,
+                metadata={
+                    "research_context": research_context,
+                },
+            )
+
+            print(
+                "[ResearchBridge] research query:",
+                request.query,
+            )
+
+            print(
+                "[ResearchBridge] research language:",
+                request.language,
+            )
+
+            print(
+                "[ResearchBridge] understanding context:",
+                research_context,
+            )
+
+            print(
+                "[ResearchBridge] CALLING researcher.search()"
+            )
+            print(
+                "[ResearchBridge] request.query:",
+                request.query
+            )
+            print(
+                "[ResearchBridge] request.max_results:",
+                request.max_results
             )
 
             raw = self.researcher.search(request)
+
+            print(
+                "[ResearchBridge] RAW RESULT TYPE:",
+                type(raw).__name__
+            )
+            print(
+                "[ResearchBridge] RAW RESULT COUNT:",
+                len(raw) if isinstance(raw, (list, tuple, dict)) else "N/A"
+            )
+
+            if isinstance(raw, (list, tuple)):
+                for i, item in enumerate(raw[:5], 1):
+                    print(
+                        f"[ResearchBridge] RAW[{i}]:",
+                        getattr(item, "url", None),
+                        getattr(item, "title", None)
+                    )
+
 
         except TypeError:
             try:
@@ -1020,6 +1226,7 @@ class ResearchBridge:
             # Explicit count for downstream consumers/debugging.
             "document_count": len(documents),
             "selected_count": len(selected_documents),
+            "evidence_count": len(selected_documents),
 
             # Final factual context built ONLY from selected evidence.
             "context": context,

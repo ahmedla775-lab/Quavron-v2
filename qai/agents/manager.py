@@ -1,4 +1,4 @@
-from knowledge.search.search import search_engine
+from qai.knowledge.search.search import search_engine
 
 
 class AgentManager:

@@ -1,6 +1,6 @@
-from teachers.manager import teacher_manager
-from learning.evaluator import evaluator
-from learning.datasets.manager import LearningDataset
+from qai.teachers.manager import teacher_manager
+from qai.learning.evaluator import evaluator
+from qai.learning.datasets.manager import LearningDataset
 
 
 class LearningEngine:

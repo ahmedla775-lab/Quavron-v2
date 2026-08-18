@@ -1,3 +1,3 @@
-from brain.core.brain import brain, Brain
+from qai.brain.core.brain import brain, Brain
 
 __all__ = ["brain", "Brain"]

@@ -1,6 +1,6 @@
-from learning.evaluator import LearningEvaluator
-from learning.gate import learning_gate
-from learning.engine import LearningEngine
+from qai.learning.evaluator import LearningEvaluator
+from qai.learning.gate import learning_gate
+from qai.learning.engine import LearningEngine
 
 
 class LearningBridge:

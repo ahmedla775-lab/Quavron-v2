@@ -3,7 +3,7 @@ import json
 import urllib.request
 import urllib.error
 
-from llm.drivers.base import BaseDriver
+from qai.llm.drivers.base import BaseDriver
 
 
 NO_ANSWER = "لا أملك حاليًا معلومات موثوقة كافية للإجابة عن هذا السؤال."
@@ -52,11 +52,24 @@ class LocalDriver(BaseDriver):
         }
 
         def tokens(value):
+            value = str(value or "").lower()
+
+            # Arabic normalization for question/evidence matching.
+            value = value.translate(str.maketrans({
+                "أ": "ا",
+                "إ": "ا",
+                "آ": "ا",
+                "ٱ": "ا",
+                "ة": "ه",
+                "ى": "ي",
+            }))
+
             value = _re.sub(
                 r"[^\w\u0600-\u06ff]+",
                 " ",
-                str(value or "").lower(),
+                value,
             )
+
             return {
                 token
                 for token in value.split()
@@ -155,8 +168,11 @@ class LocalDriver(BaseDriver):
             except Exception:
                 existing_relevance = 0.0
 
-            score += min(existing_relevance, 1.0)
+            # Preserve the QAI relevance scale (0..100).
 
+            # The rest of LocalDriver uses relevance values such as 25, 60, 80, 95 and 100.
+
+            score += min(existing_relevance, 100.0) * 0.05
             # -----------------------------------------------------
             # Find answer-focused sentences
             # -----------------------------------------------------
@@ -395,7 +411,15 @@ class LocalDriver(BaseDriver):
                         "إذا كان السؤال عن مفهوم، ركز على المفهوم فقط. "
                         "لا تخلط بين الأشخاص أو الأماكن أو المفاهيم. "
                         "لا تخترع معلومات غير مدعومة. "
-                        "إذا كانت المعلومات غير كافية، صرّح بذلك. "
+                        "إذا كانت المعلومات غير كافية، صرّح بذلك بوضوح ولا تخمّن. "
+                        "إذا لم توجد أدلة، فلا تخترع أي معلومة أو رقم أو وحدة أو اسم. "
+                        "في السؤال الواقعي المباشر، إذا لم توجد أدلة كافية، صرّح بعدم كفاية المعلومات بدل التخمين. "
+                        "لا تستخدم أرقامًا أو وحدات من الذاكرة غير الموثوقة. "
+                        "إذا وُجدت أدلة، اجعل الإجابة متوافقة معها ولا تغيّر الأرقام أو الوحدات أو الأسماء الواردة فيها. "
+                        "تحقق من الأرقام والوحدات والعلاقات المنطقية قبل الإجابة. "
+                        "في الأسئلة العلمية، لا تخلط بين السرعة والزمن والمسافة أو بين وحدات القياس المختلفة. "
+                        "إذا كان السؤال يطلب مقارنة، اذكر طرفي المقارنة بوضوح وفسّر الفرق بينهما. "
+                        "إذا كان السؤال يطلب شرحاً، قدّم شرحاً منظماً ومختصراً مع السبب والنتيجة. "
                         "أجب بالعربية الواضحة ما لم يطلب المستخدم لغة أخرى. "
                         "ابدأ بالإجابة مباشرة. "
                         "لا تعرض source أو title أو url أو Evidence أو JSON. "
@@ -411,7 +435,7 @@ class LocalDriver(BaseDriver):
             "temperature": 0.15,
             "top_p": 0.85,
             "repeat_penalty": 1.15,
-            "max_tokens": 180,
+            "max_tokens": 384,
         }
 
         data = json.dumps(
@@ -3349,176 +3373,6 @@ class LocalDriver(BaseDriver):
         )
 
 
-        # =========================================================
-        # APPROVED QAI KNOWLEDGE GATE
-        # =========================================================
-        # Never let the local LLM invent an answer when an
-        # explicitly approved QAI learning item is available.
-        _approved_qai_doc = None
-
-        for _qai_doc in documents:
-            if not isinstance(_qai_doc, dict):
-                continue
-
-            _qai_source = str(
-                _qai_doc.get("source", "")
-                or ""
-            ).strip().lower()
-
-            _qai_approved = _qai_doc.get("approved") is True
-
-            try:
-                _qai_confidence = float(
-                    _qai_doc.get("confidence", 0) or 0
-                )
-            except Exception:
-                _qai_confidence = 0.0
-
-            _qai_text = str(
-                _qai_doc.get("text", "")
-                or _qai_doc.get("content", "")
-                or _qai_doc.get("knowledge", "")
-                or ""
-            ).strip()
-
-            if (
-                _qai_source == "qai_learning"
-                and _qai_approved
-                and _qai_confidence >= 1.0
-                and _qai_text
-            ):
-                _approved_qai_doc = _qai_doc
-                break
-
-        if _approved_qai_doc is not None:
-            _approved_answer = str(
-                _approved_qai_doc.get("text", "")
-                or _approved_qai_doc.get("content", "")
-                or _approved_qai_doc.get("knowledge", "")
-                or ""
-            ).strip()
-
-            print(
-                "[LocalDriver] APPROVED QAI KNOWLEDGE DIRECT ANSWER:",
-                repr(_approved_answer),
-            )
-
-            return {
-                "provider": "local",
-                "status": "completed",
-                "source": "qai_learning",
-                "confidence": 1.0,
-                "relevance": _approved_qai_doc.get(
-                    "relevance",
-                    100,
-                ),
-                "answer": _approved_answer,
-                "message": None,
-            }
-
-
-        documents = self._clean_documents(
-            prompt,
-            documents,
-        )
-
-        # ============================================================
-        # TRUSTED QAI LEARNING GATE
-        # Supervisor-approved knowledge is returned directly.
-        # ============================================================
-        for _trusted_doc in documents:
-            if not isinstance(_trusted_doc, dict):
-                continue
-
-            _trusted_source = str(
-                _trusted_doc.get("source", "")
-            ).strip().lower()
-
-            _trusted_approved = (
-                _trusted_doc.get("approved") is True
-            )
-
-            _trusted_teacher = str(
-                _trusted_doc.get("teacher", "")
-            ).strip().lower()
-
-            try:
-                _trusted_confidence = float(
-                    _trusted_doc.get("confidence", 0)
-                )
-            except (TypeError, ValueError):
-                _trusted_confidence = 0.0
-
-            _trusted_answer = str(
-                _trusted_doc.get("text", "")
-                or _trusted_doc.get("content", "")
-                or _trusted_doc.get("knowledge", "")
-                or ""
-            ).strip()
-
-            if (
-                _trusted_source == "qai_learning"
-                and _trusted_approved
-                and _trusted_teacher == "supervisor"
-                and _trusted_confidence >= 1.0
-                and _trusted_answer
-            ):
-                print(
-                    "[LocalDriver] TRUSTED QAI KNOWLEDGE DIRECT ANSWER"
-                )
-                print(
-                    "[LocalDriver] "
-                    "source=qai_learning "
-                    "approved=True "
-                    "teacher=supervisor"
-                )
-
-                return {
-                    "provider": "local",
-                    "status": "completed",
-                    "source": "qai_learning",
-                    "confidence": 1.0,
-                    "relevance": _trusted_doc.get(
-                        "relevance",
-                        100,
-                    ),
-                    "answer": _trusted_answer,
-                    "message": None,
-                }
-
-        # =========================================================
-        # APPROVED QAI LEARNING DIRECT ANSWER
-        # =========================================================
-        # Supervisor-approved learning is trusted knowledge.
-        # Do not let the small local LLM rewrite or hallucinate
-        # facts around an approved answer.
-        for _doc in documents:
-            if (
-                _doc.get("source") == "qai_learning"
-                and _doc.get("approved") is True
-                and _doc.get("teacher") == "supervisor"
-                and float(_doc.get("confidence", 0) or 0) >= 1.0
-            ):
-                _approved_answer = str(
-                    _doc.get("text", "")
-                ).strip()
-
-                if _approved_answer:
-                    print(
-                        "[LocalDriver] APPROVED QAI KNOWLEDGE DIRECT ANSWER"
-                    )
-
-                    return {
-                        "provider": "local",
-                        "status": "completed",
-                        "source": "qai_learning",
-                        "confidence": 1.0,
-                        "relevance": _doc.get("relevance", 100),
-                        "answer": _approved_answer,
-                        "message": None,
-                    }
-
-
         if not documents:
 
             # =========================================================
@@ -3532,7 +3386,7 @@ class LocalDriver(BaseDriver):
             # external research or the local LLM.
             # =========================================================
             try:
-                from rag.retriever import retriever as _direct_retriever
+                from qai.rag.retriever import retriever as _direct_retriever
 
                 _knowledge_results = _direct_retriever.retrieve(
                     prompt,
@@ -3623,149 +3477,152 @@ class LocalDriver(BaseDriver):
             # =========================================================
             # DIRECT RESEARCH FALLBACK
             # =========================================================
-            # Local RAG is empty. Connect directly to ResearchBridge.
-            # This is intentionally inside LocalDriver.ask() so that
-            # direct LocalDriver tests and the API path use the same
-            # research fallback.
-            try:
-                import sys
-                from pathlib import Path as _Path
+            # Research decisions are controlled by Brain/Orchestrator.
+            # LocalDriver must not independently trigger ResearchBridge.
+            if False:
+                # Local RAG is empty. Connect directly to ResearchBridge.
+                # This is intentionally inside LocalDriver.ask() so that
+                # direct LocalDriver tests and the API path use the same
+                # research fallback.
+                try:
+                    import sys
+                    from pathlib import Path as _Path
 
-                _quavron_root = _Path(__file__).resolve().parents[2]
+                    _quavron_root = _Path(__file__).resolve().parents[2]
 
-                if str(_quavron_root) not in sys.path:
-                    sys.path.insert(0, str(_quavron_root))
+                    if str(_quavron_root) not in sys.path:
+                        sys.path.insert(0, str(_quavron_root))
 
-                from brain.core.research_bridge import ResearchBridge
+                    from brain.core.research_bridge import ResearchBridge
 
-                print(
-                    "[LocalDriver] RAG empty -> "
-                    "activating ResearchBridge"
-                )
+                    print(
+                        "[LocalDriver] RAG empty -> "
+                        "activating ResearchBridge"
+                    )
 
-                bridge = ResearchBridge()
+                    bridge = ResearchBridge()
 
-                research_result = bridge.research(
-                    prompt,
-                    max_results=8,
-                    max_pages=5,
-                )
+                    research_result = bridge.research(
+                        prompt,
+                        max_results=8,
+                        max_pages=5,
+                    )
 
-                print(
-                    "[LocalDriver] ResearchBridge success:",
-                    bool(
-                        research_result.get("success")
-                    ),
-                )
+                    print(
+                        "[LocalDriver] ResearchBridge success:",
+                        bool(
+                            research_result.get("success")
+                        ),
+                    )
 
-                research_documents = (
-                    research_result.get("documents", [])
-                    or []
-                )
+                    research_documents = (
+                        research_result.get("documents", [])
+                        or []
+                    )
 
-                print(
-                    "[LocalDriver] Research documents:",
-                    len(research_documents),
-                )
+                    print(
+                        "[LocalDriver] Research documents:",
+                        len(research_documents),
+                    )
 
-                if research_documents:
-                    research_context_parts = []
+                    if research_documents:
+                        research_context_parts = []
 
-                    for doc in research_documents:
-                        if not isinstance(doc, dict):
-                            continue
+                        for doc in research_documents:
+                            if not isinstance(doc, dict):
+                                continue
 
-                        source = str(
-                            doc.get(
-                                "source",
-                                "qai_research",
+                            source = str(
+                                doc.get(
+                                    "source",
+                                    "qai_research",
+                                )
+                                or "qai_research"
+                            ).strip()
+
+                            title = str(
+                                doc.get("title", "")
+                                or ""
+                            ).strip()
+
+                            url = str(
+                                doc.get("url", "")
+                                or ""
+                            ).strip()
+
+                            content = str(
+                                doc.get("content")
+                                or doc.get("text")
+                                or doc.get("snippet")
+                                or ""
+                            ).strip()
+
+                            if not content:
+                                continue
+
+                            research_context_parts.append(
+                                "\n".join(
+                                    [
+                                        f"source: {source}",
+                                        f"title: {title}",
+                                        f"url: {url}",
+                                        f"content: {content}",
+                                    ]
+                                )
                             )
-                            or "qai_research"
-                        ).strip()
 
-                        title = str(
-                            doc.get("title", "")
-                            or ""
-                        ).strip()
-
-                        url = str(
-                            doc.get("url", "")
-                            or ""
-                        ).strip()
-
-                        content = str(
-                            doc.get("content")
-                            or doc.get("text")
-                            or doc.get("snippet")
-                            or ""
-                        ).strip()
-
-                        if not content:
-                            continue
-
-                        research_context_parts.append(
-                            "\n".join(
-                                [
-                                    f"source: {source}",
-                                    f"title: {title}",
-                                    f"url: {url}",
-                                    f"content: {content}",
-                                ]
+                        if research_context_parts:
+                            research_context = (
+                                "=== QAI RESEARCH EVIDENCE ===\n"
+                                + "\n\n".join(
+                                    research_context_parts
+                                )
                             )
-                        )
 
-                    if research_context_parts:
-                        research_context = (
-                            "=== QAI RESEARCH EVIDENCE ===\n"
-                            + "\n\n".join(
-                                research_context_parts
+                            if context:
+                                context = (
+                                    str(context).rstrip()
+                                    + "\n\n"
+                                    + research_context
+                                )
+                            else:
+                                context = research_context
+
+                            print(
+                                "[LocalDriver] Research context "
+                                "attached"
                             )
-                        )
 
-                        if context:
-                            context = (
-                                str(context).rstrip()
-                                + "\n\n"
-                                + research_context
+                            documents = self._parse_documents(
+                                context
                             )
-                        else:
-                            context = research_context
 
-                        print(
-                            "[LocalDriver] Research context "
-                            "attached"
-                        )
+                            print(
+                                "[LocalDriver] RAG documents after "
+                                "research:",
+                                len(documents),
+                            )
 
-                        documents = self._parse_documents(
-                            context
-                        )
+                            documents = self._clean_documents(
+                                prompt,
+                                documents,
+                            )
 
-                        print(
-                            "[LocalDriver] RAG documents after "
-                            "research:",
-                            len(documents),
-                        )
+                            print(
+                                "[LocalDriver] Clean research "
+                                "documents:",
+                                len(documents),
+                            )
 
-                        documents = self._clean_documents(
-                            prompt,
-                            documents,
-                        )
+                except Exception as exc:
+                    import traceback
 
-                        print(
-                            "[LocalDriver] Clean research "
-                            "documents:",
-                            len(documents),
-                        )
+                    print(
+                        "[LocalDriver] ResearchBridge ERROR:",
+                        repr(exc),
+                    )
 
-            except Exception as exc:
-                import traceback
-
-                print(
-                    "[LocalDriver] ResearchBridge ERROR:",
-                    repr(exc),
-                )
-
-                traceback.print_exc()
+                    traceback.print_exc()
 
         # =========================================================
         # DIRECT RESEARCH ANSWER
@@ -4197,6 +4054,113 @@ class LocalDriver(BaseDriver):
         # If no documents exist, QAI can still answer from the model.
         # =========================================================
 
+        # =========================================================
+        # APPROVED RAG EVIDENCE DIRECT ANSWER
+        # =========================================================
+        # Supervisor-approved exact learning evidence is authoritative.
+        # Do not allow the local LLM to replace it with invented text.
+        # =========================================================
+
+        try:
+            _approved_evidence = []
+
+            for _doc in documents:
+                if not isinstance(_doc, dict):
+                    continue
+
+                _source = str(
+                    _doc.get("source", "") or ""
+                )
+
+                _approved = (
+                    _doc.get("approved", False) is True
+                )
+
+                try:
+                    _relevance = float(
+                        _doc.get("relevance", 0) or 0
+                    )
+                except (TypeError, ValueError):
+                    _relevance = 0.0
+
+                try:
+                    _confidence = float(
+                        _doc.get("confidence", 0) or 0
+                    )
+                except (TypeError, ValueError):
+                    _confidence = 0.0
+
+                _text = str(
+                    _doc.get("text", "") or ""
+                ).strip()
+
+                if (
+                    _source == "qai_learning"
+                    and _approved
+                    and _confidence >= 1.0
+                    and _relevance >= 95
+                    and _text
+                ):
+                    _approved_evidence.append(_doc)
+
+            if _approved_evidence:
+                _best = _approved_evidence[0]
+
+                _answer = str(
+                    _best.get("text", "") or ""
+                ).strip()
+
+                if _answer:
+                    print(
+                        "[LocalDriver] APPROVED RAG DIRECT ANSWER:",
+                        "relevance=",
+                        _best.get("relevance"),
+                        "confidence=",
+                        _best.get("confidence"),
+                    )
+
+                    return {
+                        "provider": "local",
+                        "status": "completed",
+                        "source": "qai_learning",
+                        "confidence": 1.0,
+                        "relevance": float(
+                            _best.get("relevance", 100) or 100
+                        ),
+                        "answer": _answer,
+                        "message": None,
+                    }
+
+        except Exception as _approved_error:
+            print(
+                "[LocalDriver] Approved evidence direct-answer error:",
+                type(_approved_error).__name__,
+                str(_approved_error),
+            )
+
+        # =========================================================
+        # COMPARISON
+        # =========================================================
+        # Comparison must happen BEFORE local Llama generation.
+        # Otherwise a successful Llama response makes this path
+        # unreachable.
+        if self._is_comparison(prompt):
+            comparison = self._build_comparison(
+                prompt,
+                documents,
+            )
+
+            if comparison:
+                return {
+                    "provider": "local",
+                    "status": "completed",
+                    "source": "local_knowledge",
+                    "confidence": 0.85,
+                    "relevance": 100,
+                    "answer": comparison,
+                    "message": None,
+                }
+
         print(
             "[LocalDriver] Sending request to local llama.cpp:",
             "documents=",
@@ -4230,7 +4194,7 @@ class LocalDriver(BaseDriver):
                     else "local_llama_rag"
                 ),
                 "confidence": (
-                    0.70
+                    0.55
                     if not documents
                     else 0.90
                 ),
@@ -4250,26 +4214,6 @@ class LocalDriver(BaseDriver):
                 "answer": NO_ANSWER,
                 "message": None,
             }
-
-        # =========================================================
-        # COMPARISON
-        # =========================================================
-        if self._is_comparison(prompt):
-            comparison = self._build_comparison(
-                prompt,
-                documents,
-            )
-
-            if comparison:
-                return {
-                    "provider": "local",
-                    "status": "completed",
-                    "source": "local_knowledge",
-                    "confidence": 0.85,
-                    "relevance": 100,
-                    "answer": comparison,
-                    "message": None,
-                }
 
         # =========================================================
         # TRUSTED LOCAL KNOWLEDGE

@@ -1,24 +1,28 @@
 from fastapi import APIRouter
-from brain.core.brain import brain
+from pydantic import BaseModel, Field
+
+from qai.services.ai_service import service
 
 
 router = APIRouter(prefix="/api")
 
 
+class ThinkRequest(BaseModel):
+    user_id: str = Field(min_length=1)
+    message: str = Field(min_length=1)
+
+
 @router.get("/status")
 def status():
-
     return {
         "service": "Quavron AI API",
-        "status": "online"
+        "status": "online",
     }
 
 
-
-@router.get("/think/{message}")
-def think(message: str, user_id: str = "guest"):
-
-    return brain.think(
-        message,
-        user_id=user_id
+@router.post("/think")
+def think(req: ThinkRequest):
+    return service.think(
+        message=req.message,
+        user_id=req.user_id,
     )

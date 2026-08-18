@@ -1,7 +1,7 @@
-from language.dictionary import dictionary
-from policy.engine import engine as policy
-from memory.memory import memory
-from rag.engine import engine as rag
+from qai.language.dictionary import dictionary
+from qai.policy.engine import engine as policy
+from qai.memory.memory import memory
+from qai.rag.engine import engine as rag
 
 
 class Pipeline:

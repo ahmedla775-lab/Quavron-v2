@@ -18,6 +18,8 @@ from qai_research.engines.searxng_discovery import (
     SearXNGInstanceDiscovery,
 )
 
+from qai_research.config.settings import settings
+
 
 class SearXNGPool(SearchEngine):
     """
@@ -45,6 +47,10 @@ class SearXNGPool(SearchEngine):
         self.discovery = SearXNGInstanceDiscovery(
             timeout=timeout,
         )
+
+        self.configured_url = str(
+            getattr(settings, "SEARXNG_URL", "") or ""
+        ).strip().rstrip("/")
 
         self.engines: List[
             SearXNGSearchEngine
@@ -92,22 +98,64 @@ class SearXNGPool(SearchEngine):
 
     def refresh(self) -> int:
         """
-        إعادة بناء قائمة المحركات الصالحة.
+        إعادة بناء قائمة محركات SearXNG.
+
+        الأولوية:
+        1. SEARXNG_URL المعرّف من الإعدادات.
+        2. Discovery كـ fallback.
         """
 
         self.engines = []
         self.last_errors = []
 
-        urls = self.discover()
+        urls = []
+
+        # ---------------------------------------------------------
+        # 1. Configured SearXNG instance
+        # ---------------------------------------------------------
+
+        if self.configured_url:
+            urls.append(self.configured_url)
+
+        # ---------------------------------------------------------
+        # 2. Public discovery fallback
+        # ---------------------------------------------------------
+
+        try:
+            discovered = self.discover()
+
+            for url in discovered:
+                url = str(url or "").strip().rstrip("/")
+
+                if url and url not in urls:
+                    urls.append(url)
+
+        except Exception as exc:
+            self.last_errors.append(
+                f"discovery: {type(exc).__name__}: {exc}"
+            )
+
+        # Limit pool size
+        urls = urls[:self.max_instances]
+
+        # ---------------------------------------------------------
+        # Build engines
+        # ---------------------------------------------------------
 
         for url in urls:
-
-            self.engines.append(
-                SearXNGSearchEngine(
+            try:
+                engine = SearXNGSearchEngine(
                     base_url=url,
                     timeout=self.timeout,
                 )
-            )
+
+                self.engines.append(engine)
+
+            except Exception as exc:
+                self.last_errors.append(
+                    f"engine_init:{url}: "
+                    f"{type(exc).__name__}: {exc}"
+                )
 
         return len(self.engines)
 
@@ -193,6 +241,45 @@ class SearXNGPool(SearchEngine):
                 results.extend(
                     engine_results
                 )
+
+        # ---------------------------------------------------------
+        # Retry once after refreshing instances
+        # ---------------------------------------------------------
+
+        if not results:
+            self.last_errors.append(
+                "All SearXNG engines returned zero results; "
+                "refreshing pool and retrying once."
+            )
+
+            try:
+                self.refresh()
+            except Exception as exc:
+                self.last_errors.append(
+                    f"refresh_retry: "
+                    f"{type(exc).__name__}: {exc}"
+                )
+
+            if self.engines:
+                retry_results = []
+
+                for engine in self.engines:
+                    try:
+                        engine_results = engine.search(
+                            request
+                        )
+
+                        retry_results.extend(
+                            engine_results or []
+                        )
+
+                    except Exception as exc:
+                        self.last_errors.append(
+                            f"retry:{engine.name}: "
+                            f"{type(exc).__name__}: {exc}"
+                        )
+
+                results.extend(retry_results)
 
         return self._deduplicate(
             results

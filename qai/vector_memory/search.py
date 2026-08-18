@@ -1,5 +1,5 @@
 import re
-from vector_memory.store import store
+from qai.vector_memory.store import store
 
 
 class VectorSearch:

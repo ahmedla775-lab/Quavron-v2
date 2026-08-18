@@ -56,11 +56,22 @@ class SourceManager:
         self,
         request: ResearchRequest,
     ) -> Tuple[List[SearchResult], List[str]]:
+        """
+        اكتشاف وتجميع المادة الخام من جميع مصادر البحث.
+
+        القاعدة المعمارية:
+        - Discovery مسؤول عن اكتشاف المادة الخام.
+        - Relevance لا تحكم على صحة المعرفة.
+        - Relevance تستخدم فقط لإعطاء إشارة ترتيب/أولوية.
+        - لا يتم حذف نتيجة خارجية بسبب ضعف صلتها بالسؤال.
+        - لا يتم اعتبار relevance دليلًا على صحة المحتوى.
+        - QAI يقرر لاحقًا ما الذي يمثل دليلًا صالحًا وما الذي يدخل في الإجابة.
+        """
 
         self.errors = []
         self.sources_used = []
 
-        accepted_results = []
+        raw_results = []
 
         for engine in self.engines:
 
@@ -77,43 +88,28 @@ class SourceManager:
                     )
                     continue
 
-                raw_results = engine.search(
+                discovered = engine.search(
                     request
                 )
 
-                if not raw_results:
+                if not discovered:
                     self.errors.append(
                         f"{name}: no results"
                     )
                     continue
 
-                filtered = (
-                    self.relevance_filter.filter(
-                        request.query,
-                        raw_results,
-                    )
-                )
-
-                if not filtered:
-                    self.errors.append(
-                        f"{name}: "
-                        "no relevant results"
-                    )
-                    continue
-
-                accepted_results.extend(
-                    filtered
+                # -------------------------------------------------
+                # RAW DISCOVERY
+                # -------------------------------------------------
+                # كل ما اكتشفه المصدر يبقى مادة خام.
+                # لا relevance gate هنا.
+                raw_results.extend(
+                    discovered
                 )
 
                 self.sources_used.append(
                     name
                 )
-
-                # نستخدم المصدر التالي أيضًا
-                # للحصول على تنوع في المصادر،
-                # لكن نتوقف عند بلوغ الحد المطلوب.
-                if len(accepted_results) >= request.max_results:
-                    break
 
             except Exception as exc:
                 message = (
@@ -124,10 +120,102 @@ class SourceManager:
 
                 self.errors.append(message)
 
+        if not raw_results:
+            return (
+                [],
+                self.errors,
+            )
+
+        # ---------------------------------------------------------
+        # RELEVANCE = RANKING SIGNAL ONLY
+        # ---------------------------------------------------------
+        #
+        # نحسب relevance لترتيب المادة الخام فقط.
+        # إذا أعاد RelevanceFilter نتيجة، نستخدم ترتيبها.
+        # لكن لا نسمح له بتحويل نفسه إلى gate معرفي.
+        #
+        ranked = self.relevance_filter.filter(
+            request.query,
+            raw_results,
+        )
+
+        # حماية معمارية:
+        # إذا كان filter القديم قد أسقط بعض النتائج،
+        # نعيد دمجها من المادة الخام الأصلية.
+        #
+        # الهدف: لا تضيع أي مادة اكتشفها Discovery.
+        ranked_by_url = {
+            str(
+                result.url or ""
+            ).strip().lower(): result
+            for result in ranked
+        }
+
+        final_results = []
+
+        for result in raw_results:
+            key = str(
+                result.url or ""
+            ).strip().lower()
+
+            scored = ranked_by_url.get(key)
+
+            if scored is not None:
+                final_results.append(
+                    scored
+                )
+            else:
+                # النتيجة لم تمر عبر scoring القديم.
+                # تبقى موجودة كمادة خام.
+                result.relevance = float(
+                    getattr(
+                        result,
+                        "relevance",
+                        0.0,
+                    )
+                    or 0.0
+                )
+
+                final_results.append(
+                    result
+                )
+
+        # إزالة التكرار التقني فقط.
+        # هذا لا يعني رفض المعرفة بسبب relevance.
+        final_results = self._deduplicate(
+            final_results
+        )
+
+        # ترتيب المادة الخام حسب relevance كإشارة معالجة فقط.
+        final_results.sort(
+            key=lambda result: (
+                -float(
+                    getattr(
+                        result,
+                        "relevance",
+                        0.0,
+                    )
+                    or 0.0
+                ),
+                -float(
+                    getattr(
+                        result,
+                        "score",
+                        0.0,
+                    )
+                    or 0.0
+                ),
+            )
+        )
+
+        for rank, result in enumerate(
+            final_results,
+            1,
+        ):
+            result.rank = rank
+
         return (
-            self._deduplicate(
-                accepted_results
-            )[: request.max_results],
+            final_results,
             self.errors,
         )
 
