@@ -556,32 +556,45 @@ class LocalDriver(BaseDriver):
         """
         Parse RAG context into normalized documents.
 
-        External research is normalized to source=qai_research so
-        LocalDriver.ask can never confuse web research with trusted
-        local knowledge.
+        Rules:
+        - QAI research is source=qai_research.
+        - USER CONTEXT is never RAG evidence.
+        - Research wrapper is parsed exactly once.
+        - Research content is cut at USER CONTEXT.
+        - Generic/local parsing never receives research blocks.
+        - Existing JSON/list document support is preserved.
         """
         if not context:
             return []
 
         documents = []
 
-        # ---------------------------------------------------------
-        # Existing structured document support
-        # ---------------------------------------------------------
+        # =========================================================
+        # 1. STRUCTURED DOCUMENTS
+        # =========================================================
+
+        raw_documents = None
+
         if isinstance(context, list):
             raw_documents = context
-        else:
-            raw_documents = None
 
-            # Try JSON first.
+        elif isinstance(context, dict):
+            for key in (
+                "documents",
+                "results",
+                "sources",
+                "data",
+            ):
+                value = context.get(key)
+                if isinstance(value, list):
+                    raw_documents = value
+                    break
+
+        elif isinstance(context, str):
             try:
                 import json
 
-                parsed = json.loads(
-                    context
-                    if isinstance(context, str)
-                    else str(context)
-                )
+                parsed = json.loads(context)
 
                 if isinstance(parsed, list):
                     raw_documents = parsed
@@ -603,53 +616,69 @@ class LocalDriver(BaseDriver):
                 raw_documents = None
 
         if raw_documents is not None:
+
             for item in raw_documents:
-                if isinstance(item, dict):
-                    doc = dict(item)
 
-                    source = str(
-                        doc.get("source", "")
-                        or doc.get("provider", "")
-                        or doc.get("type", "")
-                        or ""
-                    ).strip().lower()
+                if not isinstance(item, dict):
+                    continue
 
-                    # Normalize all external research aliases.
-                    if source in {
-                        "research",
-                        "qai_research",
-                        "web_research",
-                        "external_research",
-                        "web",
-                        "search",
-                    }:
-                        doc["source"] = "qai_research"
+                doc = dict(item)
 
-                        # Preserve useful research fields.
-                        if not doc.get("content"):
-                            for key in (
-                                "snippet",
-                                "text",
-                                "description",
-                                "answer",
-                            ):
-                                if doc.get(key):
-                                    doc["content"] = str(
-                                        doc[key]
-                                    ).strip()
-                                    break
+                source = str(
+                    doc.get("source", "")
+                    or doc.get("provider", "")
+                    or doc.get("type", "")
+                    or ""
+                ).strip().lower()
 
+                if source in {
+                    "research",
+                    "qai_research",
+                    "web_research",
+                    "external_research",
+                    "web",
+                    "search",
+                }:
+                    doc["source"] = "qai_research"
+
+                    if not doc.get("content"):
+                        for key in (
+                            "snippet",
+                            "text",
+                            "description",
+                            "answer",
+                        ):
+                            if doc.get(key):
+                                doc["content"] = str(
+                                    doc[key]
+                                ).strip()
+                                break
+
+                # Structured USER CONTEXT must never enter RAG.
+                text_for_check = str(
+                    doc.get("text", "")
+                    or doc.get("content", "")
+                    or ""
+                )
+
+                if "=== USER CONTEXT ===" in text_for_check:
+                    text_for_check = text_for_check.split(
+                        "=== USER CONTEXT ===",
+                        1,
+                    )[0].rstrip()
+
+                    doc["content"] = text_for_check
+                    doc["text"] = text_for_check
+
+                if text_for_check:
                     documents.append(doc)
 
-        # ---------------------------------------------------------
-        # Text context parser
-        # ---------------------------------------------------------
-
-        # ---------------------------------------------------------
-        # Text context parsing
-        # ---------------------------------------------------------
+        # =========================================================
+        # 2. TEXT CONTEXT
+        # =========================================================
 
         if not documents:
+
             raw = (
                 context
                 if isinstance(context, str)
@@ -658,98 +687,45 @@ class LocalDriver(BaseDriver):
 
             import re
 
-            # Research metadata blocks.
+            # -----------------------------------------------------
+            # USER CONTEXT boundary
+            # -----------------------------------------------------
+            # Everything from this marker onward is NOT evidence.
+            # This is intentionally done BEFORE research parsing.
+            # -----------------------------------------------------
+
+            user_context_match = re.search(
+                r"(?is)={2,}\s*USER\s+CONTEXT\s*={2,}",
+                raw,
+            )
+
+            if user_context_match:
+                evidence_raw = raw[
+                    :user_context_match.start()
+                ].rstrip()
+            else:
+                evidence_raw = raw
+
+            # -----------------------------------------------------
+            # QAI RESEARCH EVIDENCE
+            # -----------------------------------------------------
+
             research_pattern = re.compile(
-                r"\[research_source=([^\]]+)\]"
-                r"(.*?)(?=\[research_source=|\Z)",
+                r"={2,}\s*QAI\s+RESEARCH\s+EVIDENCE\s*={2,}"
+                r"(.*?)"
+                r"(?=={2,}\s*QAI\s+RESEARCH\s+EVIDENCE\s*={2,}|\Z)",
                 re.IGNORECASE | re.DOTALL,
             )
 
-            matches = list(
-                research_pattern.finditer(raw)
+            research_matches = list(
+                research_pattern.finditer(evidence_raw)
             )
 
-            for match in matches:
-                source_value = (
-                    match.group(1)
-                    .strip()
-                )
+            research_spans = []
 
-                content = (
-                    match.group(2)
-                    .strip()
-                )
+            for match in research_matches:
 
-                documents.append(
-                    {
-                        "source": "qai_research",
-                        "research_source": source_value,
-                        "content": content,
-                        "text": content,
-                    }
-                )
-
-            # Generic document blocks.
-            if not documents:
-                chunks = re.split(
-                    r"\n\s*\n+",
-                    raw,
-                )
-
-                for chunk in chunks:
-                    chunk = chunk.strip()
-
-                    if not chunk:
-                        continue
-
-                    source = "local"
-
-                    lower = chunk.lower()
-
-                    if any(
-                        marker in lower
-                        for marker in (
-                            "research_source=",
-                            "source=research",
-                            '"source":"research"',
-                            '"source": "research"',
-                            "source: research",
-                        )
-                    ):
-                        source = "qai_research"
-
-                    documents.append(
-                        {
-                            "source": source,
-                            "content": chunk,
-                            "text": chunk,
-                        }
-                    )
-
-        # ---------------------------------------------------------
-        # Parse QAI RESEARCH EVIDENCE wrapper
-        # ---------------------------------------------------------
-        # ResearchBridge.ask() may attach external research in this form:
-        #
-        # === QAI RESEARCH EVIDENCE ===
-        # source: qai_research
-        # title: ...
-        # url: ...
-        # content: ...
-        #
-        # This block must NEVER be classified as local knowledge.
-        # ---------------------------------------------------------
-        if isinstance(context, str) and "=== QAI RESEARCH EVIDENCE ===" in context:
-            research_blocks = re.split(
-                r"={2,}\s*QAI\s+RESEARCH\s+EVIDENCE\s*={2,}",
-                context,
-                flags=re.IGNORECASE,
-            )
-
-            parsed_research = []
-
-            for block in research_blocks:
-                block = block.strip()
+                block = match.group(1).strip()
 
                 if not block:
                     continue
@@ -779,10 +755,17 @@ class LocalDriver(BaseDriver):
 
                 content = content_match.group(1).strip()
 
+                # Absolute safety boundary.
+                if "=== USER CONTEXT ===" in content:
+                    content = content.split(
+                        "=== USER CONTEXT ===",
+                        1,
+                    )[0].rstrip()
+
                 if not content:
                     continue
 
-                source = (
+                source_value = (
                     source_match.group(1).strip()
                     if source_match
                     else "qai_research"
@@ -800,10 +783,10 @@ class LocalDriver(BaseDriver):
                     else ""
                 )
 
-                parsed_research.append(
+                documents.append(
                     {
                         "source": "qai_research",
-                        "research_source": source,
+                        "research_source": source_value,
                         "title": title,
                         "url": url,
                         "content": content,
@@ -811,63 +794,175 @@ class LocalDriver(BaseDriver):
                     }
                 )
 
-            if parsed_research:
-                # Remove the generic/local interpretation of the
-                # same research wrapper before normalization.
-                documents = [
-                    doc
-                    for doc in documents
-                    if not (
-                        isinstance(doc, dict)
-                        and str(doc.get("source", "")).strip().lower()
-                        == "local"
-                        and "=== QAI RESEARCH EVIDENCE ==="
-                        in str(doc.get("content", ""))
+                research_spans.append(match.span())
+
+            # -----------------------------------------------------
+            # Remove research blocks before local parsing.
+            # -----------------------------------------------------
+
+            generic_raw = evidence_raw
+
+            for a, b in reversed(research_spans):
+                generic_raw = (
+                    generic_raw[:a]
+                    + "\n\n"
+                    + generic_raw[b:]
+                )
+
+            # -----------------------------------------------------
+            # Legacy research blocks
+            # -----------------------------------------------------
+
+            legacy_pattern = re.compile(
+                r"\[research_source=([^\]]+)\]"
+                r"(.*?)(?=\[research_source=|\Z)",
+                re.IGNORECASE | re.DOTALL,
+            )
+
+            legacy_matches = list(
+                legacy_pattern.finditer(generic_raw)
+            )
+
+            legacy_spans = []
+
+            for match in legacy_matches:
+
+                source_value = match.group(1).strip()
+                content = match.group(2).strip()
+
+                if "=== USER CONTEXT ===" in content:
+                    content = content.split(
+                        "=== USER CONTEXT ===",
+                        1,
+                    )[0].rstrip()
+
+                if not content:
+                    continue
+
+                documents.append(
+                    {
+                        "source": "qai_research",
+                        "research_source": source_value,
+                        "content": content,
+                        "text": content,
+                    }
+                )
+
+                legacy_spans.append(match.span())
+
+            for a, b in reversed(legacy_spans):
+                generic_raw = (
+                    generic_raw[:a]
+                    + "\n\n"
+                    + generic_raw[b:]
+                )
+
+            # -----------------------------------------------------
+            # Generic LOCAL documents
+            # -----------------------------------------------------
+
+            chunks = re.split(
+                r"\n\s*\n+",
+                generic_raw,
+            )
+
+            for chunk in chunks:
+
+                chunk = chunk.strip()
+
+                if not chunk:
+                    continue
+
+                lower = chunk.lower()
+
+                # Never allow user context to become evidence.
+                if "=== USER CONTEXT ===" in chunk:
+                    chunk = chunk.split(
+                        "=== USER CONTEXT ===",
+                        1,
+                    )[0].rstrip()
+
+                if not chunk:
+                    continue
+
+                source = "local"
+
+                if any(
+                    marker in lower
+                    for marker in (
+                        "research_source=",
+                        "source=research",
+                        '"source":"research"',
+                        '"source": "research"',
+                        "source: research",
                     )
-                ]
+                ):
+                    source = "qai_research"
 
-                documents.extend(parsed_research)
+                documents.append(
+                    {
+                        "source": source,
+                        "content": chunk,
+                        "text": chunk,
+                    }
+                )
 
-        # ---------------------------------------------------------
-        # Final normalization
-        # ---------------------------------------------------------
+        # =========================================================
+        # 3. FINAL NORMALIZATION / SAFETY
+        # =========================================================
+
         normalized = []
 
         for doc in documents:
+
             if not isinstance(doc, dict):
                 continue
 
-            doc = dict(doc)
+            item = dict(doc)
 
             source = str(
-                doc.get("source", "")
+                item.get("source", "")
                 or ""
             ).strip().lower()
 
             if source in {
                 "research",
-                "qai_research",
                 "web_research",
                 "external_research",
                 "web",
                 "search",
             }:
-                doc["source"] = "qai_research"
+                source = "qai_research"
 
-            content = str(
-                doc.get("content")
-                or doc.get("text")
-                or doc.get("snippet")
+            if source == "qai_research":
+                item["source"] = "qai_research"
+
+            text = str(
+                item.get("text", "")
+                or item.get("content", "")
                 or ""
             ).strip()
 
-            if not content:
+            # Final hard boundary.
+            if "=== USER CONTEXT ===" in text:
+                text = text.split(
+                    "=== USER CONTEXT ===",
+                    1,
+                )[0].rstrip()
+
+            if not text:
                 continue
 
-            doc["content"] = content
-            doc["text"] = content
+            item["text"] = text
+            item["content"] = str(
+                item.get("content", "")
+                or text
+            ).split(
+                "=== USER CONTEXT ===",
+                1,
+            )[0].rstrip()
 
-            normalized.append(doc)
+            normalized.append(item)
 
         return normalized
 

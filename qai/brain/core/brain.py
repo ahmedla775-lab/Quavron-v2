@@ -11,9 +11,18 @@ from qai.understanding import parse_question
 
 class Brain:
 
-    def __init__(self):
+    def __init__(self, research_bridge_instance=None):
         self.intent_router = router
         self.rag_engine = engine
+
+        # ResearchBridge is injectable so tests and future orchestration
+        # layers can provide a controlled research source without
+        # replacing the module-level singleton.
+        self.research_bridge = (
+            research_bridge_instance
+            if research_bridge_instance is not None
+            else research_bridge
+        )
 
     # =====================================================
     # UNDERSTANDING CONTRACT
@@ -1043,7 +1052,7 @@ class Brain:
 
         if orchestration_plan.get("research_if_insufficient", not has_knowledge):
 
-            research_result = research_bridge.research(
+            research_result = self.research_bridge.research(
                 question,
                 understanding=understanding,
                 max_results=8,
@@ -1152,46 +1161,81 @@ class Brain:
                 )
 
         # -------------------------------------------------
-        # 9. ASK QAI
+        # 9. GENERATION SAFETY GATE
+        # -------------------------------------------------
+        # If Research was required but produced no trusted
+        # evidence, do not allow LocalDriver to fabricate a
+        # factual answer from an empty context.
         # -------------------------------------------------
 
-        try:
-            llm_result = gateway.ask(
-                provider,
-                question,
-                generation_context,
-            )
-
-        except Exception as e:
-
+        if (
+            research_used
+            and research_evidence_count == 0
+            and not has_knowledge
+        ):
             print(
-
-                "[Brain] Generation error:",
-
-                type(e).__name__,
-
-                str(e),
-
+                "[Brain] Generation blocked:",
+                "no trusted evidence available",
             )
-
 
             llm_result = {
-
-                "provider": provider,
-
-                "status": "error",
-
-                "source": "generation_error",
-
-                "confidence": 0,
-
-                "relevance": 0,
-
-                "answer": "",
-
-                "message": str(e),
-
+                "provider": "local",
+                "status": "insufficient_evidence",
+                "source": "qai_no_evidence",
+                "confidence": 0.0,
+                "relevance": 0.0,
+                "answer": (
+                    "I don't have enough trusted evidence "
+                    "to provide a reliable factual answer."
+                ),
+                "message": (
+                    "Research was attempted, but no trusted "
+                    "evidence passed the research quality gate."
+                ),
             }
+
+        else:
+            # -------------------------------------------------
+            # 10. ASK QAI
+            # -------------------------------------------------
+
+            try:
+                llm_result = gateway.ask(
+                    provider,
+                    question,
+                    generation_context,
+                )
+
+            except Exception as e:
+
+                print(
+
+                    "[Brain] Generation error:",
+
+                    type(e).__name__,
+
+                    str(e),
+
+                )
+
+
+                llm_result = {
+
+                    "provider": provider,
+
+                    "status": "error",
+
+                    "source": "generation_error",
+
+                    "confidence": 0,
+
+                    "relevance": 0,
+
+                    "answer": "",
+
+                    "message": str(e),
+
+                }
 
 
         if not isinstance(llm_result, dict):
@@ -1334,12 +1378,52 @@ class Brain:
             flags=_public_answer_re.IGNORECASE,
         )
 
+        # Remove leaked internal QAI knowledge/RAG wrappers.
+        _public_answer = _public_answer_re.sub(
+            r"={2,}\s*QAI\s+KNOWLEDGE\s+CONTEXT\s*={2,}",
+            " ",
+            _public_answer,
+            flags=_public_answer_re.IGNORECASE,
+        )
+
+        _public_answer = _public_answer_re.sub(
+            r"={2,}\s*KNOWLEDGE\s+ITEM\s*={2,}",
+            " ",
+            _public_answer,
+            flags=_public_answer_re.IGNORECASE,
+        )
+
+        # Remove common serialized internal RAG fields.
+        _public_answer = _public_answer_re.sub(
+            r"\b(?:score|relevance|final_score|approved|confidence|store|metadata|knowledge)\s*=\s*[^\s]+",
+            " ",
+            _public_answer,
+            flags=_public_answer_re.IGNORECASE,
+        )
+
+        # Remove leaked serialized knowledge metadata.
+        _public_answer = _public_answer_re.sub(
+            r"\bsource\s*=\s*knowledge\b",
+            " ",
+            _public_answer,
+            flags=_public_answer_re.IGNORECASE,
+        )
+
+        _public_answer = _public_answer_re.sub(
+            r"\bstored_question\s*=\s*[^|]+\s*\|",
+            " ",
+            _public_answer,
+            flags=_public_answer_re.IGNORECASE,
+        )
+
         # Normalize whitespace.
         _public_answer = _public_answer_re.sub(
             r"\s+",
             " ",
             _public_answer,
         ).strip()
+
+        orchestration = result.get("orchestration") or {}
 
         return {
             "reply": _public_answer,
@@ -1352,7 +1436,19 @@ class Brain:
             "domain": result.get("domain"),
             "understanding": result.get("understanding"),
 
-            "orchestration": result.get("orchestration"),
+            # Public orchestration metadata.
+            "research_used": orchestration.get("research_used"),
+            "research_evidence_count": orchestration.get(
+                "research_evidence_count"
+            ),
+            "generation_provider": orchestration.get(
+                "generation_provider"
+            ),
+            "generation_source": orchestration.get(
+                "generation_source"
+            ),
+
+            "orchestration": orchestration,
         }
 
 
