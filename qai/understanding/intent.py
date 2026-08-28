@@ -23,7 +23,7 @@ That responsibility remains with the existing intent/router.py.
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 
 # ---------------------------------------------------------------------------
@@ -647,6 +647,65 @@ def _score_intent(
 
 
 # ---------------------------------------------------------------------------
+# Structural fallback
+# ---------------------------------------------------------------------------
+
+def _structural_fallback_intent(text: str) -> Optional[str]:
+    """
+    Infer a conservative semantic intent from the grammatical question form.
+
+    This is only a fallback. Explicit intent markers always take precedence.
+    """
+    if not text:
+        return None
+
+    if re.search(r"(?<!\w)(متى|أي عام|في أي سنة|منذ متى|كم مضى)(?!\w)", text):
+        return "temporal"
+
+    if re.search(r"(?<!\w)(أين|اين|في أي بلد|في أي مدينة)(?!\w)", text):
+        return "location"
+
+    if re.search(r"(?<!\w)(كم|كم عدد|كم شخص|كم مستخدم|كم مرة|كم وحدة)(?!\w)", text):
+        return "count"
+
+    if re.search(r"(?<!\w)(من هو|من هي|من هم|من أسس|من أنشأ)(?!\w)", text):
+        return "identity"
+
+    if re.search(r"(?<!\w)(ما الفرق|الفرق بين|قارن|مقارنة|أيهما أفضل|من الأفضل)(?!\w)", text):
+        return "comparison"
+
+    if re.search(r"(?<!\w)(ما هو|ما هي|ما معنى|ماذا يعني|ما المقصود|تعريف)(?!\w)", text):
+        return "definition"
+
+    if re.search(r"(?<!\w)(اشرح|شرح|فسر|فسّر|وضح|وضّح)(?!\w)", text):
+        return "explanation"
+
+    if re.search(r"(?<!\w)(كيف يمكن|كيف أستطيع|ماذا أفعل|خطوات|طريقة)(?!\w)", text):
+        return "procedure"
+
+    # Generic factual question.
+    if re.match(
+        r"^(ما|ماذا|من|متى|أين|اين|كيف|لماذا|هل|كم|أي)\s+",
+        text,
+    ):
+        return "information"
+
+    if re.match(
+        r"^(what|who|when|where|why|how|which)\s+",
+        text,
+    ):
+        return "information"
+
+    if re.match(
+        r"^(quoi|que|qui|quand|où|ou|pourquoi|comment|quel|quelle|quels|quelles)\s+",
+        text,
+    ):
+        return "information"
+
+    return None
+
+
+# ---------------------------------------------------------------------------
 # Main detector
 # ---------------------------------------------------------------------------
 
@@ -712,6 +771,25 @@ def detect_intent(text: Any) -> Dict[str, Any]:
     )
 
     if not candidates:
+        fallback = _structural_fallback_intent(source)
+
+        if fallback:
+            return {
+                "intent": fallback,
+                "confidence": 0.68,
+                "markers": [],
+                "candidates": [
+                    {
+                        "intent": fallback,
+                        "confidence": 0.68,
+                        "markers": [],
+                        "source": "structural_fallback",
+                    }
+                ],
+                "is_question": _question_signal(source),
+                "input": source,
+            }
+
         return {
             "intent": "general",
             "confidence": 0.35,

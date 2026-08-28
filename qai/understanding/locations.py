@@ -164,6 +164,29 @@ COUNTRIES = {
 
 
 # Common Algerian locations because QAI operates in an Algerian context.
+GLOBAL_LOCATIONS = {
+    "باريس": ("city", "باريس"),
+    "paris": ("city", "باريس"),
+    "لندن": ("city", "لندن"),
+    "london": ("city", "لندن"),
+    "برلين": ("city", "برلين"),
+    "berlin": ("city", "برلين"),
+    "روما": ("city", "روما"),
+    "rome": ("city", "روما"),
+    "مدريد": ("city", "مدريد"),
+    "madrid": ("city", "مدريد"),
+    "نيويورك": ("city", "نيويورك"),
+    "new york": ("city", "نيويورك"),
+    "طوكيو": ("city", "طوكيو"),
+    "tokyo": ("city", "طوكيو"),
+    "بكين": ("city", "بكين"),
+    "beijing": ("city", "بكين"),
+    "القاهرة": ("city", "القاهرة"),
+    "cairo": ("city", "القاهرة"),
+    "الإسكندرية": ("city", "الإسكندرية"),
+    "alexandria": ("city", "الإسكندرية"),
+}
+
 ALGERIAN_LOCATIONS = {
     "الجزائر": ("city", "الجزائر"),
     "الجزائر العاصمة": ("city", "الجزائر العاصمة"),
@@ -571,6 +594,70 @@ def _deduplicate_locations(
 
 
 # ---------------------------------------------------------------------------
+# Landmark / named-place extraction
+# ---------------------------------------------------------------------------
+
+LANDMARKS = {
+    "برج إيفل": ("landmark", "برج إيفل"),
+    "برج ايفل": ("landmark", "برج إيفل"),
+    "eiffel tower": ("landmark", "برج إيفل"),
+    "الأهرامات": ("landmark", "أهرامات الجيزة"),
+    "أهرامات الجيزة": ("landmark", "أهرامات الجيزة"),
+    "pyramids of giza": ("landmark", "أهرامات الجيزة"),
+    "تاج محل": ("landmark", "تاج محل"),
+    "taj mahal": ("landmark", "تاج محل"),
+}
+
+def _find_landmarks(text: str) -> List[Location]:
+    raw = str(text or "")
+    normalized = normalize_location_text(raw)
+    results: List[Location] = []
+
+    known = sorted(
+        LANDMARKS.items(),
+        key=lambda item: len(normalize_location_text(item[0])),
+        reverse=True,
+    )
+
+    for surface, (kind, canonical) in known:
+        needle = normalize_location_text(surface)
+        if not needle:
+            continue
+
+        start_pos = 0
+        while True:
+            index = normalized.find(needle, start_pos)
+            if index < 0:
+                break
+
+            end_index = index + len(needle)
+
+            before_ok = (
+                index == 0
+                or not normalized[index - 1].isalnum()
+            )
+            after_ok = (
+                end_index >= len(normalized)
+                or not normalized[end_index].isalnum()
+            )
+
+            if before_ok and after_ok:
+                results.append(
+                    Location(
+                        text=surface,
+                        normalized=canonical,
+                        kind=kind,
+                        start=index,
+                        end=end_index,
+                        confidence=0.97,
+                    )
+                )
+
+            start_pos = end_index
+
+    return results
+
+# ---------------------------------------------------------------------------
 # Public extraction API
 # ---------------------------------------------------------------------------
 
@@ -597,6 +684,7 @@ def extract_locations(
     # High-confidence known-name extraction
     # --------------------------------------------------------
     locations.extend(_find_known_locations(raw_text))
+    locations.extend(_find_landmarks(raw_text))
 
     # --------------------------------------------------------
     # Unknown/general patterns
@@ -911,6 +999,8 @@ __all__ = [
     "LOCATION_TYPES",
     "COUNTRIES",
     "ALGERIAN_LOCATIONS",
+    "GLOBAL_LOCATIONS",
+    "LANDMARKS",
     "normalize_location_text",
     "canonical_location",
     "extract_locations",

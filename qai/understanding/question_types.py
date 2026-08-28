@@ -379,13 +379,21 @@ def _clean_text(value: Any) -> str:
 
 
 def _contains_marker(text: str, marker: str) -> bool:
-    """Safely detect a marker inside text."""
-    marker = marker.strip().lower()
+    """Safely detect a lexical marker without substring collisions."""
+    text = str(text or "").strip().lower()
+    marker = str(marker or "").strip().lower()
 
-    if not marker:
+    if not text or not marker:
         return False
 
-    return marker in text
+    # Multi-word phrases should match as lexical phrases.
+    if " " in marker:
+        pattern = rf"(?<!\\w){re.escape(marker)}(?!\\w)"
+        return bool(re.search(pattern, text, flags=re.IGNORECASE))
+
+    # Single-word markers must be complete tokens.
+    pattern = rf"(?<!\\w){re.escape(marker)}(?!\\w)"
+    return bool(re.search(pattern, text, flags=re.IGNORECASE))
 
 
 def _marker_hits(text: str, question_type: str) -> List[str]:

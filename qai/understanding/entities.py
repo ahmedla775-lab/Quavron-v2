@@ -27,6 +27,46 @@ ENTITY_UNKNOWN = "unknown"
 
 
 KNOWN_COUNTRIES = {
+    # English / international names
+    "Algeria",
+    "Egypt",
+    "Morocco",
+    "Tunisia",
+    "Libya",
+    "Mauritania",
+    "France",
+    "Germany",
+    "Spain",
+    "Italy",
+    "United Kingdom",
+    "Britain",
+    "United States",
+    "USA",
+    "America",
+    "Canada",
+    "Russia",
+    "China",
+    "Japan",
+    "India",
+    "Turkey",
+    "Qatar",
+    "Saudi Arabia",
+    "United Arab Emirates",
+    "Jordan",
+    "Lebanon",
+    "Iraq",
+    "Palestine",
+    "Syria",
+    "New Zealand",
+    "Australia",
+    "Belgium",
+    "Netherlands",
+    "Switzerland",
+    "Portugal",
+    "Greece",
+    "Brazil",
+    "Mexico",
+
     "الجزائر",
     "الجزائرية",
     "مصر",
@@ -60,6 +100,42 @@ KNOWN_COUNTRIES = {
 }
 
 KNOWN_CITIES = {
+    # English / international names
+    "Algiers",
+    "Oran",
+    "Djelfa",
+    "Constantine",
+    "Annaba",
+    "Setif",
+    "Blida",
+    "Batna",
+    "Biskra",
+    "Tunis",
+    "Rabat",
+    "Casablanca",
+    "Marrakesh",
+    "Cairo",
+    "Alexandria",
+    "Paris",
+    "London",
+    "Berlin",
+    "Rome",
+    "Madrid",
+    "Moscow",
+    "New York",
+    "Los Angeles",
+    "Tokyo",
+    "Beijing",
+    "Wellington",
+    "Auckland",
+    "Sydney",
+    "Brussels",
+    "Amsterdam",
+    "Lisbon",
+    "Athens",
+    "Brasilia",
+    "Mexico City",
+
     "الجزائر",
     "الجزائر العاصمة",
     "الجلفة",
@@ -89,6 +165,22 @@ KNOWN_CITIES = {
 }
 
 KNOWN_LANGUAGES = {
+    # English / French names
+    "English",
+    "French",
+    "Arabic",
+    "German",
+    "Russian",
+    "Spanish",
+    "Turkish",
+    "anglais",
+    "français",
+    "arabe",
+    "allemand",
+    "russe",
+    "espagnol",
+    "turc",
+
     "العربية",
     "عربي",
     "اللغة العربية",
@@ -143,7 +235,31 @@ KNOWN_TECHNOLOGIES = {
     "llama.cpp",
     "rag",
     "llm",
-    "api",
+    "ssd",
+}
+
+
+# ---------------------------------------------------------------------------
+# Entity aliases
+# ---------------------------------------------------------------------------
+# Natural-language aliases are resolved to canonical dictionary entities.
+# They are intentionally kept separate from the main semantic dictionaries.
+
+ENTITY_ALIASES = {
+    # Arabic aliases
+    "بايثون": ("python", ENTITY_TECHNOLOGY),
+    "بايثون ": ("python", ENTITY_TECHNOLOGY),
+
+    # AI aliases
+    "ai": ("artificial intelligence", ENTITY_CONCEPT),
+    "AI": ("artificial intelligence", ENTITY_CONCEPT),
+    "a.i.": ("artificial intelligence", ENTITY_CONCEPT),
+    "ال ai": ("artificial intelligence", ENTITY_CONCEPT),
+    "الـai": ("artificial intelligence", ENTITY_CONCEPT),
+    "بايثون ": ("python", ENTITY_TECHNOLOGY),
+    "ai": ("artificial intelligence", ENTITY_CONCEPT),
+    "ال ai": ("artificial intelligence", ENTITY_CONCEPT),
+    "الـai": ("artificial intelligence", ENTITY_CONCEPT),
 }
 
 KNOWN_PLATFORMS = {
@@ -168,6 +284,59 @@ KNOWN_PROJECTS = {
     "qai",
     "qce",
     "mailorganizer",
+}
+
+# Common real-world entities frequently appearing in factual questions.
+KNOWN_PERSONS = {
+    "نابليون",
+    "نابليون بونابرت",
+    "ألبرت أينشتاين",
+    "اينشتاين",
+    "إسحاق نيوتن",
+    "نيوتن",
+    "ليوناردو دافنشي",
+    "غاليليو",
+}
+
+KNOWN_ORGANIZATIONS = {
+    "الأمم المتحدة",
+    "الاتحاد الأوروبي",
+    "ناسا",
+    "nasa",
+    "google",
+    "microsoft",
+    "apple",
+    "openai",
+}
+
+KNOWN_PRODUCTS = {
+    "iphone",
+    "ipad",
+    "windows",
+    "android",
+    "chatgpt",
+}
+
+KNOWN_CONCEPTS = {
+    "artificial intelligence",
+    "artificial-intelligence",
+    "machine learning",
+    "deep learning",
+    "programming",
+    "democracy",
+    "economics",
+
+    "الذكاء الاصطناعي",
+    "الذكاء الصناعي",
+    "artificial intelligence",
+    "machine learning",
+    "تعلم الآلة",
+    "التعلم الآلي",
+    "deep learning",
+    "التعلم العميق",
+    "البرمجة",
+    "الاقتصاد",
+    "الديمقراطية",
 }
 
 
@@ -316,7 +485,27 @@ class EntityExtractor:
         technologies: Optional[Iterable[str]] = None,
         platforms: Optional[Iterable[str]] = None,
         projects: Optional[Iterable[str]] = None,
+        persons: Optional[Iterable[str]] = None,
+        organizations: Optional[Iterable[str]] = None,
+        products: Optional[Iterable[str]] = None,
+        concepts: Optional[Iterable[str]] = None,
     ) -> None:
+        self.persons = set(
+            _normalize(x)
+            for x in (persons or KNOWN_PERSONS)
+        )
+        self.organizations = set(
+            _normalize(x)
+            for x in (organizations or KNOWN_ORGANIZATIONS)
+        )
+        self.products = set(
+            _normalize(x)
+            for x in (products or KNOWN_PRODUCTS)
+        )
+        self.concepts = set(
+            _normalize(x)
+            for x in (concepts or KNOWN_CONCEPTS)
+        )
 
         self.countries = set(
             _normalize(x)
@@ -437,69 +626,104 @@ class EntityExtractor:
 
         entities: List[Entity] = []
 
+        source = str(text or "")
+        normalized_source = _normalize(source)
+
+        # --------------------------------------------------------------
+        # Semantic aliases
+        # --------------------------------------------------------------
+        for alias, (canonical, entity_type) in ENTITY_ALIASES.items():
+            alias_text = str(alias or "").strip()
+
+            if not alias_text:
+                continue
+
+            pattern = re.compile(
+                r"(?<![A-Za-z0-9_\u0621-\u063A\u0641-\u064A])"
+                + re.escape(alias_text)
+                + r"(?![A-Za-z0-9_\u0621-\u063A\u0641-\u064A])",
+                flags=re.IGNORECASE,
+            )
+
+            for match in pattern.finditer(source):
+                captured = match.group(0).strip()
+
+                if not captured:
+                    continue
+
+                entities.append(
+                    Entity(
+                        text=captured,
+                        entity_type=entity_type,
+                        normalized=_normalize(canonical),
+                        start=match.start(),
+                        end=match.end(),
+                        confidence=0.92,
+                        metadata={
+                            "detector": "entity_alias",
+                            "canonical": canonical,
+                            "alias": alias_text,
+                        },
+                    )
+                )
+
+        # --------------------------------------------------------------
+        # Dictionary entities
+        # --------------------------------------------------------------
         groups: List[Tuple[str, set[str]]] = [
+            (ENTITY_PERSON, self.persons),
+            (ENTITY_ORGANIZATION, self.organizations),
+            (ENTITY_PRODUCT, self.products),
+            (ENTITY_CONCEPT, self.concepts),
             (ENTITY_COUNTRY, self.countries),
-            (ENTITY_CITY, self.cities),
+            (ENTITY_CITY, self.cities - self.countries),
             (ENTITY_LANGUAGE, self.languages),
             (ENTITY_TECHNOLOGY, self.technologies),
             (ENTITY_PLATFORM, self.platforms),
             (ENTITY_PROJECT, self.projects),
         ]
 
-        for entity_type, values in groups:
-            for normalized_value in values:
-                if not normalized_value:
+        for entity_type, names in groups:
+            for name in names:
+                name = str(name or "").strip()
+
+                if not name:
                     continue
 
-                pattern = re.escape(normalized_value)
+                # Match semantic dictionary entries without relying on
+                # Python's Unicode \b behavior around Arabic text.
+                escaped_name = re.escape(name)
 
-                for match in re.finditer(
-                    pattern,
-                    _normalize(text),
+                pattern = re.compile(
+                    r"(?<![A-Za-z0-9_\u0621-\u063A\u0641-\u064A])"
+                    + escaped_name
+                    + r"(?![A-Za-z0-9_\u0621-\u063A\u0641-\u064A])",
                     flags=re.IGNORECASE,
-                ):
-                    original = self._slice_by_normalized_position(
-                        text,
-                        match.start(),
-                        match.end(),
-                    )
+                )
 
-                    if not original:
-                        original = normalized_value
+                for match in pattern.finditer(source):
+                    captured = match.group(0).strip()
 
-                    confidence = 0.95
-
-                    if entity_type == ENTITY_PLATFORM:
-                        confidence = 0.98
-
-                    if entity_type == ENTITY_PROJECT:
-                        confidence = 0.97
+                    if not captured:
+                        continue
 
                     entities.append(
                         Entity(
-                            text=original,
+                            text=captured,
                             entity_type=entity_type,
-                            normalized=normalized_value,
-                            start=self._approx_original_index(
-                                text,
-                                match.start(),
-                            ),
-                            end=self._approx_original_index(
-                                text,
-                                match.end(),
-                            ),
-                            confidence=confidence,
+                            normalized=_normalize(name),
+                            start=match.start(),
+                            end=match.end(),
+                            confidence=0.90,
                             metadata={
                                 "detector": "dictionary",
+                                "canonical": name,
                             },
                         )
                     )
 
         return entities
 
-    # ------------------------------------------------------------------
-    # Number extraction
-    # ------------------------------------------------------------------
 
     def _extract_numbers(
         self,
@@ -612,11 +836,6 @@ class EntityExtractor:
                 ENTITY_PERSON,
                 r"(?:السيد|السيدة|الأستاذ|الأستاذة|المهندس|المهندسة|الدكتور|الدكتورة)\s+([A-Za-z\u0600-\u06FF][A-Za-z\u0600-\u06FF .'-]{1,60})",
                 0.78,
-            ),
-            (
-                ENTITY_LOCATION,
-                r"(?:في|بـ|ب|من|إلى|الى)\s+([A-Za-z\u0600-\u06FF][A-Za-z\u0600-\u06FF .'-]{1,50})",
-                0.55,
             ),
         ]
 
@@ -1029,6 +1248,10 @@ __all__ = [
     "ENTITY_DATE",
     "ENTITY_NUMBER",
     "ENTITY_UNKNOWN",
+    "KNOWN_PERSONS",
+    "KNOWN_ORGANIZATIONS",
+    "KNOWN_PRODUCTS",
+    "KNOWN_CONCEPTS",
     "Entity",
     "EntityExtractor",
     "extract_entities",

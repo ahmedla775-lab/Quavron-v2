@@ -24,19 +24,26 @@ from typing import Any, Dict, List, Optional
 
 RELATION_PATTERNS = {
     "capital_of": [
-        r"\bعاصمة\s+(?P<object>[\u0600-\u06FF\w-]+)",
-        r"\b(?P<object>[\u0600-\u06FF\w-]+)\s+عاصمتها\b",
-        r"\bcapital\s+of\s+(?P<object>[A-Za-z][\w-]*)",
-        r"\bcapitale\s+de\s+(?P<object>[\wÀ-ÿ-]+)",
+        # Arabic
+        r"(?:ما\s+(?:هي\s+)?عاصمة\s+)(?P<object>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*?)(?=\s*[؟?!,،;؛.]|$)",
+        r"\bعاصمة\s+(?P<object>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*?)(?=\s*[؟?!,،;؛.]|$)",
+        r"\b(?P<object>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*?)\s+عاصمتها\b",
+
+        # English
+        r"\bcapital\s+of\s+(?P<object>[A-Za-z][\w-]*(?:\s+[A-Za-z][\w-]*)*?)(?=\s*[?!,.;]|$)",
+
+        # French
+        r"\bcapitale\s+de\s+(?P<object>[\wÀ-ÿ-]+(?:\s+[\wÀ-ÿ-]+)*?)(?=\s*[?!,.;]|$)",
     ],
 
     "located_in": [
+        r"(?:أين|اين)\s+(?:يقع|تقع|موجود|موجودة)\s+(?P<subject>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*)",
         r"أين\s+(?:تقع|يوجد|توجد)\s+(?P<subject>[\u0600-\u06FF\w-]+)",
         r"أين\s+(?:تقع|يوجد|توجد)\s+(?P<subject>[A-Za-z][\w-]*)",
 
-        r"\b(?P<subject>[\u0600-\u06FF\w-]+)\s+يقع\s+في\s+(?P<object>[\u0600-\u06FF\w-]+)",
-        r"\b(?P<subject>[\u0600-\u06FF\w-]+)\s+تقع\s+في\s+(?P<object>[\u0600-\u06FF\w-]+)",
-        r"\b(?P<subject>[\u0600-\u06FF\w-]+)\s+موجود(?:ة)?\s+في\s+(?P<object>[\u0600-\u06FF\w-]+)",
+        r"\b(?P<subject>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*)\s+يقع\s+في\s+(?P<object>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*)",
+        r"\b(?P<subject>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*)\s+تقع\s+في\s+(?P<object>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*)",
+        r"\b(?P<subject>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*)\s+موجود(?:ة)?\s+في\s+(?P<object>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*)",
         r"\b(?P<subject>[A-Za-z][\w-]*)\s+is\s+in\s+(?P<object>[A-Za-z][\w-]*)",
         r"\b(?P<subject>[A-Za-z][\w-]*)\s+located\s+in\s+(?P<object>[A-Za-z][\w-]*)",
         r"\b(?P<subject>[\wÀ-ÿ-]+)\s+est\s+à\s+(?P<object>[\wÀ-ÿ-]+)",
@@ -68,8 +75,15 @@ RELATION_PATTERNS = {
         r"\b(?P<subject>[\wÀ-ÿ-]+)\s+a\s+été\s+fondé(?:e)?\s+par\s+(?P<object>[\wÀ-ÿ-]+)",
     ],
 
+    "lives_in": [
+        r"(?P<subject>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*?)\s+(?:يعيش|تعيش|يسكن|تسكن)\s+(?:في|بـ|ب)\s+(?P<object>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*?)(?=\s*[؟?!,،;؛.]|$)",
+        r"(?:هل\s+)?(?:يعيش|تعيش|يسكن|تسكن)\s+(?P<subject>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*?)\s+(?:في|بـ|ب)\s+(?P<object>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*?)(?=\s*[؟?!,،;؛.]|$)",
+        r"\b(?P<subject>[A-Za-z][\w-]*(?:\s+[A-Za-z][\w-]*)*)\s+(?:lives|resides)\s+in\s+(?P<object>[A-Za-z][\w-]*(?:\s+[A-Za-z][\w-]*)*)",
+        r"\b(?P<subject>[\wÀ-ÿ-]+(?:\s+[\wÀ-ÿ-]+)*)\s+(?:vit|habite)\s+à\s+(?P<object>[\wÀ-ÿ-]+(?:\s+[\wÀ-ÿ-]+)*)",
+    ],
+
     "works_for": [
-        r"\b(?P<subject>[\u0600-\u06FF\w-]+)\s+يعمل\s+(?:في|لدى)\s+(?P<object>[\u0600-\u06FF\w-]+)",
+        r"\b(?P<subject>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*)\s+يعمل\s+(?:في|لدى)\s+(?P<object>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*)",
         r"\b(?P<subject>[A-Za-z][\w-]*)\s+works\s+for\s+(?P<object>[A-Za-z][\w-]*)",
         r"\b(?P<subject>[\wÀ-ÿ-]+)\s+travaille\s+pour\s+(?P<object>[\wÀ-ÿ-]+)",
     ],
@@ -98,6 +112,22 @@ RELATION_PATTERNS = {
         r"\b(?P<subject>[\wÀ-ÿ-]+)\s+dépend\s+de\s+(?P<object>[\wÀ-ÿ-]+)",
     ],
 
+    "population_of": [
+        r"(?:ما\s+(?:هو\s+)?عدد\s+سكان\s+)(?P<object>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*)",
+        r"عدد\s+سكان\s+(?P<object>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*)",
+        r"population\s+of\s+(?P<object>[A-Za-z][\w-]*(?:\s+[A-Za-z][\w-]*)*)",
+    ],
+    "built_by": [
+        r"من\s+(?:بنى|قام\s+ببناء)\s+(?P<subject>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*)",
+        # من بنى برج إيفل؟ -> subject=برج إيفل
+        r"من\s+بنى\s+(?P<subject>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*)",
+        # English: Eiffel Tower was built by Gustave Eiffel
+        r"(?P<subject>[A-Za-z][\w-]*(?:\s+[A-Za-z][\w-]*)*)\s+was\s+built\s+by\s+(?P<object>[A-Za-z][\w-]*(?:\s+[A-Za-z][\w-]*)*)",
+    ],
+    "famous_for": [
+        r"(?P<subject>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*)\s+مشهور(?:ة)?\s+ب(?:ـ)?\s*(?P<object>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*)",
+        r"(?P<subject>[A-Za-z][\w-]*(?:\s+[A-Za-z][\w-]*)*)\s+is\s+famous\s+for\s+(?P<object>[A-Za-z][\w-]*(?:\s+[A-Za-z][\w-]*)*)",
+    ],
     "comparison": [
         r"(?:ما\s+الفرق\s+بين|ما\s+الفرق\s+بين)\s+(?P<subject>[\u0600-\u06FF\w-]+)\s+و(?P<object>[\u0600-\u06FF\w-]+)",
         r"قارن\s+بين\s+(?P<subject>[\u0600-\u06FF\w-]+)\s+و(?P<object>[\u0600-\u06FF\w-]+)",
@@ -154,6 +184,18 @@ RELATION_ALIASES = {
     "depends": "depends_on",
     "depends_on": "depends_on",
     "يعتمد": "depends_on",
+
+    "population": "population_of",
+    "population_of": "population_of",
+    "سكان": "population_of",
+
+    "built_by": "built_by",
+    "built": "built_by",
+    "بنى": "built_by",
+
+    "famous_for": "famous_for",
+    "famous": "famous_for",
+    "مشهور": "famous_for",
 }
 
 
@@ -225,8 +267,114 @@ def extract_relations(text: Any) -> List[Dict[str, Any]]:
 
     results: List[Dict[str, Any]] = []
 
+    # --------------------------------------------------------------
+    # Compound-question context
+    #
+    # Example:
+    #   من هو يوسف السعدي؟ وأين يعيش؟ هل يعيش في مصر؟
+    #
+    # The final "هل يعيش في مصر" clause must inherit the person
+    # introduced by the previous identity clause.
+    # --------------------------------------------------------------
+    context_subject = ""
+
+    identity_matches = re.findall(
+        r"(?:من|ما)\\s+(?:هو|هي)\\s+"
+        r"(?P<subject>[\\u0600-\\u06FF\\w-]+"
+        r"(?:\\s+[\\u0600-\\u06FF\\w-]+)*?)"
+        r"(?=\\s*[؟?!,،;؛.]|$)",
+        source,
+        flags=re.IGNORECASE,
+    )
+
+    if identity_matches:
+        context_subject = _clean(identity_matches[-1])
+
+    # Direct compound lives_in question.
+    # This is intentionally handled before the generic relation
+    # patterns because those patterns can otherwise consume the
+    # entire text before "يعيش".
+    compound_lives = re.search(
+        r"(?:هل\\s+)?(?:يعيش|تعيش|يسكن|تسكن)\\s+"
+        r"(?P<subject>[\\u0600-\\u06FF\\w-]+"
+        r"(?:\\s+[\\u0600-\\u06FF\\w-]+)*?)\\s+"
+        r"(?:في|بـ|ب)\\s+"
+        r"(?P<object>[\\u0600-\\u06FF\\w-]+"
+        r"(?:\\s+[\\u0600-\\u06FF\\w-]+)*?)"
+        r"(?=\\s*[؟?!,،;؛.]|$)",
+        source,
+        flags=re.IGNORECASE,
+    )
+
+    if compound_lives:
+        compound_subject = _clean(
+            compound_lives.group("subject")
+        )
+
+        # If the regex consumed previous question text, use the
+        # identity subject instead.
+        if context_subject and (
+            "؟" in compound_subject
+            or "?" in compound_subject
+            or "!" in compound_subject
+            or "هل" in compound_subject
+            or compound_subject.startswith("من ")
+            or compound_subject.startswith("ما ")
+        ):
+            compound_subject = context_subject
+
+        results.append(
+            _make_relation(
+                relation="lives_in",
+                subject=compound_subject,
+                object_=compound_lives.group("object"),
+                confidence=0.90,
+                pattern=compound_lives.re.pattern,
+            )
+        )
+
+        # Mark this relation as already handled so the generic
+        # lives_in regex cannot create the erroneous duplicate.
+        handled_compound_lives = True
+    else:
+        handled_compound_lives = False
+
+    # In compound Arabic questions, prefer the final direct
+    # yes/no clause, e.g.:
+    #   من هو يوسف السعدي؟ وأين يعيش؟ هل يعيش في مصر؟
+    # The semantic subject is the person named in the preceding
+    # identity clause, not the whole preceding question.
+    compound_lives = re.search(
+        r"(?:هل\s+)?(?:يعيش|تعيش|يسكن|تسكن)\s+"
+        r"(?P<subject>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*?)\s+"
+        r"(?:في|بـ|ب)\s+"
+        r"(?P<object>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*?)"
+        r"(?=\s*[؟?!,،;؛.]|$)",
+        source,
+        flags=re.IGNORECASE,
+    )
+
+    if compound_lives:
+        groups = compound_lives.groupdict()
+
+        results.append(
+            _make_relation(
+                relation="lives_in",
+                subject=groups.get("subject", ""),
+                object_=groups.get("object", ""),
+                confidence=0.90,
+                pattern=compound_lives.re.pattern,
+            )
+        )
+
     for relation_name, patterns in RELATION_PATTERNS.items():
         for pattern in patterns:
+
+            # The compound lives_in question was already extracted
+            # above using clause-aware context.
+            if relation_name == "lives_in" and handled_compound_lives:
+                continue
+
             try:
                 matches = re.finditer(
                     pattern,
@@ -424,3 +572,135 @@ __all__ = [
     "relation_signature",
     "relation_dict",
 ]
+
+
+# QAI_CLAUSE_AWARE_RELATIONS_PATCH_V1
+# Context-aware wrapper for compound questions/statements.
+# Keeps the existing relation detectors intact.
+
+_original_extract_relations = extract_relations
+
+
+def _qai_clean_context_subject(value):
+    import re
+
+    value = str(value or "").strip()
+
+    # Remove common Arabic question prefixes.
+    value = re.sub(
+        r"^(?:من|ما)\s+(?:هو|هي)\s+",
+        "",
+        value,
+        flags=re.IGNORECASE,
+    )
+
+    value = re.sub(
+        r"^(?:من|ما)\s+",
+        "",
+        value,
+        flags=re.IGNORECASE,
+    )
+
+    # Stop at the first question/statement boundary.
+    value = re.split(r"[؟?!,،;؛.]", value, maxsplit=1)[0]
+
+    return value.strip(" \t\r\n")
+
+
+def _qai_context_subject(text):
+    import re
+
+    # Explicit identity/question context:
+    # "من هو يوسف السعدي؟"
+    patterns = (
+        r"(?:^|[؟?!,،;؛.]\s*)من\s+هو\s+(?P<subject>[^؟?!,،;؛.]+)",
+        r"(?:^|[؟?!,،;؛.]\s*)من\s+هي\s+(?P<subject>[^؟?!,،;؛.]+)",
+    )
+
+    for pattern in patterns:
+        m = re.search(pattern, text, flags=re.IGNORECASE)
+        if m:
+            subject = _qai_clean_context_subject(m.group("subject"))
+            if subject:
+                return subject
+
+    return None
+
+
+def extract_relations(text):
+    import re
+
+    text = str(text or "").strip()
+
+    # Normal/simple case: keep the existing implementation exactly as-is.
+    if not re.search(r"[؟?!,،;؛.]", text):
+        return _original_extract_relations(text)
+
+    # First run the original detector on the complete text.
+    relations = _original_extract_relations(text)
+
+    # For compound questions, also inspect each clause independently.
+    clauses = [
+        c.strip()
+        for c in re.split(r"[؟?!,،;؛.]+", text)
+        if c.strip()
+    ]
+
+    for clause in clauses:
+        if clause == text:
+            continue
+
+        for relation in _original_extract_relations(clause):
+            duplicate = any(
+                r.get("relation") == relation.get("relation")
+                and r.get("subject") == relation.get("subject")
+                and r.get("object") == relation.get("object")
+                for r in relations
+            )
+
+            if not duplicate:
+                relations.append(relation)
+
+    # Recover the subject from an earlier identity clause.
+    context_subject = _qai_context_subject(text)
+
+    if context_subject:
+        for relation in relations:
+            if relation.get("relation") == "lives_in":
+                subject = str(relation.get("subject") or "").strip()
+
+                # Replace polluted subject such as:
+                # "من هو يوسف السعدي؟ وأين يعيش؟ هل"
+                if (
+                    not subject
+                    or "من هو" in subject
+                    or "من هي" in subject
+                    or "هل" in subject
+                    or "أين" in subject
+                    or "؟" in subject
+                    or "?" in subject
+                ):
+                    relation["subject"] = context_subject
+                    relation["confidence"] = max(
+                        float(relation.get("confidence", 0.85)),
+                        0.90,
+                    )
+
+    # Final deduplication.
+    unique = []
+    seen = set()
+
+    for relation in relations:
+        key = (
+            relation.get("relation"),
+            relation.get("subject"),
+            relation.get("object"),
+        )
+
+        if key in seen:
+            continue
+
+        seen.add(key)
+        unique.append(relation)
+
+    return unique

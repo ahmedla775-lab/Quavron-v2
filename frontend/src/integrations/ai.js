@@ -6,8 +6,7 @@ class AIIntegration {
       throw new Error("VITE_AI_API is not configured");
     }
 
-    const user =
-      JSON.parse(localStorage.getItem("user") || "{}");
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
 
     const resolvedUserId =
       userId ||
@@ -17,16 +16,24 @@ class AIIntegration {
       user.email ||
       "guest";
 
-    const url =
-      `${baseURL}/api/think/${encodeURIComponent(prompt)}` +
-      `?user_id=${encodeURIComponent(resolvedUserId)}`;
-
-    const res = await fetch(url);
+    const res = await fetch(`${baseURL}/api/chat`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        user_id: resolvedUserId,
+        message: prompt,
+      }),
+    });
 
     if (!res.ok) {
       const body = await res.text().catch(() => "");
+
       throw new Error(
-        `Quavron AI request failed (${res.status})${body ? `: ${body}` : ""}`
+        `Quavron AI request failed (${res.status})${
+          body ? `: ${body}` : ""
+        }`
       );
     }
 

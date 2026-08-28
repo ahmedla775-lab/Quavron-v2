@@ -103,7 +103,7 @@ export default function QuavronAI() {
           </p>
 
           <p className="mt-2">
-            {response.llm?.answer || response.answer || response.message}
+            {response.reply || response.llm?.answer || response.answer || response.message}
           </p>
 
         </div>

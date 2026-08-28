@@ -65,8 +65,14 @@ except Exception:
 try:
     from .temporal import extract_temporal
 except Exception:
-    def extract_temporal(value: Any) -> Any:
-        return []
+    try:
+        from .temporal import analyze_temporal as extract_temporal
+    except Exception:
+        try:
+            from .temporal import parse_temporal as extract_temporal
+        except Exception:
+            def extract_temporal(value: Any) -> Any:
+                return []
 
 
 try:
@@ -361,11 +367,110 @@ def _extract_keywords(text: str) -> List[str]:
 def _clean_phrase(value: str) -> str:
     value = str(value or "")
     value = re.sub(r"\s+", " ", value)
-    value = value.strip(
-        " \t\r\n.,،؛;:!?؟()[]{}<>\"'`“”‘’«»"
-    )
-    return value.strip()
 
+    # Remove only actual surrounding whitespace/punctuation.
+    # Do NOT remove Latin letters or Arabic letters from the phrase.
+    value = value.strip()
+    value = value.strip(
+        ".,،؛;:!?؟()[]{}<>\\\"'`“”‘’«»"
+    )
+    value = value.strip()
+
+    return value
+
+
+def _extract_comparison_targets(text: str) -> Dict[str, Optional[str]]:
+    """Extract left/right operands from common comparison phrasing."""
+
+    value = str(text or "").strip()
+
+    # ---------------------------------------------------------------
+    # Arabic
+    # ---------------------------------------------------------------
+    arabic = re.search(
+        r"(?:ما\s+)?الفرق\s+بين\s+(.+)",
+        value,
+        flags=re.IGNORECASE,
+    )
+
+    if arabic:
+        body = arabic.group(1).strip()
+
+        # Remove only terminal punctuation.
+        body = body.rstrip("؟?!,،;؛.")
+
+        # Find the Arabic conjunction "و".
+        #
+        # We deliberately require either:
+        #   whitespace + و + optional whitespace
+        # OR
+        #   whitespace + و directly attached to the right operand.
+        #
+        # This prevents matching the "و" inside:
+        #   للابتوب
+        #   الحاسوب
+        #   للمكتبي
+        separator = re.search(
+            r"\s+و(?:َ)?(?=\s*[\w\u0600-\u06FF])",
+            body,
+            flags=re.IGNORECASE,
+        )
+
+        if separator:
+            left = body[:separator.start()].strip()
+            right = body[separator.end():].strip()
+
+            # If there is whitespace after the conjunction,
+            # remove it without touching the operand itself.
+            right = right.lstrip()
+
+            left = _clean_phrase(left)
+            right = _clean_phrase(right)
+
+            if left and right:
+                return {
+                    "left": left,
+                    "right": right,
+                }
+
+    # ---------------------------------------------------------------
+    # English
+    # ---------------------------------------------------------------
+    m = re.search(
+        r"(?:difference|differences)\s+between\s+"
+        r"(?P<left>.+?)\s+and\s+"
+        r"(?P<right>.+?)(?:[?!,.;]\s*)?$",
+        value,
+        flags=re.IGNORECASE,
+    )
+
+    if m:
+        return {
+            "left": _clean_phrase(m.group("left")) or None,
+            "right": _clean_phrase(m.group("right")) or None,
+        }
+
+    # ---------------------------------------------------------------
+    # French
+    # ---------------------------------------------------------------
+    m = re.search(
+        r"(?:différence|differences?)\s+entre\s+"
+        r"(?P<left>.+?)\s+et\s+"
+        r"(?P<right>.+?)(?:[?!,.;]\s*)?$",
+        value,
+        flags=re.IGNORECASE,
+    )
+
+    if m:
+        return {
+            "left": _clean_phrase(m.group("left")) or None,
+            "right": _clean_phrase(m.group("right")) or None,
+        }
+
+    return {
+        "left": None,
+        "right": None,
+    }
 
 def _extract_subject(text: str) -> Optional[str]:
     """
@@ -413,7 +518,9 @@ def _extract_target(text: str) -> Optional[str]:
         r"عاصمة\s+(.+?)(?:[؟?!]|$)",
         r"سكان\s+(.+?)(?:[؟?!]|$)",
         r"في\s+(.+?)(?:[؟?!]|$)",
-        r"من\s+(.+?)(?:[؟?!]|$)",
+        # Do not treat "من بنى X؟" as target="بنى X".
+        # The built_by relation supplies X as the subject.
+        r"من\s+(?!(?:هو|هي)\b|(?:بنى|قام\s+ببناء|أسس|اسس|أنشأ|انشأ|اخترع|اكتشف)\b)(.+?)(?:[؟?!]|$)",
         r"إلى\s+(.+?)(?:[؟?!]|$)",
         r"الى\s+(.+?)(?:[؟?!]|$)",
 
@@ -585,7 +692,7 @@ class QuestionParser:
 
         question_type_result = _safe_call(
             detect_question_type,
-            normalized,
+            original,
             "general",
         )
 
@@ -600,18 +707,29 @@ class QuestionParser:
                 question_type_result or "general"
             )
 
+        if not isinstance(question_type_result, dict):
+            question_type_result = {
+                "type": question_type,
+                "confidence": 0.0,
+                "markers": [],
+                "candidates": [],
+            }
+
         intent_result = _normalize_intent_result(
             _safe_call(
                 detect_intent,
-                normalized,
+                original,
                 {"intent": "general", "confidence": 0.0},
             )
         )
 
+        # Semantic extraction must use the original text.
+        # normalization.py may perform lossy Arabic character normalization
+        # (e.g. ة/ه, إ/ا, ي/ى), which can damage entity/relation values.
         entities = _as_list(
             _safe_call(
                 extract_entities,
-                normalized,
+                original,
                 [],
             )
         )
@@ -619,33 +737,158 @@ class QuestionParser:
         relations = _as_list(
             _safe_call(
                 extract_relations,
-                normalized,
+                original,
                 [],
             )
         )
+        # Relation-aware entity cleanup:
+        # The relation extractor is authoritative for relation semantics.
+        #
+        # Example:
+        #   "من بنى برج إيفل؟"
+        #
+        # relation:
+        #   built_by(subject="برج إيفل")
+        #
+        # The entity detector may incorrectly produce:
+        #   "بنى برج إيفل"
+        #
+        # Remove only that erroneous relation-derived entity.
+
+        if relations:
+            for relation in relations:
+                if not isinstance(relation, dict):
+                    continue
+
+                relation_name = str(
+                    relation.get("relation") or ""
+                ).strip()
+
+                relation_subject = _clean_phrase(
+                    str(relation.get("subject") or "")
+                )
+
+                if relation_name != "built_by":
+                    continue
+
+                if not relation_subject:
+                    continue
+
+                cleaned_entities = []
+
+                for entity in entities:
+                    # Entity may be either:
+                    #   - a dict
+                    #   - an Entity dataclass/object
+                    #
+                    # The cleanup must support both forms.
+
+                    if isinstance(entity, dict):
+                        raw_entity_text = entity.get("text") or ""
+                    else:
+                        raw_entity_text = getattr(
+                            entity,
+                            "text",
+                            "",
+                        )
+
+                    entity_text = _clean_phrase(
+                        str(raw_entity_text)
+                    )
+
+                    # Remove only erroneous entities such as:
+                    #   "بنى برج إيفل"
+                    #   "قام ببناء برج إيفل"
+                    #
+                    # The relation extractor remains authoritative:
+                    #   built_by(subject="برج إيفل")
+
+                    is_erroneous_built_entity = (
+                        relation_subject in entity_text
+                        and (
+                            entity_text.startswith("بنى ")
+                            or entity_text.startswith("قام ببناء ")
+                        )
+                    )
+
+                    if is_erroneous_built_entity:
+                        continue
+
+                    cleaned_entities.append(entity)
+
+                entities = cleaned_entities
 
         temporal = _safe_call(
             extract_temporal,
-            normalized,
+            original,
             [],
         )
 
         numbers = _safe_call(
             extract_numbers,
-            normalized,
+            original,
             [],
         )
 
         locations = _as_list(
             _safe_call(
                 extract_locations,
-                normalized,
+                original,
                 [],
             )
         )
 
-        subject = _extract_subject(normalized)
-        target = _extract_target(normalized)
+        # Subject/target are semantic fields too, so preserve the
+        # original Arabic spelling instead of using the lossy normalized text.
+        subject = _extract_subject(original)
+        target = _extract_target(original)
+
+        # Relations are a stronger semantic signal than the generic
+        # subject/target heuristics. Use them as a conservative fallback.
+        if relations:
+            primary_relation = relations[0]
+
+            if isinstance(primary_relation, dict):
+                relation_name = str(
+                    primary_relation.get("relation") or ""
+                ).strip()
+
+                relation_subject = _clean_phrase(
+                    str(primary_relation.get("subject") or "")
+                )
+
+                relation_object = _clean_phrase(
+                    str(primary_relation.get("object") or "")
+                )
+
+                if relation_name in {
+                    "located_in",
+                    "built_by",
+                }:
+                    if relation_subject:
+                        subject = relation_subject
+
+                elif relation_name in {
+                    "capital_of",
+                    "population_of",
+                }:
+                    # Example:
+                    #   ما عاصمة فرنسا؟
+                    #   كم عدد سكان فرنسا؟
+                    #
+                    # The country is the relation object/target.
+                    subject = None
+
+                    if relation_object:
+                        target = relation_object
+
+                elif relation_subject and not subject:
+                    subject = relation_subject
+
+                if relation_object and not target:
+                    target = relation_object
+
+        comparison_targets = _extract_comparison_targets(original)
         keywords = _extract_keywords(normalized)
 
         confidence = self._calculate_confidence(
@@ -696,6 +939,8 @@ class QuestionParser:
 
         # Keep the complete raw intent result available for future integration.
         result["intent_result"] = intent_result
+        result["question_type_result"] = question_type_result
+        result["comparison_targets"] = comparison_targets
 
         # Compact metadata useful to Brain/RAG later.
         result["meta"] = {
@@ -703,7 +948,11 @@ class QuestionParser:
             "version": self.version,
             "has_entities": bool(entities),
             "has_relations": bool(relations),
-            "has_temporal": bool(temporal),
+            "has_temporal": bool(
+                temporal.get("has_temporal_information", False)
+                if isinstance(temporal, dict)
+                else temporal
+            ),
             "has_numbers": bool(numbers),
             "has_locations": bool(locations),
             "keyword_count": len(keywords),

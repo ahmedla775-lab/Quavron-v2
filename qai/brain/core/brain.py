@@ -7,6 +7,7 @@ from qai.users.context.builder import context_builder
 from qai.learning.bridge import learning_bridge
 from qai.brain.core.research_bridge import research_bridge
 from qai.understanding import parse_question
+from qai.cognition import CognitiveEngine
 
 
 class Brain:
@@ -23,6 +24,10 @@ class Brain:
             if research_bridge_instance is not None
             else research_bridge
         )
+
+        # Cognitive layer:
+        # supervises Understanding without replacing it.
+        self.cognition = CognitiveEngine()
 
     # =====================================================
     # UNDERSTANDING CONTRACT
@@ -913,12 +918,50 @@ class Brain:
             legacy_intent_result=intent_result,
         )
 
-        # Brain decisions now consume the Contract.
+        # -------------------------------------------------
+        # 3. COGNITION
+        # -------------------------------------------------
+        # Cognition validates the Understanding Contract.
+        # It may safely reconcile structural defects, but it
+        # does not generate factual answers.
+        # -------------------------------------------------
+        cognition_result = None
+        cognition_decision = None
+
+        try:
+            cognition_result = self.cognition.process(
+                {
+                    "question": question,
+                    "user_id": user_id or "guest",
+                    "understanding": understanding,
+                    "context": user_context,
+                }
+            )
+
+            cognition_decision = cognition_result.decision
+
+            corrected = getattr(
+                cognition_result,
+                "corrected_understanding",
+                None,
+            )
+
+            if isinstance(corrected, dict) and corrected:
+                understanding = corrected
+
+        except Exception as e:
+            print(
+                "[Brain] Cognition error:",
+                type(e).__name__,
+                str(e),
+            )
+
+        # Brain decisions now consume the final semantic Contract.
         intent = understanding["intent"]
         domain = understanding["domain"]
 
         # -------------------------------------------------
-        # 3. DECISION ROUTER
+        # 4. DECISION ROUTER
         # -------------------------------------------------
         # Understanding Contract is the semantic source of truth.
         # Decision routing is derived from the contract and does

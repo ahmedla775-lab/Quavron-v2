@@ -38,7 +38,8 @@ export default function AIChat() {
         {
           role:"assistant",
           message:
-          result?.llm?.answer ??
+          result?.reply ??
+                                                               result?.llm?.answer ??
           result?.answer ??
           "No response"
         }
