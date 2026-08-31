@@ -1176,6 +1176,44 @@ class Brain:
 
         generation_context = context or ""
 
+        # -------------------------------------------------
+        # SEMANTIC UNDERSTANDING CONTEXT
+        # -------------------------------------------------
+        # Pass the final semantic contract downstream.
+        # LocalDriver must use these relations instead of
+        # guessing relationships from noisy RAG text.
+        try:
+            import json
+
+            semantic_context = json.dumps(
+                {
+                    "intent": understanding.get("intent"),
+                    "domain": understanding.get("domain"),
+                    "entities": understanding.get("entities") or [],
+                    "relations": understanding.get("relations") or [],
+                    "subject": understanding.get("subject"),
+                    "target": understanding.get("target"),
+                },
+                ensure_ascii=False,
+                default=str,
+            )
+
+            generation_context = (
+                f"{generation_context}\\n\\n"
+                if generation_context
+                else ""
+            ) + (
+                "=== QAI SEMANTIC UNDERSTANDING ===\\n"
+                + semantic_context
+            )
+
+        except Exception as e:
+            print(
+                "[Brain] Semantic context serialization error:",
+                type(e).__name__,
+                str(e),
+            )
+
         if user_context:
             try:
                 import json

@@ -39,6 +39,11 @@ class LLMGateway:
                 context
             )
         except Exception as e:
+            print(
+                "[LLMGateway] Driver error:",
+                type(e).__name__,
+                str(e),
+            )
             return {
                 "provider": provider,
                 "status": "error",

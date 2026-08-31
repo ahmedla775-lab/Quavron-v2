@@ -1270,6 +1270,19 @@ class LocalDriver(BaseDriver):
             concepts.append("intent:identity")
 
         # ---------------------------------------------------------
+        # Capital-of relation
+        # ---------------------------------------------------------
+        # Examples:
+        #   ما هي عاصمة الجزائر؟
+        #   ماهي عاصمة فلسطين؟
+        #   ما عاصمة الجزائر؟
+        #
+        # This is a factual relation, not a Quavron identity question.
+        # It is handled separately by the hard CAPITAL_OF boundary.
+        if "عاصمة" in q:
+            concepts.append("intent:capital_of")
+
+        # ---------------------------------------------------------
         # Explicit intents
         # ---------------------------------------------------------
 
@@ -1304,6 +1317,41 @@ class LocalDriver(BaseDriver):
         if "intent:supervisor_learning" in concepts:
             if "intent:learning_test" in concepts:
                 concepts.remove("intent:learning_test")
+
+        # ---------------------------------------------------------
+        # Generic semantic relation: CAPITAL_OF
+        # ---------------------------------------------------------
+        # Capital questions are factual relation questions, not
+        # identity questions. Detect them generically without
+        # hard-coding countries.
+        if "عاصمة" in q:
+            if any(
+                marker in q
+                for marker in [
+                    "ما هي عاصمة",
+                    "ماهي عاصمة",
+                    "ما عاصمة",
+                    "ماهي عاصمه",
+                    "ما عاصمه",
+                ]
+            ):
+                if "relation:capital_of" not in concepts:
+                    concepts.append("relation:capital_of")
+
+        # ---------------------------------------------------------
+        # Capital-of relation
+        # ---------------------------------------------------------
+        # Support:
+        #   ما هي عاصمة الجزائر؟
+        #   ماهي عاصمة فلسطين؟
+        #   ما عاصمة الجزائر؟
+        #
+        # _normalize() converts "عاصمة" -> "عاصمه".
+        if (
+            "عاصمه" in q
+            and "intent:capital_of" not in concepts
+        ):
+            concepts.append("intent:capital_of")
 
         return concepts
     # =========================================================
@@ -1340,6 +1388,46 @@ class LocalDriver(BaseDriver):
 
         q = self._normalize(question)
         t = self._normalize(text)
+
+        # ---------------------------------------------------------
+        # HARD RELATION BOUNDARY: CAPITAL_OF
+        # ---------------------------------------------------------
+        # A high RAG relevance score must never allow a document
+        # about another country to answer a capital-of question.
+        #
+        # Example:
+        #   question = "ماهي عاصمة فلسطين؟"
+        #   document = "الجزائر العاصمة هي عاصمة الجزائر."
+        #
+        # The document must explicitly mention the requested
+        # country before relevance/lexical scoring is considered.
+        # ---------------------------------------------------------
+        # ---------------------------------------------------------
+        # HARD RELATION BOUNDARY: CAPITAL_OF
+        # ---------------------------------------------------------
+        # Normalization may convert:
+        #   عاصمة -> عاصمه
+        # Therefore accept both normalized and original forms.
+        # ---------------------------------------------------------
+        if "عاصمة" in q or "عاصمه" in q:
+            import re as _capital_question_re
+
+            _capital_question_match = _capital_question_re.search(
+                r"(?:عاصمة|عاصمه)\s+(.+?)(?:\s*[؟?!,،;؛.]|$)",
+                q,
+            )
+
+            if _capital_question_match:
+                _requested_country = (
+                    _capital_question_match.group(1)
+                    .strip()
+                )
+
+                if (
+                    _requested_country
+                    and _requested_country not in t
+                ):
+                    return -1
 
         q_words = set(self.keywords(question))
         d_words = set(self.keywords(text))
@@ -1549,6 +1637,106 @@ class LocalDriver(BaseDriver):
                 or "qai" in t
             ):
                 return -1
+
+        # -----------------------------------------------------
+        # HARD ENTITY / RELATION BOUNDARY
+        # -----------------------------------------------------
+        # A document about a different entity must never answer
+        # a relation question merely because lexical overlap or
+        # RAG relevance is high.
+        #
+        # Example:
+        #   question: ما هي عاصمة فلسطين؟
+        #   document: الجزائر العاصمة هي عاصمة الجزائر.
+        #
+        # Both contain "عاصمة", but the requested target entity
+        # is different. Therefore the document is rejected.
+        #
+        # This is intentionally generic: no country names are
+        # hard-coded.
+        # -----------------------------------------------------
+
+        try:
+            _question_relations = getattr(
+                self,
+                "_extract_question_relations",
+                None,
+            )
+
+            if callable(_question_relations):
+                _q_relations = _question_relations(question)
+            else:
+                _q_relations = []
+
+            if not isinstance(_q_relations, list):
+                _q_relations = []
+
+            for _qrel in _q_relations:
+                if not isinstance(_qrel, dict):
+                    continue
+
+                _q_relation = str(
+                    _qrel.get("relation", "") or ""
+                ).strip().lower()
+
+                _q_target = str(
+                    _qrel.get("object", "") or
+                    _qrel.get("target", "") or
+                    ""
+                ).strip()
+
+                if not _q_relation or not _q_target:
+                    continue
+
+                # Capital relation is entity-sensitive.
+                if _q_relation == "capital_of":
+                    _q_target_n = self._normalize(_q_target)
+
+                    # Look for explicit capital relation evidence
+                    # inside the candidate document.
+                    _capital_relation_found = False
+                    _document_targets = []
+
+                    _capital_patterns = [
+                        rf"عاصمة\s+(?P<target>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*?)\s+(?:هي|:|-)",
+                        rf"(?P<target>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*?)\s+هي\s+عاصمة",
+                        rf"(?P<target>[\u0600-\u06FF\w-]+(?:\s+[\u0600-\u06FF\w-]+)*?)\s+عاصمتها",
+                    ]
+
+                    for _pattern in _capital_patterns:
+                        for _match in re.finditer(
+                            _pattern,
+                            text,
+                            flags=re.IGNORECASE,
+                        ):
+                            _target = str(
+                                _match.group("target") or ""
+                            ).strip()
+
+                            if _target:
+                                _document_targets.append(
+                                    self._normalize(_target)
+                                )
+
+                    # If the document explicitly names another
+                    # target country, it cannot answer this question.
+                    if _document_targets:
+                        _capital_relation_found = any(
+                            _q_target_n == _doc_target_n
+                            or _q_target_n in _doc_target_n
+                            or _doc_target_n in _q_target_n
+                            for _doc_target_n in _document_targets
+                        )
+
+                        if not _capital_relation_found:
+                            return -1
+
+        except Exception as _entity_guard_error:
+            print(
+                "[LocalDriver] Entity/relation guard error:",
+                type(_entity_guard_error).__name__,
+                str(_entity_guard_error),
+            )
 
         # -----------------------------------------------------
         # Base RAG relevance
@@ -1777,6 +1965,40 @@ class LocalDriver(BaseDriver):
         concepts = self._question_concepts(question)
 
         # ---------------------------------------------------------
+        # HARD RELATION BOUNDARY: CAPITAL_OF
+        # ---------------------------------------------------------
+        # A capital_of question may only use a document that
+        # explicitly mentions the requested country.
+        #
+        # This is generic: it applies to Algeria, Palestine,
+        # New Zealand, France, Japan, or any other country.
+        # No country or capital is hard-coded here.
+        # ---------------------------------------------------------
+        if "intent:capital_of" in concepts:
+            import re as _capital_boundary_re
+
+            _capital_q = self._normalize(question)
+
+            _capital_match = _capital_boundary_re.search(
+                r"عاصمه\s+(.+?)(?:\s*[؟?!,،;؛.]|$)",
+                _capital_q,
+            )
+
+            if _capital_match:
+                _requested_country = (
+                    _capital_match.group(1)
+                    .strip()
+                )
+
+                if _requested_country:
+                    _document_mentions_country = (
+                        _requested_country in t
+                    )
+
+                    if not _document_mentions_country:
+                        return False
+
+        # ---------------------------------------------------------
         # Official-test intent
         # ---------------------------------------------------------
         if "intent:learning_test" in concepts:
@@ -1848,6 +2070,36 @@ class LocalDriver(BaseDriver):
                 return document_is_qai_learning_test
 
             return document_is_learning_test
+
+        # ---------------------------------------------------------
+        # CAPITAL_OF intent
+        # ---------------------------------------------------------
+        # Generic semantic boundary:
+        # A capital-of question may only use a document that
+        # explicitly mentions the requested country.
+        #
+        # No country is hard-coded here.
+        # The same rule applies to Algeria, Palestine, France,
+        # Japan, New Zealand, or any other country.
+        # ---------------------------------------------------------
+        if "intent:capital_of" in concepts:
+            import re as _capital_allowed_re
+
+            _capital_match = _capital_allowed_re.search(
+                r"عاصمه?\\s+(.+?)(?:\\s*[؟?!,،;؛.]|$)",
+                q,
+            )
+
+            if _capital_match:
+                _requested_country = (
+                    _capital_match.group(1).strip()
+                )
+
+                if (
+                    _requested_country
+                    and _requested_country not in t
+                ):
+                    return False
 
         # ---------------------------------------------------------
         # Learning-process intent
@@ -4002,40 +4254,100 @@ class LocalDriver(BaseDriver):
         #   must never produce "نهج".
         # =========================================================
 
-        if "عاصمة" in _direct_question_lower and documents:
-            import re as _capital_re
+        # =========================================================
+        # GENERIC RELATION ANSWER: CAPITAL_OF
+        # =========================================================
+        # Do not infer the answer from arbitrary words in research
+        # titles/snippets. The question parser already gives us the
+        # semantic relation and target entity.
+        #
+        # Expected relation:
+        #   capital_of(country) -> capital
+        #
+        # Evidence must explicitly connect the requested country
+        # with its capital.
+        # =========================================================
 
-            _capital_candidates = []
+        if documents:
+            import re as _relation_re
 
-            # Extract country from:
-            # "ما عاصمة الجزائر؟"
-            # "ما هي عاصمة مصر؟"
-            _question_match = _capital_re.search(
-                r"ما\s+(?:هي\s+)?عاصمة\s+(.+?)\s*[؟?!.،,]*$",
-                _direct_question_lower,
+            _capital_relation = False
+            _relation_country = ""
+
+            # Read semantic relation information when available.
+            _relations = []
+
+            # Read semantic relations from the context supplied by Brain.
+            # LocalDriver must not depend on an undefined local variable.
+            _semantic_match = _relation_re.search(
+                r"=== QAI SEMANTIC UNDERSTANDING ===\s*(\{.*?\})",
+                context or "",
+                flags=_relation_re.DOTALL,
             )
 
-            _country = (
-                _question_match.group(1).strip()
-                if _question_match
-                else ""
-            )
+            if _semantic_match:
+                try:
+                    _semantic_data = json.loads(
+                        _semantic_match.group(1)
+                    )
+                    if isinstance(_semantic_data, dict):
+                        _relations = (
+                            _semantic_data.get("relations")
+                            or []
+                        )
+                except Exception as _semantic_exc:
+                    print(
+                        "[LocalDriver] Semantic context parse error:",
+                        type(_semantic_exc).__name__,
+                        str(_semantic_exc),
+                    )
 
-            _country = _capital_re.sub(
-                r"[؟?!.،,]+$",
-                "",
-                _country,
-            ).strip()
+            if isinstance(_relations, list):
+                for _rel in _relations:
+                    if not isinstance(_rel, dict):
+                        continue
 
-            if _country:
-                _country_re = _capital_re.escape(_country)
+                    _name = str(
+                        _rel.get("relation")
+                        or _rel.get("type")
+                        or ""
+                    ).strip().lower()
+
+                    if _name == "capital_of":
+                        _capital_relation = True
+
+                        _relation_country = str(
+                            _rel.get("object")
+                            or _rel.get("target")
+                            or ""
+                        ).strip()
+
+                        if _relation_country:
+                            break
+
+            # Fallback only when the semantic relation is unavailable.
+            # This is generic and does not contain any specific country.
+            if not _capital_relation and "عاصمة" in _direct_question_lower:
+                _question_match = _relation_re.search(
+                    r"ما\s+(?:هي\s+)?عاصمة\s+(.+?)\s*[؟?!.،,]*$",
+                    _direct_question_lower,
+                )
+
+                if _question_match:
+                    _capital_relation = True
+                    _relation_country = _question_match.group(1).strip()
+
+            if _capital_relation and _relation_country:
+                _country_re = _relation_re.escape(_relation_country)
+                _capital_candidates = []
 
                 for _doc in documents:
                     if not isinstance(_doc, dict):
                         continue
 
                     _title = str(
-                        _doc.get("title", "") or ""
+                        _doc.get("title")
+                        or ""
                     ).strip()
 
                     _content = str(
@@ -4052,22 +4364,22 @@ class LocalDriver(BaseDriver):
                         _title + " " + _content
                     ).replace("\n", " ")
 
-                    _text = _capital_re.sub(
+                    _text = _relation_re.sub(
                         r"\s+",
                         " ",
                         _text,
                     ).strip()
 
                     # -------------------------------------------------
-                    # Pattern 1:
-                    # "عاصمة مصر هي القاهرة"
+                    # Pattern A:
+                    # "عاصمة الجزائر هي الجزائر العاصمة"
                     # -------------------------------------------------
-                    for _match in _capital_re.finditer(
+                    for _match in _relation_re.finditer(
                         rf"عاصمة\s+{_country_re}\s+(?:هي|:|-)\s+"
-                        r"([\u0600-\u06ffA-Za-z][\u0600-\u06ffA-Za-z\s-]{1,40}?)"
-                        r"(?=\s*[،,.؛;]|\s*$)",
+                        r"([\u0600-\u06ffA-Za-z][\u0600-\u06ffA-Za-z\s-]{1,60}?)"
+                        r"(?=\s*[،,.؛;]|$)",
                         _text,
-                        flags=_capital_re.IGNORECASE,
+                        flags=_relation_re.IGNORECASE,
                     ):
                         _capital = _match.group(1).strip()
 
@@ -4077,19 +4389,17 @@ class LocalDriver(BaseDriver):
                             )
 
                     # -------------------------------------------------
-                    # Pattern 2:
-                    # "القاهرة هي عاصمة مصر"
+                    # Pattern B:
+                    # "الجزائر عاصمتها الجزائر العاصمة"
                     # -------------------------------------------------
-                    for _match in _capital_re.finditer(
-                        r"([\u0600-\u06ffA-Za-z][\u0600-\u06ffA-Za-z\s-]{1,40}?)"
-                        rf"\s+هي\s+عاصمة\s+{_country_re}",
+                    for _match in _relation_re.finditer(
+                        rf"{_country_re}\s+عاصمتها\s+"
+                        r"([\u0600-\u06ffA-Za-z][\u0600-\u06ffA-Za-z\s-]{1,60}?)"
+                        r"(?=\s*[،,.؛;]|$)",
                         _text,
-                        flags=_capital_re.IGNORECASE,
+                        flags=_relation_re.IGNORECASE,
                     ):
                         _capital = _match.group(1).strip()
-
-                        # Keep only the final phrase after punctuation.
-                        _capital = _capital.split("،")[-1].strip()
 
                         if _capital:
                             _capital_candidates.append(
@@ -4097,47 +4407,79 @@ class LocalDriver(BaseDriver):
                             )
 
                     # -------------------------------------------------
-                    # Pattern 3:
-                    # "مصر عاصمتها القاهرة"
+                    # Pattern C:
+                    # "الجزائر العاصمة هي عاصمة الجزائر"
                     # -------------------------------------------------
-                    for _match in _capital_re.finditer(
-                        rf"{_country_re}\s+عاصمتها\s+"
-                        r"([\u0600-\u06ffA-Za-z][\u0600-\u06ffA-Za-z\s-]{1,40}?)"
-                        r"(?=\s*[،,.؛;]|\s*$)",
+                    for _match in _relation_re.finditer(
+                        r"([\u0600-\u06ffA-Za-z][\u0600-\u06ffA-Za-z\s-]{1,60}?)"
+                        rf"\s+هي\s+عاصمة\s+{_country_re}",
                         _text,
-                        flags=_capital_re.IGNORECASE,
+                        flags=_relation_re.IGNORECASE,
                     ):
                         _capital = _match.group(1).strip()
+
+                        # Remove leading/trailing navigation noise.
+                        _capital = _capital.split("،")[-1].strip()
+
+                        # Never accept interrogative words as a capital.
+                        if _capital.strip() in {
+                            "ما",
+                            "ماذا",
+                            "أي",
+                            "اي",
+                            "أين",
+                            "اين",
+                            "هل",
+                        }:
+                            continue
 
                         if _capital:
                             _capital_candidates.append(
                                 (110, _capital)
                             )
 
-            if _capital_candidates:
-                _capital_candidates.sort(
-                    key=lambda item: item[0],
-                    reverse=True,
-                )
+                    # -------------------------------------------------
+                    # Pattern D:
+                    # "عاصمة الجزائر: الجزائر العاصمة"
+                    # -------------------------------------------------
+                    for _match in _relation_re.finditer(
+                        rf"عاصمة\s+{_country_re}\s*[:\-]\s*"
+                        r"([\u0600-\u06ffA-Za-z][\u0600-\u06ffA-Za-z\s-]{1,60}?)"
+                        r"(?=\s*[،,.؛;]|$)",
+                        _text,
+                        flags=_relation_re.IGNORECASE,
+                    ):
+                        _capital = _match.group(1).strip()
 
-                _capital_answer = _capital_candidates[0][1]
+                        if _capital:
+                            _capital_candidates.append(
+                                (105, _capital)
+                            )
 
-                print(
-                    "[LocalDriver] DIRECT CAPITAL ANSWER:",
-                    _capital_answer,
-                    "country=",
-                    _country,
-                )
+                if _capital_candidates:
+                    _capital_candidates.sort(
+                        key=lambda item: item[0],
+                        reverse=True,
+                    )
 
-                return {
-                    "provider": "local",
-                    "status": "completed",
-                    "source": "qai_research",
-                    "confidence": 0.98,
-                    "relevance": 1.0,
-                    "answer": _capital_answer,
-                    "message": None,
-                }
+                    _capital_answer = _capital_candidates[0][1]
+
+                    print(
+                        "[LocalDriver] DIRECT CAPITAL RELATION ANSWER:",
+                        _capital_answer,
+                        "country=",
+                        _relation_country,
+                    )
+
+                    return {
+                        "provider": "local",
+                        "status": "completed",
+                        "source": "qai_research",
+                        "confidence": 0.98,
+                        "relevance": 1.0,
+                        "answer": _capital_answer,
+                        "message": None,
+                    }
 
         # =========================================================
         # LOCAL LLAMA GENERATION
@@ -4318,15 +4660,23 @@ class LocalDriver(BaseDriver):
             documents,
         )
 
+        selected_documents = [
+            item[2]
+            for item in selected
+            if isinstance(item, tuple)
+            and len(item) >= 3
+            and isinstance(item[2], dict)
+        ]
+
         answer = self._compose_intent_answer(
             prompt,
-            documents,
+            selected_documents,
         )
 
-        if not answer and selected:
+        if not answer and selected_documents:
             answer = self._compose_multi_document_answer(
                 prompt,
-                documents,
+                selected_documents,
             )
 
         if answer:
